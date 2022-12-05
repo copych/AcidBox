@@ -8,4 +8,4 @@ You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external
 * partition scheme: NoOTA (1MB Prog/ 3MB SPDIFF)
 * PSRAM: enabled
 
-Also you will need to upload samples to the ESP32 flash. To do so go there: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
+Also you will need to upload samples to the ESP32 flash. To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
