@@ -1,6 +1,8 @@
 #ifndef TB303VOICE_H
 #define TB303VOICE_H
 
+
+
 #include "moogladder.h"
 //#include "rosic_TeeBeeFilter.h"
 //#include "sp_tbvcf.h"
@@ -34,7 +36,7 @@ public:
   inline float GetFilterEnv();             // call once per sample
   inline void Generate() ;
   MoogLadder Filter;
- // rosic::TeeBeeFilter Filter;
+  //::TeeBeeFilter Filter;
   //SP_TBVCF Filter;
   Wavefolder WFolder;
   float pan = 0.5f;

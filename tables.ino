@@ -8,6 +8,12 @@ float expSaw2048(uint16_t i) {
   return res;
 }
 
+
+float tanh2048(uint16_t i) {
+  float res = tanh( (float)i * 5.0f / 2048.0f); // 0.0 -- 5.0 argument
+  return res;
+}
+
 float expSquare2048(uint16_t i) { // requires saw table
   uint16_t j = i + WAVE_SIZE/2;
   if (j>=WAVE_SIZE) j = j - WAVE_SIZE;
@@ -31,6 +37,10 @@ void buildTables() {
   
   for (uint16_t i = 0 ; i < WAVE_SIZE; i++) {
     square_2048[i] = expSquare2048(i);
+  }
+  
+  for (uint16_t i = 0 ; i < WAVE_SIZE; i++) {
+    tanh_2048[i] = tanh2048(i); 
   }
 }
 

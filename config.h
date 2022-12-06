@@ -1,9 +1,12 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v0.1"
+#define VERSION         "v0.2"
 
 //#define DEBUG_ON
 #define MIDI_ON
 //#define MIDI_VIA_SERIAL // in style of Hairless MIDI, this will block Serial debugging
+
+#define MAX_CUTOFF_FREQ 3000.0f
+#define MIN_CUTOFF_FREQ 150.0f
 
 //#define SH1106 //OLED display type: SH1106 or SSD1306, if you select none, no display code will be compiled 
 //#define SSD1306   // uncomment if you have such kind
@@ -11,7 +14,7 @@
 #define I2C_SCL         22
 
 #define SAMPLE_RATE     44100
-#define DIV_SAMPLE_RATE 1.0f/(float)SAMPLE_RATE
+#define DIV_SAMPLE_RATE 2.267573e-5 // 1/44100
 #define WAVE_SIZE       2048 // samples used for waveforms 
 #define DMA_BUF_LEN     32
 #define DMA_NUM_BUF     2

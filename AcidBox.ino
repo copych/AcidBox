@@ -50,11 +50,12 @@ static float midi_phase_steps[128];
 static float midi_2048_steps[128];
 static float saw_2048[2048];
 static float square_2048[2048];
-static int debug_note=69;
+static float tanh_2048[2048];
+
 TaskHandle_t SynthTask1;
 TaskHandle_t SynthTask2;
 
-// Output buffers (2ch interleaved)
+// Audio buffers of all kinds
 static float synth_buf[2][DMA_BUF_LEN]; // 2 * 303 mono
 static float drums_buf[DMA_BUF_LEN*2]; //  808 stereo 
 static float mix_buf_l[DMA_BUF_LEN]; // pre-mix L and R channels
@@ -107,9 +108,9 @@ static void audio_task2(void *userData) {
           c2=micros();
           drums();
           d2 = micros() - c2;
-          
+
           xTaskNotifyGive(SynthTask1);
-          
+
           c3=micros();
           mixer();
           global_fx();
@@ -118,6 +119,7 @@ static void audio_task2(void *userData) {
           i2s_output();
         }
         taskYIELD();
+      
     }
 }
 
@@ -172,10 +174,11 @@ void setup(void) {
   }
   
   i2sInit();
-  i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY);
+//  i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY); NO_DAC case
+  i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
   
-  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 12000, NULL, 1, &SynthTask1, 0 );
-  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 12000, NULL, 1, &SynthTask2, 1 );
+  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 15000, NULL, 1, &SynthTask1, 0 );
+  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 15000, NULL, 1, &SynthTask2, 1 );
   
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
@@ -185,18 +188,21 @@ void setup(void) {
 
 void loop() { // default loopTask running on the Core1
   // you can still place some of your code here
-  // or vTaskDelete();
+  // or   vTaskDelete(NULL);
 
+ // processButtons();
+   
+//  c2=micros();
 #ifdef MIDI_ON
   MIDI.read();
 #endif
- // processButtons();
- 
+ // d2 = micros() - c2;
+
   DEB (d1);
   DEB(" ");
   DEB (d2);
   DEB(" ");
   DEBUG (d3);
-  
+ 
   taskYIELD(); // breath for all the rest of the Core1 tasks
 }

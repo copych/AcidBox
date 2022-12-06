@@ -18,19 +18,23 @@ static void global_fx() { // prepare output
     // we can apply global effects here to mix_buf_l and _r
     for (int i=0; i < DMA_BUF_LEN; i++) { 
 
-     //  Effect_Process( &mix_buf_l[i], &mix_buf_r[i] );
-      // Delay_Process( &mix_buf_l[i], &mix_buf_r[i] );
-     //  Reverb_Process( &mix_buf_l[i], &mix_buf_r[i] );
-
+       Effect_Process( &mix_buf_l[i], &mix_buf_r[i] );
+       Delay_Process( &mix_buf_l[i], &mix_buf_r[i] );
+       Reverb_Process( &mix_buf_l[i], &mix_buf_r[i] );
+ 
     }
 }
 
 inline void i2s_output () {  
   for (int i=0; i < DMA_BUF_LEN; i++) { 
-      out_buf._signed[i*2] = 2000 * (3.0f + mix_buf_l[i]);
-      out_buf._signed[i*2+1] = 2000 * (3.0f + mix_buf_r[i]) ;
+//      out_buf._signed[i*2] = 2000 * (3.0f + mix_buf_l[i]);
+//      out_buf._signed[i*2+1] = 2000 * (3.0f + mix_buf_r[i]) ;
      
+      out_buf._signed[i*2] = 0.333 * 0x8000 * ( mix_buf_l[i]);
+      out_buf._signed[i*2+1] = 0.333 * 0x8000 * ( mix_buf_r[i]) ;
   }
   // now out_buf is ready, output
-  i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY);
+
+  //i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY); // NO-DAC case
+  i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
 }

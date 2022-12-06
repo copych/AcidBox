@@ -36,7 +36,7 @@ class MoogLadder
     inline void setResonance(float res) { res_ = res; }
 
   private:
-    float istor_, res_, freq_, delay_[6], tanhstg_[3], old_freq_, old_res_,
+    float istor_, res_, freq_, delay_[6], tanhstg_[3], old_freq_, old_res_, one_sr_,
         sample_rate_, old_acr_, old_tune_;
     float my_tanh(float x);
 };

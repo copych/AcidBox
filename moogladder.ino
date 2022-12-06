@@ -2,22 +2,33 @@
 
 inline float MoogLadder::my_tanh(float x)
 {
-  int sign = 1;
-    if (x<0) {
-        sign=-1;
+  //return tanh(x);
+    float sign = 1.0f;
+    if (x<0.0f) {
+        sign=-1.0f;
         x= -x;
     }
-    if (x>=4.0) {
+    if (x>=4.95f) {
       return sign;
     }
-    if (x<0.4) return x*sign; 
-    return sign * x/(x+1/(2.12-2.88*x+4*x*x)); // very good approximation for tanh() found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
-   // return sign * tanh(x);
+    if (x<=0.4f) return float(x*sign)*0.9498724f; // soften region borders    
+    return  sign * tanh_2048[(uint16_t)(x*409.6f)]; // lookup table 
+  // return sign * x/(x+1.0/(2.12-2.88*x+4.0*x*x)); // very good approximation for tanh() found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
+  //  return sign * tanh(x);
 }
 
+/*
+inline float MoogLadder::my_tanh(float x)
+  {
+    float a = fabs(2*x);
+    float b = 24+a*(12+a*(6+a));
+    return 2*(x*b)/(a*b+48);
+  }
+*/
 void MoogLadder::Init(float sample_rate)
 {
     sample_rate_ = sample_rate;
+    one_sr_ = 1.0 / sample_rate;
     istor_       = 0.0f;
     res_         = 0.4f;
     freq_        = 1000.0f;
@@ -42,7 +53,8 @@ float MoogLadder::Process(float in)
     float  stg[4];
     float  acr, tune;
 
-    float THERMAL = 0.000025;
+    static float THERMAL = 0.000025;
+    static float ONE_THERMAL = 40000.0f;
 
     if(res < 0)
     {
@@ -53,14 +65,14 @@ float MoogLadder::Process(float in)
     {
         float f, fc, fc2, fc3, fcr;
         old_freq_ = freq;
-        fc        = (freq / sample_rate_);
+        fc        = (freq * one_sr_);
         f         = 0.5f * fc;
         fc2       = fc * fc;
         fc3       = fc2 * fc2;
 
         fcr  = 1.8730f * fc3 + 0.4955f * fc2 - 0.6490f * fc + 0.9988f;
         acr  = -3.9364f * fc2 + 1.8409f * fc + 0.9968f;
-        tune = (1.0f - expf(-(TWOPI * f * fcr))) / THERMAL;
+        tune = (1.0f - expf(-(TWOPI * f * fcr))) * ONE_THERMAL;
 
         old_res_  = res;
         old_acr_  = acr;

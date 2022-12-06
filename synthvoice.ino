@@ -24,8 +24,6 @@ void SynthVoice::StartNote(uint8_t midiNote, uint8_t velo) {
     _eAmpEnvState = ENV_INIT;
     _eFilterEnvState = ENV_INIT;
   }
- // Filter.SetFreq(_cutoff * 5000.0f);
- // Filter.SetRes(_reso);
 }
 
 void SynthVoice::EndNote(uint8_t midiNote, uint8_t velo) {
@@ -54,17 +52,15 @@ void SynthVoice::Generate() {
   float amplitude = 0.0f;
   for (int i = 0; i < DMA_BUF_LEN; ++i) {
     if (_eAmpEnvState != ENV_IDLE) {
-      samp =  GetAmpEnv() * (((1.0f - _waveMix) * square_2048[ (uint16_t)(_phaze) ] ) + ( _waveMix * saw_2048[ (uint16_t)(_phaze) ] ));
+      samp =  GetAmpEnv() * (((1.0f - _waveMix) * square_2048[ (uint16_t)(_phaze) ] ) + ( _waveMix * saw_2048[ (uint16_t)(_phaze) ] )); // lookup and mix waveforms
     } else {
       samp = 0.0f;
     }
     // Filter
-//    Filter.SetFreq(5000.0f * (_cutoff +  GetFilterEnv()));
-    //Filter.setFeedbackHighpassCutoff(_cutoff * 5000.0f);
-    Filter.setCutoff(5000.0f * (_cutoff +  _envMod*GetFilterEnv()));
-    //samp = Filter.Process(samp); // moogladder
-    //samp = Filter.getSample(samp); // rosic open303
-    samp = Filter.Process(samp); // TBVCF
+    Filter.setCutoff((MAX_CUTOFF_FREQ-MIN_CUTOFF_FREQ) * (_cutoff + _envMod * GetFilterEnv()) + MIN_CUTOFF_FREQ);
+    samp = Filter.Process(samp); // moogladder
+
+    
     samp = WFolder.Process(samp);
     if ((_slide || _portamento) && _deltaStep!=0.0f) {
       if (fabs(_targetStep - _currentStep) >= fabs(_deltaStep)) {
@@ -79,22 +75,11 @@ void SynthVoice::Generate() {
     if ( _phaze >= WAVE_SIZE) {
       _phaze -= WAVE_SIZE ;
     }
-    synth_buf[_index][i] = (samp);
-    //synth_buf[_index][i+DMA_BUF_LEN] = (samp);
+    synth_buf[_index][i] = (samp); // mono
   }
 }
 
 void SynthVoice::Init() {
-/*
-  Filter.Init(SAMPLE_RATE);
-  Filter.SetFreq(_cutoff * 5000.0f);
-  Filter.SetRes(_reso);
-*/
-//  Filter.setSampleRate(SAMPLE_RATE);
-//Filter.setMode(rosic::TeeBeeFilter::TB_303);
-  //Filter.setResonance(_reso);
- // Filter.setFeedbackHighpassCutoff(150.0f);
- // Filter.setCutoff(_cutoff * 5000.0f);
   Filter.Init((float)SAMPLE_RATE);
   WFolder.Init(); 
 }
@@ -154,6 +139,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
 }
 
 inline float SynthVoice::GetAmpEnv() {
+
   if (_eAmpEnvState == ENV_INIT) {
     _ampEnvPosition = 0;
     if (!_accent) {
@@ -189,6 +175,7 @@ inline float SynthVoice::GetAmpEnv() {
 
 
 inline float SynthVoice::GetFilterEnv() {
+
   if (_eFilterEnvState == ENV_INIT) {
     _filterEnvPosition = 0;
     if (!_accent) {
