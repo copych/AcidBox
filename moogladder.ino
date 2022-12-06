@@ -1,30 +1,22 @@
 #include "moogladder.h"
 
-inline float MoogLadder::my_tanh(float x)
+inline float MoogLadder::my_tanh(float x) // as turned out, the quality of approximation very much affects overall sound quality
 {
-  //return tanh(x);
     float sign = 1.0f;
     if (x<0.0f) {
         sign=-1.0f;
         x= -x;
     }
     if (x>=4.95f) {
-      return sign;
+      return sign; // |x|>4, |tanh(x)| ~= 1 
     }
-    if (x<=0.4f) return float(x*sign)*0.9498724f; // soften region borders    
-    return  sign * tanh_2048[(uint16_t)(x*409.6f)]; // lookup table 
-  // return sign * x/(x+1.0/(2.12-2.88*x+4.0*x*x)); // very good approximation for tanh() found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
-  //  return sign * tanh(x);
+    if (x<=0.4f) return float(x*sign)*0.9498724f; // seamless region borders, tanh() is almost linear [-0.4 , 0.4], otherwise hissing and clicking appear   
+    return  sign * tanh_2048[(uint16_t)(x*409.6f)]; // lookup table contains 2048 values for x [0, 5], coeff 2048/5=409.6
+  // return sign * x/(x+1.0/(2.12-2.88*x+4.0*x*x)); // good approximation for tanh() found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
+  //  return sign * tanh(x); // this was an initial function
 }
 
-/*
-inline float MoogLadder::my_tanh(float x)
-  {
-    float a = fabs(2*x);
-    float b = 24+a*(12+a*(6+a));
-    return 2*(x*b)/(a*b+48);
-  }
-*/
+
 void MoogLadder::Init(float sample_rate)
 {
     sample_rate_ = sample_rate;
