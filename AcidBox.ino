@@ -1,3 +1,31 @@
+/*
+* 
+* AcidBox
+* ESP32 headless acid combo of 2 x 303 + 1 x 808 like synths. MIDI driven. I2S output. No indication. Uses both cores of ESP32.
+* 
+* To build the thing
+* You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external DAC, like PCM5102. In ArduinoIDE Tools menu select:
+* 
+* * Board: ESP32 Dev Module
+* * Partition scheme: No OTA (1MB APP/ 3MB SPDIFF)
+* * PSRAM: enabled
+*
+* Also you will need to upload samples from /data folder to the ESP32 flash. To do so follow the instructions:
+* https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
+* And then use Tools -> ESP32 Sketch Data Upload
+*
+* ####\ /###\ ####\  /#\  #   #    /###\ #   #
+* #   # #     #   # /# #\ #\ /#    #   # #\  #        
+* #   # #     #   # #   # ## ##    #   # ##\ #
+* ####/ \###\ ####/ ##### # # #    #   # # #\#
+* #         # # #   #   # #   #    #   # #  ##
+* #         # #  #  #   # #   #    #   # #   #
+* #     \###/ #   # #   # #   #    \###/ #   #
+*
+* IT WON'T RUN WITHOUT PSRAM, I CHECKED THAT !
+*
+*/
+
 #include "config.h"
 #include "driver/i2s.h"
 //#include "delayline.h"
