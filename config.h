@@ -1,7 +1,7 @@
 #define PROG_NAME       "ESP32 AcidBox"
 #define VERSION         "v0.1"
 
-#define DEBUG_ON
+//#define DEBUG_ON
 #define MIDI_ON
 //#define MIDI_VIA_SERIAL // in style of Hairless MIDI, this will block Serial debugging
 

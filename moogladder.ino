@@ -12,6 +12,7 @@ inline float MoogLadder::my_tanh(float x)
     }
     if (x<0.4) return x*sign; 
     return sign * x/(x+1/(2.12-2.88*x+4*x*x)); // very good approximation for tanh() found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
+   // return sign * tanh(x);
 }
 
 void MoogLadder::Init(float sample_rate)

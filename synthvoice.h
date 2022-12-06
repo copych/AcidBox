@@ -2,6 +2,8 @@
 #define TB303VOICE_H
 
 #include "moogladder.h"
+//#include "rosic_TeeBeeFilter.h"
+//#include "sp_tbvcf.h"
 #include "wavefolder.h"
 #include "midi_controls.h"
 
@@ -9,7 +11,7 @@ class SynthVoice {
 public:
   SynthVoice();
   SynthVoice(uint8_t ind) {_index = ind;};
-  void Begin();
+  void Init();
 	void StartNote(uint8_t midiNote, uint8_t velo);
   void EndNote(uint8_t midiNote, uint8_t velo);
   inline void StopSound();
@@ -32,8 +34,8 @@ public:
   inline float GetFilterEnv();             // call once per sample
   inline void Generate() ;
   MoogLadder Filter;
- // Svf Filter;
-  //Biquad Filter;
+ // rosic::TeeBeeFilter Filter;
+  //SP_TBVCF Filter;
   Wavefolder WFolder;
   float pan = 0.5f;
   float volume = 0.5f;

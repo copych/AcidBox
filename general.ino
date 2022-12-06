@@ -18,9 +18,9 @@ static void global_fx() { // prepare output
     // we can apply global effects here to mix_buf_l and _r
     for (int i=0; i < DMA_BUF_LEN; i++) { 
 
-       Effect_Process( &mix_buf_l[i], &mix_buf_r[i] );
-       Delay_Process( &mix_buf_l[i], &mix_buf_r[i] );
-       Reverb_Process( &mix_buf_l[i], &mix_buf_r[i] );
+     //  Effect_Process( &mix_buf_l[i], &mix_buf_r[i] );
+      // Delay_Process( &mix_buf_l[i], &mix_buf_r[i] );
+     //  Reverb_Process( &mix_buf_l[i], &mix_buf_r[i] );
 
     }
 }

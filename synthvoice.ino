@@ -59,8 +59,12 @@ void SynthVoice::Generate() {
       samp = 0.0f;
     }
     // Filter
-    Filter.SetFreq(5000.0f * (_cutoff +  GetFilterEnv()));
-    samp = Filter.Process(samp);
+//    Filter.SetFreq(5000.0f * (_cutoff +  GetFilterEnv()));
+    //Filter.setFeedbackHighpassCutoff(_cutoff * 5000.0f);
+    Filter.setCutoff(5000.0f * (_cutoff +  _envMod*GetFilterEnv()));
+    //samp = Filter.Process(samp); // moogladder
+    //samp = Filter.getSample(samp); // rosic open303
+    samp = Filter.Process(samp); // TBVCF
     samp = WFolder.Process(samp);
     if ((_slide || _portamento) && _deltaStep!=0.0f) {
       if (fabs(_targetStep - _currentStep) >= fabs(_deltaStep)) {
@@ -80,11 +84,19 @@ void SynthVoice::Generate() {
   }
 }
 
-void SynthVoice::Begin() {
+void SynthVoice::Init() {
+/*
   Filter.Init(SAMPLE_RATE);
   Filter.SetFreq(_cutoff * 5000.0f);
   Filter.SetRes(_reso);
-  WFolder.Init();
+*/
+//  Filter.setSampleRate(SAMPLE_RATE);
+//Filter.setMode(rosic::TeeBeeFilter::TB_303);
+  //Filter.setResonance(_reso);
+ // Filter.setFeedbackHighpassCutoff(150.0f);
+ // Filter.setCutoff(_cutoff * 5000.0f);
+  Filter.Init((float)SAMPLE_RATE);
+  WFolder.Init(); 
 }
 
 
@@ -107,23 +119,36 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       _waveMix = cc_value * MIDI_NORM;
       break;
     case CC_303_RESO:
-      _reso = cc_value * MIDI_NORM * 0.95;
-      Filter.SetRes(_reso);
+      _reso = cc_value * MIDI_NORM * 0.96f;
+      Filter.setResonance(_reso);
       break;    
     case CC_303_DECAY: // Env release
-      _filterDecayMs = cc_value * MIDI_NORM * 5000.0f ;
-      _ampDecayMs = cc_value * MIDI_NORM * 7500.0f;
+      _filterDecayMs = 5.0f + cc_value * MIDI_NORM * 5000.0f ;
+      _ampDecayMs = 5.0f + cc_value * MIDI_NORM * 7500.0f;
+      _filterAccentDecayMs = 0.5 * _ampDecayMs;
+      _ampAccentDecayMs = 0.5 * _ampDecayMs;
+      break;
+    case CC_303_ATTACK: // Env attack
+      _filterAttackMs = cc_value * MIDI_NORM * 500.0f ;
+      _ampAttackMs =  cc_value * MIDI_NORM * 700.0f;
+      _filterAccentAttackMs = 0.3f * _filterAttackMs ;
+      _ampAccentAttackMs = 0.3f * _ampAttackMs;
       break;
     case CC_303_CUTOFF:
       _cutoff = cc_value * MIDI_NORM;
-      Filter.SetFreq(_cutoff * 5000.0f);
       break;
     case CC_303_DELAYSEND:
       _sendDelay = cc_value * MIDI_NORM;
       break;
+    case CC_303_ENVMOD_LVL:
+      _envMod = cc_value * MIDI_NORM;
+      break;
+    case CC_303_ACCENT_LVL:
+      _accentLevel = cc_value * MIDI_NORM;
+      break;
     case CC_303_DISTORTION:
       _gain = cc_value * 60.0f * MIDI_NORM;
-      WFolder.SetGain(_gain + 1.0f);
+      WFolder.SetGain(_gain + 1.0f); 
       break;
   }
 }

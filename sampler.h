@@ -7,7 +7,7 @@
 
 class Sampler {
   public:
-    Sampler();
+    Sampler(){}
     Sampler(uint8_t countPrg = 5) { countPrograms = countPrg; };
     inline void Init();
     void ScanContents(fs::FS &fs, const char *dirname, uint8_t levels);

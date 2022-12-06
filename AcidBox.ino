@@ -51,8 +51,8 @@ static float midi_2048_steps[128];
 static float saw_2048[2048];
 static float square_2048[2048];
 static int debug_note=69;
-TaskHandle_t Task1;
-TaskHandle_t Task2;
+TaskHandle_t SynthTask1;
+TaskHandle_t SynthTask2;
 
 // Output buffers (2ch interleaved)
 static float synth_buf[2][DMA_BUF_LEN]; // 2 * 303 mono
@@ -76,21 +76,19 @@ Sampler Drums(5);
 // Core0 task
 static void audio_task1(void *userData) {
 
-  Synth1.Begin();
-  Synth2.Begin();
+  Synth1.Init();  
+  Synth2.Init();
   
     while(1) {
         // this part of the code never intersects with mixer()
         c1=micros();
         Synth1.Generate(); 
-        d1=micros()-c1;
-        c2=micros();
         Synth2.Generate();
-        d2=micros()-c2;
+        d1=micros()-c1;
         // this part of the code is operating with shared resources, so we should make it safe
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
           
-            xTaskNotifyGive(Task2); // if you have glitches, you may want to place this string in the end of audio_task1
+            xTaskNotifyGive(SynthTask2); // if you have glitches, you may want to place this string in the end of audio_task1
         }        
     }
 }
@@ -106,13 +104,17 @@ static void audio_task2(void *userData) {
     while(1) {
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
           // we can run it together with synth(), but not with mixer()
-          c3=micros();
+          c2=micros();
           drums();
-          d3 = micros() - c3;
-          xTaskNotifyGive(Task1);
+          d2 = micros() - c2;
           
+          xTaskNotifyGive(SynthTask1);
+          
+          c3=micros();
           mixer();
           global_fx();
+          d3 = micros() - c3;
+          
           i2s_output();
         }
         taskYIELD();
@@ -129,9 +131,12 @@ void setup(void) {
     MIDISerial.begin( 31250, SERIAL_8N1, MIDIRX_PIN, MIDITX_PIN ); // midi port
   #endif
 #else
-  #ifdef DEBUG_ON
-    Serial.begin(115200);
-  #endif
+#endif
+
+#ifdef DEBUG_ON
+#ifndef MIDI_VIA_SERIAL
+  Serial.begin(115200);
+#endif
 #endif
 
   for (uint8_t i = 0; i < GPIO_BUTTONS; i++) {
@@ -169,12 +174,12 @@ void setup(void) {
   i2sInit();
   i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY);
   
-  xTaskCreatePinnedToCore( audio_task1, "Task1", 8192, NULL, 1, &Task1, 0 );
-  xTaskCreatePinnedToCore( audio_task2, "Task2", 8192, NULL, 1, &Task2, 1 );
+  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 12000, NULL, 1, &SynthTask1, 0 );
+  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 12000, NULL, 1, &SynthTask2, 1 );
   
   // somehow we should allow tasks to run
-  xTaskNotifyGive(Task1);
-  xTaskNotifyGive(Task2);
+  xTaskNotifyGive(SynthTask1);
+  xTaskNotifyGive(SynthTask2);
 
 }
 
@@ -186,11 +191,12 @@ void loop() { // default loopTask running on the Core1
   MIDI.read();
 #endif
  // processButtons();
- /*
+ 
   DEB (d1);
   DEB(" ");
   DEB (d2);
   DEB(" ");
-  DEBUG (d3);*/
+  DEBUG (d3);
+  
   taskYIELD(); // breath for all the rest of the Core1 tasks
 }
