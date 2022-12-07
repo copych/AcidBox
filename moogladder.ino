@@ -1,24 +1,32 @@
 #include "moogladder.h"
 
-inline float MoogLadder::my_tanh(float x) // as turned out, the quality of approximation very much affects overall sound quality
+inline float MoogLadder::my_tanh(float x)
 {
+  //return tanh(x);
     float sign = 1.0f;
     if (x<0.0f) {
         sign=-1.0f;
         x= -x;
     }
     if (x>=4.95f) {
-      return sign; // |x|>4, |tanh(x)| ~= 1 
+      return sign;
     }
-    if (x<=0.4f) return float(x*sign)*0.9498724f; // seamless region borders, tanh() is almost linear [-0.4 , 0.4], otherwise hissing and clicking appear   
-    return  sign * tanh_2048[(uint16_t)(x*409.6f)]; // lookup table contains 2048 values for x [0, 5], coeff 2048/5=409.6
-  // return sign * x/(x+1.0/(2.12-2.88*x+4.0*x*x)); // good approximation for tanh() found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
-  //  return sign * tanh(x); // this was an initial function
+    if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders    
+    //return  sign * tanh_2048[(uint16_t)(x*409.6f)]; // lookup table 
+   return sign * x/(x+1.0/(2.12-2.88*x+4.0*x*x)); // very good approximation for tanh() found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
+  //  return sign * tanh(x);
 }
 
+/*
+inline float MoogLadder::my_tanh(float x)
+  {
+    float a = fabs(2*x);
+    float b = 24+a*(12+a*(6+a));
+    return 2*(x*b)/(a*b+48);
+  }
+*/
 
-void MoogLadder::Init(float sample_rate)
-{
+void MoogLadder::Init(float sample_rate) {
     sample_rate_ = sample_rate;
     one_sr_ = 1.0 / sample_rate;
     istor_       = 0.0f;
@@ -35,8 +43,9 @@ void MoogLadder::Init(float sample_rate)
     old_res_  = -1.0f;
 }
 
-float MoogLadder::Process(float in)
-{
+float MoogLadder::Process(float in) {
+    static uint32_t fx_prescaler=0;
+    fx_prescaler++;
     float  freq = freq_;
     float  res  = res_;
     float  res4;
@@ -48,13 +57,14 @@ float MoogLadder::Process(float in)
     static float THERMAL = 0.000025;
     static float ONE_THERMAL = 40000.0f;
 
+    
     if(res < 0)
     {
         res = 0;
     }
 
-    if(old_freq_ != freq || old_res_ != res)
-    {
+    if ((old_freq_ != freq || old_res_ != res) && ( fx_prescaler % 4 == 0 )) {
+    //if (old_freq_ != freq || old_res_ != res) {
         float f, fc, fc2, fc3, fcr;
         old_freq_ = freq;
         fc        = (freq * one_sr_);
@@ -69,9 +79,7 @@ float MoogLadder::Process(float in)
         old_res_  = res;
         old_acr_  = acr;
         old_tune_ = tune;
-    }
-    else
-    {
+    } else {
         res  = old_res_;
         acr  = old_acr_;
         tune = old_tune_;
@@ -79,8 +87,7 @@ float MoogLadder::Process(float in)
 
     res4 = 4.0f * res * acr;
 
-    for(int j = 0; j < 2; j++)
-    {
+    for(int j = 0; j < 2; j++) {
         in -= res4 * delay[5];
         delay[0] = stg[0]
             = delay[0] + tune * (my_tanh(in * THERMAL) - tanhstg[0]);

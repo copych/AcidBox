@@ -70,9 +70,11 @@ void Sampler::ScanContents(fs::FS &fs, const char *dirname, uint8_t levels){
 
 
 inline void Sampler::Init(){
+    Effects.Init();
+    Effects.SetBitCrusher( 0.0f );
+    
     uint32_t toRead = 512, buffPointer = 0;
 
-    
     if( !LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)){
         DEBUG("LittleFS Mount Failed");
         return;
@@ -326,15 +328,8 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ){
     newSamplePlayer->dataIn = 0;
     newSamplePlayer->sampleSeek = 44 + 4*newSamplePlayer->attack_midi; // 16 Bit-Samples wee nee
 
-  //  memcpy( newSamplePlayer->data, newSamplePlayer->preloadData, PRELOADSIZE );
     newSamplePlayer->active = true;
-    // ML newSamplePlayer->file.seek( BLOCKSIZE + 44, SeekSet ); /* seek ack to beginning -> after pre load data */
 
-    // If necessary, we start a little further back in the sample to cut off attack phases.
-  //  newSamplePlayer->file.seek( PRELOADSIZE + newSamplePlayer->sampleSeek , SeekSet ); /* seek ack to beginning -> after pre load data */
-
-    
-    // Das waere auch der Einstiegspunkt, wenn man Loopen wollte.
 }
 
 inline void Sampler::NoteOff( uint8_t note ){
@@ -366,18 +361,32 @@ inline void Sampler::ParseCC(uint8_t cc_number , uint8_t cc_value) {
     case CC_808_VOLUME:
       break;
     case CC_808_PAN:
+      SetPan_Midi(cc_value);
       break;
     case CC_808_RESO:
+      Effects.SetResonance(cc_value * MIDI_NORM);
       break; 
     case CC_808_CUTOFF:
+      Effects.SetCutoff(cc_value * MIDI_NORM);
       break; 
+    case CC_808_ATTACK:
+      break;
     case CC_808_DECAY:
+      SetDecay_Midi( cc_value );
+      break;
+    case CC_808_PITCH:
+      SetSoundPitch_Midi (cc_value);
       break;
     case CC_808_DELAYSEND:
-      break;    
+      break;
     case CC_808_DISTORTION:
+      Effects.SetBitCrusher(cc_value * MIDI_NORM);
+      break;
+    case CC_808_NOTE_SEL:
+      SelectNote(cc_value);
       break; 
   }
+
 }
 
 
@@ -421,12 +430,6 @@ inline void Sampler::Process( float *left, float *right ){
 
             signal_r += samplePlayer[i].signal * samplePlayer[i].vel *  samplePlayer[i].pan;
 
-            // uncomment to debug attack_midi and switch Audio off!
-             //DEBUG ( samplePlayer[i].samplePos  );
-           //  DEBUG(sampleU.u16);
-            // Filter per SamplePlayer?
-            // ToBeDone 
-
             samplePlayer[i].vel *= samplePlayer[i].decay;
 
             samplePlayer[i].samplePos += 2; // we have consumed two bytes 
@@ -444,8 +447,8 @@ inline void Sampler::Process( float *left, float *right ){
             }
         }
     }
-
-    // PAN?
-    *left  = signal_l;
-    *right = signal_r;
+    
+    Effects.Process( &signal_l, &signal_r );
+    *left  = fclamp(signal_l, -1.0f, 1.0f);
+    *right = fclamp(signal_r, -1.0f, 1.0f);;
 }

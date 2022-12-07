@@ -3,9 +3,7 @@
 
 
 
-#include "moogladder.h"
-//#include "rosic_TeeBeeFilter.h"
-//#include "sp_tbvcf.h"
+#include "moogladder.h" 
 #include "wavefolder.h"
 #include "midi_controls.h"
 
@@ -35,10 +33,6 @@ public:
   inline float GetAmpEnv();                // call once per sample
   inline float GetFilterEnv();             // call once per sample
   inline void Generate() ;
-  MoogLadder Filter;
-  //::TeeBeeFilter Filter;
-  //SP_TBVCF Filter;
-  Wavefolder WFolder;
   float pan = 0.5f;
   float volume = 0.5f;
   int midiNotes[2] = {-1, -1};
@@ -89,6 +83,9 @@ private:
   float _filterEnvDecayStep = 1.0;
   
   float _msToSteps = (float)WAVE_SIZE * DIV_SAMPLE_RATE * 1000.0f;
+  
+  MoogLadder Filter;
+  Wavefolder WFolder;
 };
 
 #endif

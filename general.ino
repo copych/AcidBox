@@ -17,11 +17,10 @@ static void mixer() { // sum buffers
 static void global_fx() { // prepare output
     // we can apply global effects here to mix_buf_l and _r
     for (int i=0; i < DMA_BUF_LEN; i++) { 
-
-       Effect_Process( &mix_buf_l[i], &mix_buf_r[i] );
-       Delay_Process( &mix_buf_l[i], &mix_buf_r[i] );
-       Reverb_Process( &mix_buf_l[i], &mix_buf_r[i] );
- 
+       Delay.Process( &mix_buf_l[i], &mix_buf_r[i] );
+       Reverb.Process( &mix_buf_l[i], &mix_buf_r[i] );
+       mix_buf_l[i] = fclamp(mix_buf_l[i] , -3.0f, 3.0f);
+       mix_buf_r[i] = fclamp(mix_buf_r[i] , -3.0f, 3.0f);
     }
 }
 
@@ -37,4 +36,12 @@ inline void i2s_output () {
 
   //i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY); // NO-DAC case
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
+}
+
+
+/** quick fp clamp
+*/
+inline float fclamp(float in, float min, float max)
+{
+    return fmin(fmax(in, min), max);
 }

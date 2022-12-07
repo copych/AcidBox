@@ -4,6 +4,7 @@
 #include <FS.h>
 #include <LittleFS.h>
 #include "midi_controls.h"
+#include "fx_filtercrusher.h"
 
 class Sampler {
   public:
@@ -43,7 +44,7 @@ class Sampler {
     uint8_t pitchdecay_midi[17] = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
     String shortInstr[17] ={ "ACC", "111","222","333","HHop", "Cr","Cl","LT","HT", "S1","S2","S3","S4", "T1","T2","T3","T4" };
     // Soundset/Program-Settings
-    uint8_t  program_midi =0; // 5 Programs
+    uint8_t  program_midi = 0; // 5 Programs
     uint8_t  program_tmp = 0; 
     uint8_t  progNumber = 0; // first subdirectory in /data 
     uint8_t  countPrograms = 5;
@@ -111,6 +112,8 @@ class Sampler {
     uint32_t sampleInfoCount = 0; /*!< storing the count if found samples in file system */
     float slowRelease; /*!< slow releasing signal will be used when sample playback stopped */
     uint8_t* psdRamBuffer=NULL ;
+
+    FxFilterCrusher Effects;
 };
 
 #endif

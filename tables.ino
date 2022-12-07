@@ -43,10 +43,3 @@ void buildTables() {
     tanh_2048[i] = tanh2048(i); 
   }
 }
-
-/** quick fp clamp
-*/
-inline float fclamp(float in, float min, float max)
-{
-    return fmin(fmax(in, min), max);
-}

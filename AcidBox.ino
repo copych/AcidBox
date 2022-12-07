@@ -28,11 +28,11 @@
 
 #include "config.h"
 #include "driver/i2s.h"
-//#include "delayline.h"
+#include "fx_delay.h"
+#include "fx_reverb.h"
 #include "synthvoice.h"
 #include "sampler.h"
 #include <Wire.h>
-//#include <WiFi.h>
 
 #ifdef MIDI_ON
   #include <MIDI.h>
@@ -56,19 +56,6 @@
   MIDI_CREATE_CUSTOM_INSTANCE( HardwareSerial, MIDISerial, MIDI, Serial2MIDISettings );
   
   #endif
-#endif
-
-
-#ifdef SSD1306
-#include <Adafruit_SSD1306.h>
-#define SCREEN_ADDRESS 0x3C // The Address was discovered using the I2C Scanner
-Adafruit_SSD1306 oled( 128, 64, &Wire, -1 );
-#endif
-
-#ifdef SH1106
-#include <Adafruit_SH110X.h>
-#define SCREEN_ADDRESS 0x3C // The Address was discovered using the I2C Scanner
-Adafruit_SH1106G oled = Adafruit_SH1106G( 128, 64, &Wire, -1 );
 #endif
 
 const i2s_port_t i2s_num = I2S_NUM_0; // i2s port number
@@ -100,52 +87,54 @@ static uint32_t c1=0, c2=0, c3=0, d1=0, d2=0, d3=0; //debug
 //DelayLine <float, (size_t)20000> Delay;
 SynthVoice Synth1(0); // use synth_buf[0]
 SynthVoice Synth2(1); // use synth_buf[1]
-Sampler Drums(5);
+Sampler Drums(5); // number of sample sets
+FxReverb Reverb;
+FxDelay Delay;
 
 // Core0 task
 static void audio_task1(void *userData) {
 
-  Synth1.Init();  
+  Synth1.Init();
   Synth2.Init();
   
     while(1) {
-        // this part of the code never intersects with mixer()
-        c1=micros();
-        Synth1.Generate(); 
-        Synth2.Generate();
-        d1=micros()-c1;
+        // this part of the code never intersects with mixer buffers
         // this part of the code is operating with shared resources, so we should make it safe
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
-          
+            c1=micros();
+            Synth1.Generate(); 
+            Synth2.Generate();
+            d1=micros()-c1;
             xTaskNotifyGive(SynthTask2); // if you have glitches, you may want to place this string in the end of audio_task1
-        }        
+        }
+        taskYIELD();
     }
 }
 
 // task for Core1, which tipically runs user's code on ESP32
 static void audio_task2(void *userData) {
   
-  Effect_Init();
-  Effect_SetBitCrusher( 0.0f );
-  Reverb_Setup();  
-  Delay_Init();  
-  Drums.Init();
+	Reverb.Init();  
+	Delay.Init();
+	Drums.Init();
     while(1) {
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
-          // we can run it together with synth(), but not with mixer()
-          c2=micros();
-          drums();
-          d2 = micros() - c2;
+        // we can run it together with synth(), but not with mixer()
+        c2=micros();
+        drums();
+        d2 = micros() - c2;
 
-          xTaskNotifyGive(SynthTask1);
+        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
 
           c3=micros();
           mixer();
-          global_fx();
-          d3 = micros() - c3;
           
-          i2s_output();
+          xTaskNotifyGive(SynthTask1);
         }
+        global_fx();
+        d3 = micros() - c3;
+        
+        i2s_output();
+        
         taskYIELD();
       
     }
@@ -153,6 +142,8 @@ static void audio_task2(void *userData) {
 
 void setup(void) {
 
+  btStop();
+  
 #ifdef MIDI_ON
   #ifdef MIDI_VIA_SERIAL 
     Serial.begin(115200); 
@@ -168,14 +159,13 @@ void setup(void) {
   Serial.begin(115200);
 #endif
 #endif
-
+/*
   for (uint8_t i = 0; i < GPIO_BUTTONS; i++) {
     pinMode(buttonGPIOs[i], INPUT_PULLDOWN);
   }
+  */
   
   buildTables();
- // WiFi.mode(WIFI_OFF);
-  btStop();
   
 #ifdef MIDI_ON
   MIDI.setHandleNoteOn(handleNoteOn);
@@ -185,10 +175,6 @@ void setup(void) {
   MIDI.begin(MIDI_CHANNEL_OMNI);
 #endif
 
-
-#if defined SH1106 || defined SSD1306
-  oledInit();
-#endif 
  // silence while we haven't loaded anything reasonable
   for (int i=0; i < DMA_BUF_LEN; i++) { 
     drums_buf[i] = 0.0f ;
@@ -205,8 +191,8 @@ void setup(void) {
 //  i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY); NO_DAC case
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
   
-  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 15000, NULL, 1, &SynthTask1, 0 );
-  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 15000, NULL, 1, &SynthTask2, 1 );
+  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 10000, NULL, 1, &SynthTask1, 0 );
+  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 10000, NULL, 1, &SynthTask2, 1 );
   
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
