@@ -13,4 +13,4 @@ Also you will need to upload samples to the ESP32 flash. To do so follow the ins
 # Thanks go to
 * Marcel Licence https://github.com/marcel-licence : synth and DSP related code (delay, bi-filter, bitcrusher initially were taken from here)
 * Infrasonic Audio https://github.com/infrasonicaudio : synth and DSP related code (moogladder filter and i2s base code were initially taken from here)
-* Erich Heinemannh ttps://github.com/ErichHeinemann/ : forked Marcel Licence's sampler and drum samples were taken from here
+* Erich Heinemannh https://github.com/ErichHeinemann/ : forked Marcel Licence's sampler and drum samples were taken from here
