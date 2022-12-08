@@ -10,7 +10,7 @@ float expSaw2048(uint16_t i) {
 
 
 float tanh2048(uint16_t i) {
-  float res = tanh( (float)i * 5.0f / 2048.0f); // 0.0 -- 5.0 argument
+  float res = tanh( (float)i * 5.0f / (float)WAVE_SIZE); // 0.0 -- 5.0 argument
   return res;
 }
 

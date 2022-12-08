@@ -2,10 +2,9 @@
 #define TB303VOICE_H
 
 
-
 #include "moogladder.h" 
 #include "wavefolder.h"
-#include "midi_controls.h"
+#include "midi_config.h"
 
 class SynthVoice {
 public:

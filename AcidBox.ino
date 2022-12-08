@@ -60,15 +60,13 @@
 
 const i2s_port_t i2s_num = I2S_NUM_0; // i2s port number
 
+// lookuptables
 static float midi_pitches[128];
 static float midi_phase_steps[128];
 static float midi_2048_steps[128];
-static float saw_2048[2048];
-static float square_2048[2048];
-static float tanh_2048[2048];
-
-TaskHandle_t SynthTask1;
-TaskHandle_t SynthTask2;
+static float saw_2048[WAVE_SIZE];
+static float square_2048[WAVE_SIZE];
+static float tanh_2048[WAVE_SIZE];
 
 // Audio buffers of all kinds
 static float synth_buf[2][DMA_BUF_LEN]; // 2 * 303 mono
@@ -80,14 +78,21 @@ static union { // a dirty trick, instead of true converting
   uint16_t _unsigned[DMA_BUF_LEN * 2];
 } out_buf;
 
+size_t bytes_written; // i2s
+static uint32_t c1=0, c2=0, c3=0, d1=0, d2=0, d3=0; // debug timing
 
-size_t bytes_written;
-static uint32_t c1=0, c2=0, c3=0, d1=0, d2=0, d3=0; //debug
+// tasks for Core0 and Core1
+TaskHandle_t SynthTask1;
+TaskHandle_t SynthTask2;
 
-//DelayLine <float, (size_t)20000> Delay;
+// 303-like synths
 SynthVoice Synth1(0); // use synth_buf[0]
 SynthVoice Synth2(1); // use synth_buf[1]
+
+// 808-like drums
 Sampler Drums(5); // number of sample sets
+
+// Global effects
 FxReverb Reverb;
 FxDelay Delay;
 

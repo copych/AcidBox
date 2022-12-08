@@ -3,7 +3,7 @@
 
 #include <FS.h>
 #include <LittleFS.h>
-#include "midi_controls.h"
+#include "midi_config.h"
 #include "fx_filtercrusher.h"
 
 class Sampler {
