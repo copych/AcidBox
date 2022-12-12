@@ -122,8 +122,11 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
     case CC_303_CUTOFF:
       _cutoff = cc_value * MIDI_NORM;
       break;
-    case CC_303_DELAYSEND:
+    case CC_303_DELAY_SEND:
       _sendDelay = cc_value * MIDI_NORM;
+      break;
+    case CC_303_REVERB_SEND:
+      _sendReverb = cc_value * MIDI_NORM;
       break;
     case CC_303_ENVMOD_LVL:
       _envMod = cc_value * MIDI_NORM;
@@ -171,6 +174,7 @@ inline float SynthVoice::GetAmpEnv() {
       return (saw_2048[ (uint16_t)_ampEnvPosition ] + 1.0f) * volume ;
     }
   }
+  return 1.0f; //never be here
 }
 
 
@@ -207,4 +211,5 @@ inline float SynthVoice::GetFilterEnv() {
       return (saw_2048[ (uint16_t)_filterEnvPosition ] + 1.0f) * 0.5f ;
     }
   }
+  return 1.0f; // never supposed to be here
 }

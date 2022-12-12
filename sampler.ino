@@ -154,8 +154,8 @@ inline void Sampler::Init(){
         samplePlayer[i].decay_midi = decay_midi[i+1];
         samplePlayer[i].decay = 1.0f;
 
-        attack_midi[i+1] = 0;
-        samplePlayer[i].attack_midi = attack_midi[i+1];
+        offset_midi[i+1] = 0;
+        samplePlayer[i].offset_midi = offset_midi[i+1];
         
         volume_midi[i+1] = 100;
         samplePlayer[i].volume_midi = volume_midi[i+1];
@@ -173,7 +173,7 @@ inline void Sampler::Init(){
 
 }
 
-inline void Sampler::SetPan_Midi( uint8_t data1){
+inline void Sampler::SetNotePan_Midi( uint8_t data1){
   samplePlayer[ selectedNote ].pan_midi = data1;
   float value = MIDI_NORM * (float)data1;
   samplePlayer[ selectedNote ].pan =  value;
@@ -183,7 +183,7 @@ inline void Sampler::SetPan_Midi( uint8_t data1){
 }
 
 
-inline void Sampler::SetDecay_Midi( uint8_t data1){
+inline void Sampler::SetNoteDecay_Midi( uint8_t data1){
   samplePlayer[ selectedNote ].decay_midi = data1;
   float value = MIDI_NORM * (float)data1;
   samplePlayer[ selectedNote ].decay = 1 - (0.000005 * pow( 5000, 1.0f - value) );
@@ -192,6 +192,13 @@ inline void Sampler::SetDecay_Midi( uint8_t data1){
 #endif  
 }
 
+
+inline void Sampler::SetNoteOffset_Midi( uint8_t data1){
+  samplePlayer[ selectedNote ].offset_midi = data1;   
+#ifdef DEBUG_SAMPLER
+  DEBF("Sampler - Note[%d].offset: %0.2f\n",  selectedNote, samplePlayer[ selectedNote ].offset_midi);
+#endif  
+}
 
 void Sampler::SetSoundPitch_Midi( uint8_t value){
   DEBUG("Pitch");
@@ -282,14 +289,14 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ){
       samplePlayer[ j ].pan = value;
     }
 
-    if( attack_midi[ j+1 ] != samplePlayer[ j ].attack_midi ){
+    if( offset_midi[ j+1 ] != samplePlayer[ j ].offset_midi ){
 #ifdef DEBUG_SAMPLER
       DEB("Attack Offset");
       DEBUG( j );      
       DEB(" samplePlayer");
-      DEBUG( attack_midi[ j+1 ] );
+      DEBUG( offset_midi[ j+1 ] );
 #endif   
-      samplePlayer[ j ].attack_midi = attack_midi[ j+1 ];
+      samplePlayer[ j ].offset_midi = offset_midi[ j+1 ];
     }
     
     if( pitchdecay_midi[ j+1 ] != samplePlayer[ j ].pitchdecay_midi ){
@@ -319,14 +326,14 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ){
         slowRelease = newSamplePlayer->signal;
     }
 
-    newSamplePlayer->samplePosF = 4.0f * newSamplePlayer->attack_midi; // 0.0f;
-    newSamplePlayer->samplePos  = 4 * newSamplePlayer->attack_midi; // 0;
+    newSamplePlayer->samplePosF = 4.0f * newSamplePlayer->offset_midi; // 0.0f;
+    newSamplePlayer->samplePos  = 4 * newSamplePlayer->offset_midi; // 0;
  //   newSamplePlayer->lastDataOut = PRELOADSIZE; /* trigger loading second half */
     
     newSamplePlayer->volume = vol * MIDI_NORM * newSamplePlayer->volume_midi * MIDI_NORM;
     newSamplePlayer->vel    = 1.0f;
     newSamplePlayer->dataIn = 0;
-    newSamplePlayer->sampleSeek = 44 + 4*newSamplePlayer->attack_midi; // 16 Bit-Samples wee nee
+    newSamplePlayer->sampleSeek = 44 + 4*newSamplePlayer->offset_midi; // 16 Bit-Samples wee nee
 
     newSamplePlayer->active = true;
 
@@ -359,31 +366,37 @@ void Sampler::SetProgram( uint8_t prog ){
 inline void Sampler::ParseCC(uint8_t cc_number , uint8_t cc_value) {
   switch (cc_number) {
     case CC_808_VOLUME:
+      SetVolume( cc_value * MIDI_NORM );
       break;
-    case CC_808_PAN:
-      SetPan_Midi(cc_value);
+    case CC_808_NOTE_PAN:
+      SetNotePan_Midi( cc_value );
       break;
     case CC_808_RESO:
-      Effects.SetResonance(cc_value * MIDI_NORM);
-      break; 
-    case CC_808_CUTOFF:
-      Effects.SetCutoff(cc_value * MIDI_NORM);
-      break; 
-    case CC_808_ATTACK:
+      Effects.SetResonance( cc_value * MIDI_NORM );
       break;
-    case CC_808_DECAY:
-      SetDecay_Midi( cc_value );
+    case CC_808_CUTOFF:
+      Effects.SetCutoff( cc_value * MIDI_NORM );
+      break;
+    case CC_808_NOTE_ATTACK:
+      SetNoteOffset_Midi( cc_value );
+      break;
+    case CC_808_NOTE_DECAY:
+      SetNoteDecay_Midi( cc_value );
       break;
     case CC_808_PITCH:
-      SetSoundPitch_Midi (cc_value);
+      SetSoundPitch_Midi ( cc_value );
       break;
-    case CC_808_DELAYSEND:
+    case CC_808_DELAY_SEND:
+      _sendDelay = cc_value * MIDI_NORM;
+      break;
+    case CC_808_REVERB_SEND:
+      _sendReverb = cc_value * MIDI_NORM;
       break;
     case CC_808_DISTORTION:
-      Effects.SetBitCrusher(cc_value * MIDI_NORM);
+      Effects.SetBitCrusher( cc_value * MIDI_NORM );
       break;
     case CC_808_NOTE_SEL:
-      SelectNote(cc_value);
+      SelectNote( cc_value );
       break; 
   }
 
@@ -447,8 +460,9 @@ inline void Sampler::Process( float *left, float *right ){
             }
         }
     }
-    
     Effects.Process( &signal_l, &signal_r );
+    signal_l *= _volume;
+    signal_r *= _volume;
     *left  = fclamp(signal_l, -1.0f, 1.0f);
     *right = fclamp(signal_r, -1.0f, 1.0f);;
 }

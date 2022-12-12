@@ -30,6 +30,7 @@
 #include "driver/i2s.h"
 #include "fx_delay.h"
 #include "fx_reverb.h"
+#include "compressor.h"
 #include "synthvoice.h"
 #include "sampler.h"
 #include <Wire.h>
@@ -70,9 +71,13 @@ static float tanh_2048[WAVE_SIZE];
 
 // Audio buffers of all kinds
 static float synth_buf[2][DMA_BUF_LEN]; // 2 * 303 mono
-static float drums_buf[DMA_BUF_LEN*2]; //  808 stereo 
-static float mix_buf_l[DMA_BUF_LEN]; // pre-mix L and R channels
-static float mix_buf_r[DMA_BUF_LEN]; // pre-mix L and R channels
+static float drums_buf_l[DMA_BUF_LEN]; //  808 stereo 
+static float drums_buf_r[DMA_BUF_LEN]; //  808 stereo 
+static float mix_buf_l[DMA_BUF_LEN]; // mix L and R channels
+static float mix_buf_r[DMA_BUF_LEN]; // mix L and R channels
+
+static float dly_k1, dly_k2, dly_k3, rvb_k1, rvb_k2, rvb_k3;
+
 static union { // a dirty trick, instead of true converting
   int16_t _signed[DMA_BUF_LEN * 2];
   uint16_t _unsigned[DMA_BUF_LEN * 2];
@@ -90,11 +95,12 @@ SynthVoice Synth1(0); // use synth_buf[0]
 SynthVoice Synth2(1); // use synth_buf[1]
 
 // 808-like drums
-Sampler Drums(5); // number of sample sets
+Sampler Drums(6); // number of sample sets
 
 // Global effects
 FxReverb Reverb;
 FxDelay Delay;
+Compressor Comp;
 
 // Core0 task
 static void audio_task1(void *userData) {
@@ -122,20 +128,20 @@ static void audio_task2(void *userData) {
 	Reverb.Init();  
 	Delay.Init();
 	Drums.Init();
+  Comp.Init(SAMPLE_RATE);
     while(1) {
         // we can run it together with synth(), but not with mixer()
-        c2=micros();
+        c2 = micros();
         drums();
         d2 = micros() - c2;
 
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
 
-          c3=micros();
+          c3 = micros();
           mixer();
           
           xTaskNotifyGive(SynthTask1);
         }
-        global_fx();
         d3 = micros() - c3;
         
         i2s_output();
@@ -182,8 +188,8 @@ void setup(void) {
 
  // silence while we haven't loaded anything reasonable
   for (int i=0; i < DMA_BUF_LEN; i++) { 
-    drums_buf[i] = 0.0f ;
-    drums_buf[i+DMA_BUF_LEN] = 0.0f ; 
+    drums_buf_l[i] = 0.0f ;
+    drums_buf_r[i] = 0.0f ; 
     synth_buf[0][i] = 0.0f ; 
     synth_buf[1][i] = 0.0f ; 
     out_buf._signed[i*2] = 0 ;

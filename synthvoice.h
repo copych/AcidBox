@@ -18,9 +18,10 @@ public:
   inline void SetSlideOff()               {_slide=false;};
   inline void SetAccentOn()               {_accent=true;};
   inline void SetAccentOff()              {_accent=false;};
-  inline void SetVolume(uint8_t vol)      {volume = (float)vol;};
+  inline void SetVolume(uint8_t val)      {volume = (float)val;};
   inline void SetPan(uint8_t pan)         {pan = (float)pan;};
-  inline void SetDelayLevel(uint8_t lvl)  {_sendDelay = (float)lvl;};
+  inline void SetDelaySend(uint8_t lvl)  {_sendDelay = (float)lvl;};
+  inline void SetReverbSend(uint8_t lvl)  {_sendReverb = (float)lvl;};
   inline void SetDistortionLevel(uint8_t lvl) {_gain = (float)lvl;};
   inline void SetCutoff(uint8_t lvl) {_cutoff = (float)lvl;};
   inline void SetReso(uint8_t lvl)   {_reso = (float)lvl;};
@@ -33,7 +34,9 @@ public:
   inline float GetFilterEnv();             // call once per sample
   inline void Generate() ;
   float pan = 0.5f;
-  float volume = 0.5f;
+  float volume = 1.0f;
+  float _sendDelay = 0.0f;
+  float _sendReverb = 0.0f;
   int midiNotes[2] = {-1, -1};
     
 private:
@@ -51,7 +54,6 @@ private:
   float _accentLevel = 0.0f; 
   float _cutoff = 0.2f; // * 5000 = Hz
   float _reso = 0.4f;
-  float _sendDelay = 0.0f;
   float _gain = 1.0; // values >1 will distort sound
   enum eEnvState_t {ENV_IDLE, ENV_INIT, ENV_ATTACK, ENV_DECAY, ENV_SUSTAIN, ENV_RELEASE, ENV_WAITING};
   volatile eEnvState_t _eAmpEnvState = ENV_IDLE;

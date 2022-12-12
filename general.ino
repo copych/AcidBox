@@ -2,35 +2,53 @@ static void drums() {
   // float fl_sample = 0.0f;
   // float fr_sample = 0.0f;
     for (int i=0; i < DMA_BUF_LEN; i++){
-      Drums.Process( &drums_buf[i], &drums_buf[i+DMA_BUF_LEN] );
+      Drums.Process( &drums_buf_l[i], &drums_buf_r[i] );
     } 
 }
 
 static void mixer() { // sum buffers 
+  float synth1_out_l, synth1_out_r, synth2_out_l, synth2_out_r, drums_out_l, drums_out_r;
+  float dly_l, dly_r, rvb_l, rvb_r;
+    dly_k1 = Synth1._sendDelay;
+    dly_k2 = Synth2._sendDelay;
+    dly_k3 = Drums._sendDelay;
+    rvb_k1 = Synth1._sendReverb;
+    rvb_k2 = Synth2._sendReverb;
+    rvb_k3 = Drums._sendReverb;
     for (int i=0; i < DMA_BUF_LEN; i++) { 
-      mix_buf_l[i] =  Synth1.pan*synth_buf[0][i] + Synth2.pan*synth_buf[1][i] + drums_buf[i];
-      mix_buf_r[i] =  (1.0f-Synth1.pan)*synth_buf[0][i] + (1.0f-Synth2.pan)*synth_buf[1][i] + drums_buf[i+DMA_BUF_LEN];
-    }
+      synth1_out_l = Synth1.pan*synth_buf[0][i];
+      synth1_out_r = (1.0f-Synth1.pan)*synth_buf[0][i];
+      synth2_out_l = Synth2.pan*synth_buf[1][i];
+      synth2_out_r = (1.0f-Synth2.pan)*synth_buf[1][i];
+      drums_out_l = drums_buf_l[i];
+      drums_out_r = drums_buf_r[i];
+      
+      dly_l = dly_k1 * synth1_out_l + dly_k2 * synth2_out_l + dly_k3 * drums_out_l; // delay bus
+      dly_r = dly_k1 * synth1_out_r + dly_k2 * synth2_out_r + dly_k3 * drums_out_r;
+      Delay.Process( &dly_l, &dly_r );
+      
+      rvb_l = rvb_k1 * synth1_out_l + rvb_k2 * synth2_out_l + rvb_k3 * drums_out_l; // reverb bus
+      rvb_r = rvb_k1 * synth1_out_r + rvb_k2 * synth2_out_r + rvb_k3 * drums_out_r;
+      Reverb.Process( &rvb_l, &rvb_r );
+      
+      mix_buf_l[i] = 0.2f * (synth1_out_l + synth2_out_l + drums_out_l + dly_l + rvb_l);
+      mix_buf_r[i] = 0.2f * (synth1_out_r + synth2_out_r + drums_out_r + dly_r + rvb_r);
 
+      Comp.Process(0.5*(mix_buf_l[i] + mix_buf_r[i])); // calculate gain based on a mono mix, can be a side chain
+      mix_buf_l[i] = Comp.Apply(mix_buf_l[i]);
+      mix_buf_r[i] = Comp.Apply(mix_buf_r[i]);
+      
+      mix_buf_l[i] = fclamp(mix_buf_l[i] , -1.0f, 1.0f); // clipper
+      mix_buf_r[i] = fclamp(mix_buf_r[i] , -1.0f, 1.0f);
+   }
 }
 
-static void global_fx() { // prepare output
-    // we can apply global effects here to mix_buf_l and _r
-    for (int i=0; i < DMA_BUF_LEN; i++) { 
-       Delay.Process( &mix_buf_l[i], &mix_buf_r[i] );
-       Reverb.Process( &mix_buf_l[i], &mix_buf_r[i] );
-       mix_buf_l[i] = fclamp(mix_buf_l[i] , -3.0f, 3.0f);
-       mix_buf_r[i] = fclamp(mix_buf_r[i] , -3.0f, 3.0f);
-    }
-}
+
 
 inline void i2s_output () {  
-  for (int i=0; i < DMA_BUF_LEN; i++) { 
-//      out_buf._signed[i*2] = 2000 * (3.0f + mix_buf_l[i]);
-//      out_buf._signed[i*2+1] = 2000 * (3.0f + mix_buf_r[i]) ;
-     
-      out_buf._signed[i*2] = 0.333 * 0x8000 * ( mix_buf_l[i]);
-      out_buf._signed[i*2+1] = 0.333 * 0x8000 * ( mix_buf_r[i]) ;
+  for (int i=0; i < DMA_BUF_LEN; i++) {      
+      out_buf._signed[i*2] = 0x8000 * ( mix_buf_l[i]);
+      out_buf._signed[i*2+1] = 0x8000 * ( mix_buf_r[i]);
   }
   // now out_buf is ready, output
 

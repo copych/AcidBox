@@ -44,7 +44,7 @@ const unsigned long fallThreshold = 10;       // debounce, not "noise", also thi
 #define MIDI_NORM 1.0f/127.0f
 
 #define FORMAT_LITTLEFS_IF_FAILED true
-#define CONFIG_LITTLEFS_CACHE_SIZE 1024
+//#define CONFIG_LITTLEFS_CACHE_SIZE 1024
 
 /* use define to dump midi data */
 //#define DEBUG_SAMPLER

@@ -27,33 +27,34 @@
 
 class FxReverb {
 	public:
-		FxReverb() {}
+	FxReverb() {}
 
-		inline void Process( float *signal_l, float *signal_r ){
-			
-				float inSample;
+	inline void Process( float *signal_l, float *signal_r ){
 
-				// create mono sample 
-				inSample = *signal_l + *signal_r; // it may cause unwanted audible effects 
-				inSample *= 0.5f;
+		float inSample;
 
-				float newsample = (Do_Comb0(inSample) + Do_Comb1(inSample) + Do_Comb2(inSample) + Do_Comb3(inSample)) / 4.0f;
-				newsample = Do_Allpass0(newsample);
-				newsample = Do_Allpass1(newsample);
-				newsample = Do_Allpass2(newsample);
+		// create mono sample 
+		inSample = *signal_l + *signal_r; // it may cause unwanted audible effects 
+		//inSample *= 0.5f;
 
-				// apply reverb level 
-				newsample *= rev_level;
+		// float newsample = (Do_Comb0(inSample) + Do_Comb1(inSample) + Do_Comb2(inSample) + Do_Comb3(inSample)) / 4.0f;
+		float newsample = (Do_Comb0(inSample) + Do_Comb1(inSample) + Do_Comb2(inSample) + Do_Comb3(inSample)) * 0.125f;
+		newsample = Do_Allpass0(newsample);
+		newsample = Do_Allpass1(newsample);
+		newsample = Do_Allpass2(newsample);
 
-				*signal_l += newsample;
-				*signal_r += newsample;
-			
-		};
+		// apply reverb level 
+		newsample *= rev_level;
 
-		inline void Init(){ 
-      SetLevel( 0.5f );
-      SetTime( 0.5f );
-		};
+		*signal_l += newsample;
+		*signal_r += newsample;
+
+	};
+
+	inline void Init(){ 
+		SetLevel( 0.1f );
+		SetTime( 0.5f );
+	};
 		
     inline void SetTime( float value ){
       rev_time = value;

@@ -13,9 +13,12 @@ class Sampler {
     inline void Init();
     void ScanContents(fs::FS &fs, const char *dirname, uint8_t levels);
     inline void SelectNote( uint8_t note ){  selectedNote = note % sampleInfoCount;     };
-    inline void SetPan_Midi( uint8_t data1);
-    inline void SetDecay_Midi( uint8_t data1);    
-    inline void SetVolume_Midi( uint8_t data1){      samplePlayer[ selectedNote ].volume_midi = data1;    };
+    inline void SetNotePan_Midi( uint8_t data1);
+    inline void SetNoteOffset_Midi( uint8_t data1 );
+    inline void SetNoteDecay_Midi( uint8_t data1);    
+    inline void SetNoteVolume_Midi( uint8_t data1){      samplePlayer[ selectedNote ].volume_midi = data1;    };
+    inline void SetDelaySend(uint8_t lvl)  {_sendDelay = (float)lvl;};
+    inline void SetReverbSend(uint8_t lvl)  {_sendReverb = (float)lvl;};
     uint16_t GetSoundSamplerate(){      return samplePlayer[ selectedNote ].sampleRate;    };
     uint8_t GetSoundDecay_Midi(){      return samplePlayer[ selectedNote ].decay_midi;    };
     uint16_t GetSoundPan_Midi(){      return samplePlayer[ selectedNote ].pan_midi;    };
@@ -24,20 +27,22 @@ class Sampler {
     void SetSoundPitch_Midi( uint8_t value);
     void SetSoundPitch(float value);
     // Offset   for the Sample-Playback to cut the sample from the left
-    void SetAttack_Midi( uint8_t value ){      samplePlayer[selectedNote].attack_midi = value;    };
     inline void NoteOn( uint8_t note, uint8_t vol );
     inline void NoteOff( uint8_t note );
     void SetPlaybackSpeed_Midi( uint8_t value ){  SetSoundPitch( (float) MIDI_NORM * value ); };
     void SetPlaybackSpeed( float value );
     void SetProgram( uint8_t prog );
+    void SetVolume( float value ) { _volume = value; };
     inline void Process( float *left, float *right );
     inline void ParseCC(uint8_t cc_number, uint8_t cc_value);
+    float _sendReverb = 0.0f;
+    float _sendDelay = 0.0f;
     
   private:
     boolean is_muted[17]={ false, false,false,false,false ,false,false,false,false ,false,false,false,false ,false,false,false,false };
                   
     uint8_t volume_midi[17]     = { 127, 127,127,127,127, 127,127,127,127, 127,127,127,127, 127,127,127,127 };
-    uint8_t attack_midi[17]     = { 0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0 };
+    uint8_t offset_midi[17]     = { 0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0 };
     uint8_t decay_midi[17]      = { 100, 100,100,100,100, 100,100,100,100, 100,100,100,100, 100,100,100,100  };
     uint8_t pitch_midi[17]      = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
     uint8_t pan_midi[17]        = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
@@ -47,8 +52,8 @@ class Sampler {
     uint8_t  program_midi = 0; // 5 Programs
     uint8_t  program_tmp = 0; 
     uint8_t  progNumber = 0; // first subdirectory in /data 
-    uint8_t  countPrograms = 5;
-
+    uint8_t  countPrograms = 7;
+    float _volume = 1.0f;
     float sampler_playback = 1.0f;
     uint8_t selectedNote = 0;
     // union is very handy for easy conversion of bytes to the wav header information
@@ -85,7 +90,6 @@ class Sampler {
         uint32_t dataIn;
         float volume; // Volume of Track
         float signal;
-    
         float decay;
         float vel;  // temp Velocity of NoteOn?
         float pitch;
@@ -96,7 +100,7 @@ class Sampler {
         uint8_t decay_midi;
         uint8_t volume_midi; // Volume of Track
         uint8_t pitch_midi;
-        uint8_t attack_midi; // offset for samples
+        uint8_t offset_midi; // offset for samples
         uint8_t pan_midi;
         boolean is_muted;
     

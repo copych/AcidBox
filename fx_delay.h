@@ -32,7 +32,7 @@ class FxDelay {
 				delayLine_r[i] = 0;
 			}
 			delayLen = MAX_DELAY / 4;
-			delayToMix = 0.2f;
+			delayToMix = 0.1f;
 			delayFeedback = 0.1f;
 		};
 
