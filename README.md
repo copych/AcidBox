@@ -4,7 +4,7 @@ MIDI driven. I2S output. No indication. Uses both cores of ESP32. Cheap ~$10.
 
 # JukeBox
 If you compile with #define JUKEBOX option in config.h, this becomes a stand-alone ACID-JUKE-BOX. You just listen.
-A modified version of http://tips.ibawizard.net/acid-banger/, initially taken from https://github.com/vitling/acid-banger included, there's no AI, but random algorhythms.
+A modified version of http://tips.ibawizard.net/acid-banger/, initially taken from https://github.com/vitling/acid-banger included, there's no AI, but randomizing pattern algorhythms.
 
 # To build the thing
 You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external DAC, like PCM5102. In ArduinoIDE select: 
