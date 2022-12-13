@@ -15,8 +15,9 @@ You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external
 
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
-# Logical diagram (JukeBox actually calls midi functions as an external app)
+# Logical diagram 
 <img src="https://github.com/copych/AcidBox/blob/main/media/2022-12-14_00-03-18.png" width=100%>
+(JukeBox actually calls midi functions as an external app)
 
 # Thanks go to
 * Marcel Licence https://github.com/marcel-licence : synth and DSP related code (delay, bi-filter, bitcrusher initially were taken from here)
