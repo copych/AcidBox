@@ -14,6 +14,8 @@ You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external
 
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
+<img src="https://github.com/copych/AcidBox/blob/main/hardware/2022-12-13%2015-44-53.JPG" width=500>
+
 # Thanks go to
 * Marcel Licence https://github.com/marcel-licence : synth and DSP related code (delay, bi-filter, bitcrusher initially were taken from here)
 * Infrasonic Audio https://github.com/infrasonicaudio : synth and DSP related code (moogladder filter, wavefolder and i2s base code were initially taken from here)
