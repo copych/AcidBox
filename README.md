@@ -15,7 +15,7 @@ You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external
 
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
-<img src="https://github.com/copych/AcidBox/blob/main/media/2022-12-13%2015-44-53.JPG" width=500>
+<img src="https://github.com/copych/AcidBox/blob/main/media/2022-12-14_00-03-18.png" width=500>
 <img src="https://github.com/copych/AcidBox/blob/main/media/2022-12-13%2015-44-53.JPG" width=500>
 
 # Thanks go to
