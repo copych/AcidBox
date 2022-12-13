@@ -1,19 +1,20 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v0.3"
+#define VERSION         "v0.4"
 
 //#define DEBUG_ON
-#define MIDI_ON
+//#define MIDI_ON
 //#define MIDI_VIA_SERIAL // in style of Hairless MIDI, this will block Serial debugging
+#define JUKEBOX
 
 #define MAX_CUTOFF_FREQ 3000.0f
 #define MIN_CUTOFF_FREQ 150.0f
 
 #define SAMPLE_RATE     44100
-#define DIV_SAMPLE_RATE 2.267573e-5 // 1/44100
-//#define SAMPLE_RATE     36000
-//#define DIV_SAMPLE_RATE 2.777777e-5 // 1/36000
+
+const float DIV_SAMPLE_RATE = 1.0f / (float)SAMPLE_RATE;
+
 #define WAVE_SIZE       2048 // samples used for waveform lookup tables 
-#define DMA_BUF_LEN     128
+#define DMA_BUF_LEN     64
 #define DMA_NUM_BUF     2
 
 #define I2S_BCLK_PIN    5
@@ -40,8 +41,8 @@ const unsigned long riseThreshold = 20;       // the threshold (in milliseconds)
 const unsigned long fallThreshold = 10;       // debounce, not "noise", also this is the time, while new "touches" won't be registered
 */
 
-#define TWOPI PI*2.0f
-#define MIDI_NORM 1.0f/127.0f
+const float TWOPI = PI*2.0f;
+const float MIDI_NORM = 1.0f/127.0f;
 
 #define FORMAT_LITTLEFS_IF_FAILED true
 //#define CONFIG_LITTLEFS_CACHE_SIZE 1024
@@ -68,4 +69,8 @@ const unsigned long fallThreshold = 10;       // debounce, not "noise", also thi
       #define DEBUG(...)
     #endif
   #endif
+#else
+      #define DEB(...)
+      #define DEBF(...)
+      #define DEBUG(...)
 #endif

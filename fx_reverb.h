@@ -52,7 +52,7 @@ class FxReverb {
 	};
 
 	inline void Init(){ 
-		SetLevel( 0.1f );
+		SetLevel( 1.0f );
 		SetTime( 0.5f );
 	};
 		

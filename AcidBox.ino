@@ -60,7 +60,6 @@
 #endif
 
 const i2s_port_t i2s_num = I2S_NUM_0; // i2s port number
-
 // lookuptables
 static float midi_pitches[128];
 static float midi_phase_steps[128];
@@ -129,6 +128,8 @@ static void audio_task2(void *userData) {
 	Delay.Init();
 	Drums.Init();
   Comp.Init(SAMPLE_RATE);
+  Comp.AutoMakeup(true);
+  Comp.SetThreshold(-60.0f);
     while(1) {
         // we can run it together with synth(), but not with mixer()
         c2 = micros();
@@ -170,13 +171,14 @@ void setup(void) {
   Serial.begin(115200);
 #endif
 #endif
-/*
+  /*
   for (uint8_t i = 0; i < GPIO_BUTTONS; i++) {
     pinMode(buttonGPIOs[i], INPUT_PULLDOWN);
   }
   */
   
   buildTables();
+  init_midi();
   
 #ifdef MIDI_ON
   MIDI.setHandleNoteOn(handleNoteOn);
@@ -211,23 +213,33 @@ void setup(void) {
 
 }
 
+static uint32_t last_ms = micros();
+
 void loop() { // default loopTask running on the Core1
   // you can still place some of your code here
   // or   vTaskDelete(NULL);
-
- // processButtons();
+  
+  // processButtons();
    
-//  c2=micros();
-#ifdef MIDI_ON
+  #ifdef MIDI_ON
   MIDI.read();
-#endif
- // d2 = micros() - c2;
-
+  #endif
+ 
+  #ifdef JUKEBOX
+  if (micros()-last_ms>1000) {
+    run_tick();
+    myRandomAddEntropy((uint16_t)(last_ms & 0x0000FFFF));
+    last_ms = micros();
+  }
+  #endif
+  
+  /*
   DEB (d1);
   DEB(" ");
   DEB (d2);
   DEB(" ");
   DEBUG (d3);
- 
-  taskYIELD(); // breath for all the rest of the Core1 tasks
+ */
+
+  taskYIELD(); // breath for all the rest of the Core1 
 }

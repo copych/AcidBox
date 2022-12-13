@@ -38,8 +38,10 @@ static void mixer() { // sum buffers
       mix_buf_l[i] = Comp.Apply(mix_buf_l[i]);
       mix_buf_r[i] = Comp.Apply(mix_buf_r[i]);
       
-      mix_buf_l[i] = fclamp(mix_buf_l[i] , -1.0f, 1.0f); // clipper
-      mix_buf_r[i] = fclamp(mix_buf_r[i] , -1.0f, 1.0f);
+   //   mix_buf_l[i] = fclamp(mix_buf_l[i] , -1.0f, 1.0f); // clipper
+    //  mix_buf_r[i] = fclamp(mix_buf_r[i] , -1.0f, 1.0f);
+       mix_buf_l[i] = fast_tanh( mix_buf_l[i]);
+       mix_buf_r[i] = fast_tanh( mix_buf_r[i]);
    }
 }
 
@@ -62,4 +64,21 @@ inline void i2s_output () {
 inline float fclamp(float in, float min, float max)
 {
     return fmin(fmax(in, min), max);
+}
+
+inline float fast_tanh(float x)
+{
+  //return tanh(x);
+    float sign = 1.0f;
+    if (x<0.0f) {
+        sign=-1.0f;
+        x= -x;
+    }
+    if (x>=4.95f) {
+      return sign;
+    }
+    if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders    
+    return  sign * tanh_2048[(uint16_t)(x*409.6f)]; // lookup table 2048 / 5 = 409.6
+ //  return sign * x/(x+1.0/(2.12-2.88*x+4.0*x*x)); // very good approximation for tanh() found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
+  //  return sign * tanh(x);
 }
