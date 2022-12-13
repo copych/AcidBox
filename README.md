@@ -17,7 +17,7 @@ Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do s
 
 # Logical diagram 
 <img src="https://github.com/copych/AcidBox/blob/main/media/2022-12-14_00-03-18.png" width=100%>
-(JukeBox actually calls midi functions as an external app)
+("Acid Banger" JukeBox actually calls midi functions as an external app)
 
 # Thanks go to
 * Marcel Licence https://github.com/marcel-licence : synth and DSP related code (delay, bi-filter, bitcrusher initially were taken from here)
