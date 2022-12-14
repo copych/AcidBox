@@ -3,7 +3,7 @@ ESP32 headless acid combo of 2 x 303 + 1 x 808 like synths.
 MIDI driven. I2S output. No indication. Uses both cores of ESP32. Cheap ~$10.
 Consult with midi_config.h to find out and to set up MIDI continous control messages.
 
-# JukeBox
+# It can be a JukeBox
 If you compile with #define JUKEBOX option in config.h, this becomes a stand-alone ACID-JUKE-BOX. You just listen.
 A modified version of http://tips.ibawizard.net/acid-banger/, initially taken from https://github.com/vitling/acid-banger included, there's no AI, but randomizing pattern algorithms.
 
