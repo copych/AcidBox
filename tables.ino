@@ -3,8 +3,8 @@ float noteToFreq(int note) {
     return (440.0f / 32.0f) * pow(2, ((float)(note - 9) / 12.0));
 }
 
-float expSaw2048(uint16_t i) {
-  float res = exp((float)(-i)/1024.0f) * 2.3f - 1.31f;
+float expSaw2048(uint16_t i) { // this one contains a piece of exp(-x) normalized to fit into (-1.0 .. 1.0) , "saw" and "square" waves are generated from this table
+  float res = exp((float)(-i)/486.0f) * 2.03f - 1.03f;
   return res;
 }
 

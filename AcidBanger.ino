@@ -635,10 +635,11 @@ static void do_midi_start() {
   send_midi_control(SYNTH2_MIDI_CHAN, 70, 64);
   send_midi_control(SYNTH1_MIDI_CHAN, 71, 100);
   send_midi_control(SYNTH2_MIDI_CHAN, 71, 100);
-  send_midi_control(SYNTH1_MIDI_CHAN, 72, 100);
-  send_midi_control(SYNTH2_MIDI_CHAN, 72, 100);
+  send_midi_control(SYNTH1_MIDI_CHAN, 72, 64);
+  send_midi_control(SYNTH2_MIDI_CHAN, 72, 64);
   send_midi_control(SYNTH1_MIDI_CHAN, 91, 5);
   send_midi_control(SYNTH2_MIDI_CHAN, 91, 5);
+  send_midi_control(DRUM_MIDI_CHAN, 91, 5);
   send_midi_control(SYNTH1_MIDI_CHAN, 94, 3);
   send_midi_control(SYNTH2_MIDI_CHAN, 94, 2);
   send_midi_start();
@@ -647,8 +648,8 @@ static void do_midi_start() {
 static void do_midi_ramps() {
   for (int i = 0; i < NUM_RAMPS; i++) {
     midiRamps[i].value += midiRamps[i].stepPer16th;
-    if (midiRamps[i].value >= 127.0f ) {
-      midiRamps[i].value = 127.0f;
+    if (midiRamps[i].value >= 120.0f ) {
+      midiRamps[i].value = 120.0f;
       midiRamps[i].stepPer16th = -midiRamps[i].stepPer16th;
     }
     if (midiRamps[i].value <= 0.0f ) {
@@ -667,6 +668,7 @@ static void do_midi_ramps() {
 }
 
 static void check_midi_ramps() {
+  // TODO escape doubling CCs
   for (int i = 0; i < NUM_RAMPS; i++) {
     midiRamps[i].leftBars--;
     if (midiRamps[i].leftBars <= 0) {

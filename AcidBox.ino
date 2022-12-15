@@ -83,7 +83,7 @@ static union { // a dirty trick, instead of true converting
 } out_buf;
 
 size_t bytes_written; // i2s
-static uint32_t c1=0, c2=0, c3=0, d1=0, d2=0, d3=0; // debug timing
+static uint32_t c1=0, c2=0, c3=0, d1=0, d2=0, d3=0, prescaler; // debug timing
 
 // tasks for Core0 and Core1
 TaskHandle_t SynthTask1;
@@ -128,8 +128,6 @@ static void audio_task2(void *userData) {
 	Delay.Init();
 	Drums.Init();
   Comp.Init(SAMPLE_RATE);
-  Comp.AutoMakeup(true);
-  Comp.SetThreshold(-60.0f);
     while(1) {
         // we can run it together with synth(), but not with mixer()
         c2 = micros();
@@ -178,8 +176,11 @@ void setup(void) {
   */
   
   buildTables();
-  init_midi();
   
+#ifdef JUKEBOX
+  init_midi();
+#endif
+
 #ifdef MIDI_ON
   MIDI.setHandleNoteOn(handleNoteOn);
   MIDI.setHandleNoteOff(handleNoteOff);

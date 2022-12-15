@@ -40,8 +40,8 @@ static void mixer() { // sum buffers
       
    //   mix_buf_l[i] = fclamp(mix_buf_l[i] , -1.0f, 1.0f); // clipper
     //  mix_buf_r[i] = fclamp(mix_buf_r[i] , -1.0f, 1.0f);
-       mix_buf_l[i] = fast_tanh( mix_buf_l[i]);
-       mix_buf_r[i] = fast_tanh( mix_buf_r[i]);
+   //    mix_buf_l[i] = fast_tanh( mix_buf_l[i]); // saturator
+   //    mix_buf_r[i] = fast_tanh( mix_buf_r[i]);
    }
 }
 
@@ -49,8 +49,8 @@ static void mixer() { // sum buffers
 
 inline void i2s_output () {  
   for (int i=0; i < DMA_BUF_LEN; i++) {      
-      out_buf._signed[i*2] = 0x8000 * ( mix_buf_l[i]);
-      out_buf._signed[i*2+1] = 0x8000 * ( mix_buf_r[i]);
+      out_buf._signed[i*2] = 0x7fff * ( mix_buf_l[i]) + 1; // 1 offset to prevent auto-zero-detect analog mute of 5102 DAC
+      out_buf._signed[i*2+1] = 0x7fff * ( mix_buf_r[i]) + 1 ;
   }
   // now out_buf is ready, output
 
@@ -59,15 +59,24 @@ inline void i2s_output () {
 }
 
 
-/** quick fp clamp
-*/
-inline float fclamp(float in, float min, float max)
-{
+inline float fclamp(float in, float min, float max){
     return fmin(fmax(in, min), max);
 }
 
-inline float fast_tanh(float x)
-{
+inline float SoftLimit(float x){
+    return x * (27.f + x * x) / (27.f + 9.f * x * x);
+}
+
+inline float SoftClip(float x){
+    if(x < -3.0f)
+        return -1.0f;
+    else if(x > 3.0f)
+        return 1.0f;
+    else
+        return SoftLimit(x);
+}
+
+inline float fast_tanh(float x){
   //return tanh(x);
     float sign = 1.0f;
     if (x<0.0f) {

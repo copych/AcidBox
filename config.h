@@ -1,5 +1,5 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v0.4"
+#define VERSION         "v0.5"
 
 //#define DEBUG_ON
 //#define MIDI_ON

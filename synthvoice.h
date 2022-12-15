@@ -4,6 +4,7 @@
 
 #include "moogladder.h" 
 #include "wavefolder.h"
+#include "overdrive.h"
 #include "midi_config.h"
 
 class SynthVoice {
@@ -87,6 +88,7 @@ private:
   
   MoogLadder Filter;
   Wavefolder WFolder;
+  Overdrive Drive;
 };
 
 #endif
