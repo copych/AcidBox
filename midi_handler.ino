@@ -1,16 +1,16 @@
 
 inline void handleNoteOn(uint8_t inChannel, uint8_t inNote, uint8_t inVelocity) {
 
-  if (inChannel == 1 ) {Synth1.StartNote(inNote, inVelocity);}
-  if (inChannel == 2 ) {Synth2.StartNote(inNote, inVelocity);}
-  if (inChannel == 10 ) {Drums.NoteOn(inNote, inVelocity);}
+  if (inChannel == SYNTH1_MIDI_CHAN ) {Synth1.StartNote(inNote, inVelocity);}
+  if (inChannel == SYNTH2_MIDI_CHAN ) {Synth2.StartNote(inNote, inVelocity);}
+  if (inChannel == DRUM_MIDI_CHAN ) {Drums.NoteOn(inNote, inVelocity);}
 }
 
 inline void handleNoteOff(uint8_t inChannel, uint8_t inNote, uint8_t inVelocity) {
 
-  if (inChannel == 1 ) {Synth1.EndNote(inNote, inVelocity);}
-  if (inChannel == 2 ) {Synth2.EndNote(inNote, inVelocity);}
-  if (inChannel == 10 ) {Drums.NoteOff(inNote);}
+  if (inChannel == SYNTH1_MIDI_CHAN ) {Synth1.EndNote(inNote, inVelocity);}
+  if (inChannel == SYNTH2_MIDI_CHAN ) {Synth2.EndNote(inNote, inVelocity);}
+  if (inChannel == DRUM_MIDI_CHAN ) {Drums.NoteOff(inNote);}
 
 }
 
@@ -35,9 +35,9 @@ inline void handleCC(uint8_t inChannel, uint8_t cc_number, uint8_t cc_value) {
       Reverb.SetLevel(cc_value * MIDI_NORM);
       break;
     default:
-      if (inChannel == 1 ) {Synth1.ParseCC(cc_number, cc_value);}
-      if (inChannel == 2 ) {Synth2.ParseCC(cc_number, cc_value);}
-      if (inChannel == 10 ) {Drums.ParseCC(cc_number, cc_value);}
+      if (inChannel == SYNTH1_MIDI_CHAN ) {Synth1.ParseCC(cc_number, cc_value);}
+      if (inChannel == SYNTH2_MIDI_CHAN ) {Synth2.ParseCC(cc_number, cc_value);}
+      if (inChannel == DRUM_MIDI_CHAN ) {Drums.ParseCC(cc_number, cc_value);}
   }
 }
 

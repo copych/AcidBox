@@ -2,10 +2,25 @@
 #define TB303VOICE_H
 
 
-#include "moogladder.h" 
+// filter to use
+#define MOOGLADDER 
+//#define OPEN303 // NOT WORKING ANYMORE, TO BE DELETED
+
+#ifdef MOOGLADDER
+  #include "moogladder.h"
+#else 
+  #ifdef OPEN303
+    #include "rosic_TeeBeeFilter.h"
+  #endif
+#endif
+
+//#include "krajeski_flt.h"
+//#include "improved_flt.h"
+//#include "r-k_flt.h"
 #include "wavefolder.h"
 #include "overdrive.h"
 #include "midi_config.h"
+#include "smoother.h"
 
 class SynthVoice {
 public:
@@ -41,7 +56,7 @@ public:
   int midiNotes[2] = {-1, -1};
     
 private:
-  // most CC controlled values internally are float, nevertheless their range corresponds to MIDI 0-127 (internally 0.0f-1.0f)
+  // most CC controlled values internally are float, nevertheless their range maps to MIDI 0-127 (internally 0.0f-1.0f)
   uint8_t _index = 0;
   bool _accent = false;
   bool _slide = false;
@@ -53,7 +68,7 @@ private:
   float _detuneCents = 0.0f;
   float _envMod = 0.0f;   
   float _accentLevel = 0.0f; 
-  float _cutoff = 0.2f; // * 5000 = Hz
+  float _cutoff = 0.2f; // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically doubles this range
   float _reso = 0.4f;
   float _gain = 1.0; // values >1 will distort sound
   enum eEnvState_t {ENV_IDLE, ENV_INIT, ENV_ATTACK, ENV_DECAY, ENV_SUSTAIN, ENV_RELEASE, ENV_WAITING};
@@ -73,20 +88,31 @@ private:
   float _filterEnvPosition = 0.0;
   float _ampAttackMs = 3.0;
   float _ampDecayMs = 300.0;
-  float _filterAttackMs = 3.0;
-  float _filterDecayMs = 200.0;
-  float _ampAccentAttackMs = 3.0;
-  float _ampAccentDecayMs = 300.0;
-  float _filterAccentAttackMs = 3.0;
-  float _filterAccentDecayMs = 200.0;
+  float _ampReleaseMs = 3.0;
   float _ampEnvAttackStep = 15.0;
   float _ampEnvDecayStep = 1.0;
+  float _ampEnvReleaseStep = 15.0;
+  float _filterAttackMs = 5.0;
+  float _filterDecayMs = 200.0;
   float _filterEnvAttackStep = 15.0;
   float _filterEnvDecayStep = 1.0;
-  
+  float _offset = 0.0; // filter discharge inertia
+  float _offset_leak = 0.93; 
   float _msToSteps = (float)WAVE_SIZE * DIV_SAMPLE_RATE * 1000.0f;
   
+  Smoother ampDeclicker;
+  Smoother filtDeclicker;
+  
+//  KrajeskiMoog Filter;
+// ImprovedMoog Filter;
+//  RKSimulationMoog Filter;
+#ifdef MOOGLADDER
   MoogLadder Filter;
+#else
+  #ifdef OPEN303
+    rosic::TeeBeeFilter Filter;
+  #endif
+#endif
   Wavefolder WFolder;
   Overdrive Drive;
 };

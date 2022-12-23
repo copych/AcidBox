@@ -1,5 +1,6 @@
 #include "synthvoice.h"
 
+
 void SynthVoice::StartNote(uint8_t midiNote, uint8_t velo) {
 //  _midiNote = midiNote;
   if (midiNotes[0] != -1) {
@@ -9,15 +10,13 @@ void SynthVoice::StartNote(uint8_t midiNote, uint8_t velo) {
   midiNotes[0] = midiNote;
   _targetStep = midi_2048_steps[midiNote];
   _accent = (velo > 80);
-  if ( _eAmpEnvState != ENV_IDLE ) {
+  if ( _eAmpEnvState != ENV_IDLE && _eAmpEnvState != ENV_RELEASE ) {
     _slide = true;
   } else {
     _slide = false;
   }
   if (_slide || _portamento) {
     _deltaStep = (_targetStep - _currentStep) * (1000.0f * DIV_SAMPLE_RATE / _slideMs );
-  //  _eAmpEnvState = ENV_INIT;
-  //  _eFilterEnvState = ENV_INIT;
   } else {
     _currentStep = _targetStep;
     _deltaStep = 0.0f ;
@@ -29,43 +28,59 @@ void SynthVoice::StartNote(uint8_t midiNote, uint8_t velo) {
 void SynthVoice::EndNote(uint8_t midiNote, uint8_t velo) {
   if (midiNotes[1] == -1) {
     if (midiNotes[0] == midiNote) {
-      _eAmpEnvState = ENV_IDLE;
+      _eAmpEnvState = ENV_RELEASE;
+      _ampEnvPosition = 0;
       midiNotes[0] = -1;
     }
   } else {
     if (midiNotes[0] == midiNotes[1] ) {
       if (midiNotes[0] == midiNote) {
-        _eAmpEnvState = ENV_IDLE;
+        _eAmpEnvState = ENV_RELEASE;
+        _ampEnvPosition = 0;
         midiNotes[1] = -1;
       }
     } else {
       if (midiNotes[0] == midiNote) {
-        _eAmpEnvState = ENV_IDLE;
+        _eAmpEnvState = ENV_RELEASE;
+        _ampEnvPosition = 0;
+        _filterEnvPosition = 0;
         midiNotes[1] = -1;
       }
     }
   }
 }
 
-void SynthVoice::Generate() {
-  float samp = 0.0f;
-  float amplitude = 0.0f;
+
+
+inline void SynthVoice::Generate() {
+  float samp = 0.0f, saw_blep = 0.0f, sqr_blep = 0.0f, filtEnv = 0.0f, ampEnv = 0.0f, final_cut = 0.0f;
   for (int i = 0; i < DMA_BUF_LEN; ++i) {
-    prescaler++;
+  prescaler++;
+  filtEnv = GetFilterEnv();
+  ampEnv = GetAmpEnv();
+  ampEnv = ampDeclicker.Process(ampEnv);
+  filtEnv = filtDeclicker.Process(filtEnv);
     if (_eAmpEnvState != ENV_IDLE) {
-      samp =  GetAmpEnv() * (((1.0f - _waveMix) * square_2048[ (uint16_t)(_phaze) ] ) + ( _waveMix * saw_2048[ (uint16_t)(_phaze) ] )); // lookup and mix waveforms
+      samp = (((1.0f - _waveMix) * (square_2048[ (uint16_t)(_phaze) ] ) ) + ( _waveMix * exp_2048[ (uint16_t)(_phaze) ] )); // lookup and mix waveforms
     } else {
       samp = 0.0f;
     }
-    // Filter
-    float filtEnv = GetFilterEnv();
-    Filter.setCutoff((MAX_CUTOFF_FREQ - MIN_CUTOFF_FREQ) * (_cutoff + _envMod * filtEnv) + MIN_CUTOFF_FREQ);
     
-    samp = Filter.Process(samp); // moogladder
-//    samp = WFolder.Process(samp);
+    final_cut = MIN_CUTOFF_FREQ + (MAX_CUTOFF_FREQ - MIN_CUTOFF_FREQ) * (_cutoff * (1.0f - 0.2f * _envMod) + _envMod * (filtEnv - 0.15f));
+#ifdef MOOGLADDER
+    if (prescaler % 4) Filter.SetCutoff( final_cut );
+#else
+  #ifdef OPEN303
+    if (prescaler % 8) Filter.setCutoff(final_cut, true);
+  #endif
+#endif
+
+    samp = Filter.Process(samp); 
+    samp *= ampEnv ;
+ //   samp = WFolder.Process(samp);
     samp = Drive.Process(samp);
-    
- //   if ( prescaler%32 == 0 && _index == 0 ) DEBUG(samp * 6.0);
+    samp *=  volume;
+//   if ( prescaler % DMA_BUF_LEN*2 == 0 && _index == 0 ) DEBUG( final_cut );
     
     if ((_slide || _portamento) && _deltaStep != 0.0f) {
       if (fabs(_targetStep - _currentStep) >= fabs(_deltaStep)) {
@@ -85,7 +100,12 @@ void SynthVoice::Generate() {
 }
 
 void SynthVoice::Init() {
-  Filter.Init((float)SAMPLE_RATE);
+  Filter.Init((float)SAMPLE_RATE);  
+  /*
+  Filter.setSampleRate((float)SAMPLE_RATE);
+  Filter.setMode(rosic::TeeBeeFilter::TB_303);
+  Filter.setFeedbackHighpassCutoff(150.0f);
+  */
   WFolder.Init(); 
   Drive.Init();
 }
@@ -111,19 +131,16 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_RESO:
       _reso = cc_value * MIDI_NORM * 0.96f;
-      Filter.setResonance(_reso);
+      Filter.SetResonance(_reso);
+      //Filter.setResonance(_reso);
       break;    
     case CC_303_DECAY: // Env release
       _filterDecayMs = 5.0f + (float)cc_value * MIDI_NORM * 5000.0f ;
       _ampDecayMs = 5.0f + (float)cc_value * MIDI_NORM * 7500.0f;
-      _filterAccentDecayMs = 0.5 * _ampDecayMs;
-      _ampAccentDecayMs = 0.5 * _ampDecayMs;
       break;
     case CC_303_ATTACK: // Env attack
       _filterAttackMs = (float)cc_value * MIDI_NORM * 500.0f ;
       _ampAttackMs =  (float)cc_value * MIDI_NORM * 700.0f;
-      _filterAccentAttackMs = 0.3f * _filterAttackMs ;
-      _ampAccentAttackMs = 0.3f * _ampAttackMs;
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
@@ -146,77 +163,121 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       _gain = 0.125f + (float)cc_value * MIDI_NORM;
       Drive.SetDrive(_gain ); 
       break;
+    case CC_303_SATURATOR:
+      Filter.SetDrive((float)cc_value * MIDI_NORM * 5.0);
+      break;
   }
 }
 
-inline float SynthVoice::GetAmpEnv() {
-
-  if (_eAmpEnvState == ENV_INIT) {
-    _ampEnvPosition = 0;
-    if (!_accent) {
+float SynthVoice::GetAmpEnv() {
+  const static float sust_level = 0.25f;
+  const static float k_sust = 1.0f - sust_level;
+  static float ret_val = 0.0f;
+  static float pass_val = 0.0f, release_lvl = 0.0f;  
+  switch (_eAmpEnvState) {
+    case ENV_INIT:
+      _ampEnvPosition = 0;
       _ampEnvAttackStep = _msToSteps / _ampAttackMs;
       _ampEnvDecayStep = _msToSteps / _ampDecayMs;
-    } else {
-      _ampEnvAttackStep = _msToSteps / _ampAccentAttackMs;
-      _ampEnvDecayStep = _msToSteps / _ampAccentDecayMs;
-    }
-    _eAmpEnvState = ENV_ATTACK;
-    return (-saw_2048[ 0 ] + 1.0f) * volume;
-  }
-  if (_eAmpEnvState == ENV_ATTACK) {
-    _ampEnvPosition += _ampEnvAttackStep;
-    if (_ampEnvPosition >= WAVE_SIZE) {
-      _eAmpEnvState = ENV_DECAY;
+      _ampEnvReleaseStep = _msToSteps / _ampReleaseMs;
+      if (_accent) {
+        _ampEnvAttackStep *= 1.4f;
+        _ampEnvDecayStep *= 1.4f;
+      }
+      _eAmpEnvState = ENV_ATTACK;
+      ret_val = (-exp_2048[ 0 ] + 1.0f) * 0.5f;
+      break;
+    case ENV_ATTACK:
+      _ampEnvPosition += _ampEnvAttackStep;
+      if (_ampEnvPosition >= WAVE_SIZE) {
+        _eAmpEnvState = ENV_DECAY;
+        _ampEnvPosition = 0;
+        ret_val = (-exp_2048[ WAVE_SIZE-1 ] + 1.0f) * 0.5f;
+      } else {
+        ret_val = (-exp_2048[ (uint16_t)_ampEnvPosition ] + 1.0f) * 0.5f;
+        if (pass_val > ret_val) ret_val = pass_val;
+      }
+      pass_val = ret_val;
+      break;
+    case ENV_DECAY:
+      _ampEnvPosition += _ampEnvDecayStep;
+      if (_ampEnvPosition >= WAVE_SIZE) {
+        _eAmpEnvState = ENV_SUSTAIN;
+        _ampEnvPosition = 0;
+        ret_val = sust_level;
+      } else {
+        ret_val = sust_level + k_sust * (exp_2048[ (uint16_t)_ampEnvPosition ] + 1.0f) * 0.5f;
+      }
+      pass_val = ret_val;
+      break;
+    case ENV_SUSTAIN: 
+      ret_val = sust_level; // for 303 asuming sustain to be endless
+      pass_val = ret_val;
       _ampEnvPosition = 0;
-      return (-saw_2048[ WAVE_SIZE-1 ] + 1.0f) * volume;
-    } else {
-      return (-saw_2048[ (uint16_t)_ampEnvPosition ] + 1.0f) * volume ;
-    }
+      break;
+    case ENV_RELEASE:    
+      if (_ampEnvPosition >= WAVE_SIZE) {
+        _eAmpEnvState = ENV_IDLE;
+        _ampEnvPosition = 0;
+        ret_val = 0.0f;
+      } else {
+        if (_ampEnvPosition <= _ampEnvReleaseStep) release_lvl = pass_val;
+        ret_val = release_lvl * (exp_2048[ (uint16_t)_ampEnvPosition ] + 1.0f) * 0.5f;
+      }
+      _ampEnvPosition += _ampEnvReleaseStep;
+      pass_val=ret_val;
+      break;
+    case ENV_IDLE:
+      ret_val = 0.0f;
+      break;
+    default:
+      ret_val = 0.0f; 
   }
-  if (_eAmpEnvState == ENV_DECAY) {
-    _ampEnvPosition += _ampEnvDecayStep;
-    if (_ampEnvPosition >= WAVE_SIZE) {
-      _eAmpEnvState = ENV_IDLE;
-      return 0.0f;
-    } else {
-      return (saw_2048[ (uint16_t)_ampEnvPosition ] + 1.0f) * volume ;
-    }
-  }
-  return 0.0f; 
+  return ret_val;
 }
 
-
 inline float SynthVoice::GetFilterEnv() {
-  if (_eFilterEnvState == ENV_INIT) {
-    _filterEnvPosition = 0;
-    if (!_accent) {
+  static float ret_val = 0.0f;
+  switch(_eFilterEnvState) {
+    case ENV_INIT:
+      _offset = ret_val;
+      _filterEnvPosition = 0.0f;
       _filterEnvAttackStep = _msToSteps / _filterAttackMs;
       _filterEnvDecayStep = _msToSteps / _filterDecayMs;
-    } else {
-      _filterEnvAttackStep = _msToSteps / _filterAccentAttackMs;
-      _filterEnvDecayStep = _msToSteps / _filterAccentDecayMs;
-    }
-    _eFilterEnvState = ENV_ATTACK;
-    return (-saw_2048[ 0 ] + 1.0f) * 0.5f;
+      if (_accent) {
+        _filterEnvAttackStep *= 1.4f;
+        _filterEnvDecayStep *= 1.4f;
+      }
+      _eFilterEnvState = ENV_ATTACK;
+      ret_val = (-exp_2048[ 0 ] + 1.0f) * 0.5f;
+      break;
+    case ENV_ATTACK:
+      if (_filterEnvPosition >= (float)WAVE_SIZE) {
+        _eFilterEnvState = ENV_DECAY;
+        _filterEnvPosition = 0.0f;
+        ret_val = (-exp_2048[ WAVE_SIZE-1 ] + 1.0f) * 0.5f;
+      } else {
+        ret_val = (-exp_2048[ (uint16_t)_filterEnvPosition ] + 1.0f) * 0.5f ;
+      }
+      _filterEnvPosition += _filterEnvAttackStep;
+      ret_val += _offset;
+      break;
+    case ENV_DECAY:
+      if (_filterEnvPosition >= (float)WAVE_SIZE) {
+        _eFilterEnvState = ENV_IDLE; // Attack-Decay-0 envelope (?)
+        _filterEnvPosition = 0.0f;
+        ret_val = 0.0f;
+      } else {
+        ret_val =  (exp_2048[ (uint16_t)_filterEnvPosition ] + 1.0f) * 0.5f ;
+      }
+      _filterEnvPosition += _filterEnvDecayStep;
+      ret_val *= (1.0f + _offset);
+      break;
+    case ENV_IDLE:
+      ret_val =  0.0f;
+      break;
+    default:      
+      ret_val =  0.0f;
   }
-  if (_eFilterEnvState == ENV_ATTACK) {
-    _filterEnvPosition += _filterEnvAttackStep;
-    if (_filterEnvPosition >= WAVE_SIZE) {
-      _eFilterEnvState = ENV_DECAY;
-      _filterEnvPosition = 0.0f;
-      return (-saw_2048[ WAVE_SIZE-1 ] + 1.0f) * 0.5f;
-    } else {
-      return (-saw_2048[ (uint16_t)_filterEnvPosition ] + 1.0f) * 0.5f ;
-    }
-  }
-  if (_eFilterEnvState == ENV_DECAY) {
-    _filterEnvPosition += _filterEnvDecayStep;
-    if (_filterEnvPosition >= WAVE_SIZE) {
-      _eFilterEnvState = ENV_IDLE;
-      return 0.0f;
-    } else {
-      return (saw_2048[ (uint16_t)_filterEnvPosition ] + 1.0f) * 0.5f ;
-    }
-  }
-  return 0.0f;  
+  return ret_val;
 }

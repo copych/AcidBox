@@ -22,7 +22,7 @@
 * #         # #  #  #   # #   #    #   # #   #
 * #     \###/ #   # #   # #   #    \###/ #   #
 *
-* IT WON'T RUN WITHOUT PSRAM, I CHECKED THAT !
+* ! SAMPLER WON'T RUN WITHOUT PSRAM ON BOARD !
 *
 */
 
@@ -64,7 +64,7 @@ const i2s_port_t i2s_num = I2S_NUM_0; // i2s port number
 static float midi_pitches[128];
 static float midi_phase_steps[128];
 static float midi_2048_steps[128];
-static float saw_2048[WAVE_SIZE];
+static float exp_2048[WAVE_SIZE];
 static float square_2048[WAVE_SIZE];
 static float tanh_2048[WAVE_SIZE];
 

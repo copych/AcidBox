@@ -26,10 +26,10 @@ void Compressor::Init(float sample_rate)
     // Initializing the params in this order to avoid dividing by zero
 
     SetRatio(12.0f);
-    SetAttack(0.01f);
+    SetAttack(0.05f);
     SetRelease(0.1f);
-    SetThreshold(-40.0f);
-    AutoMakeup(true);
+    SetThreshold(-20.0f);
+    AutoMakeup(false);
 
     gain_rec_  = 0.1f;
     slope_rec_ = 0.1f;

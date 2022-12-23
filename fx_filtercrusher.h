@@ -1,3 +1,7 @@
+#pragma once
+
+#ifndef FXFCR_H
+#define FXFCR_H
 /*
  * this file includes some simple effects
  * - dual filter
@@ -14,8 +18,11 @@
  
 class FxFilterCrusher {
 	public:
-		FxFilterCrusher() {}
+    FxFilterCrusher() {}
 
+    void Init (float samplerate) {
+      Init();
+    }
 		void Init( void ){
 			for( int i = 0; i < WAVEFORM_CNT; i++ ){
 				float val = (float)sin(i * 2.0 * PI / WAVEFORM_CNT);
@@ -28,6 +35,10 @@ class FxFilterCrusher {
 			mainFilterR_HP.filterCoeff = &filterGlobalC_HP;   
 		};
 
+    inline float Process (float sample) {
+      Process(&sample, &sample);
+      return sample;  
+    }
 		void Process( float* left, float* right ){
 			effect_prescaler ++;
 
@@ -211,3 +222,4 @@ class FxFilterCrusher {
 		
 
 };
+#endif

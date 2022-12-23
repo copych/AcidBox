@@ -29,15 +29,17 @@ class MoogLadder
         Arguments
         - freq - frequency value in Hz. Range: Any positive value.
     */
-    inline void setCutoff(float freq) { freq_ = freq; }
+    inline void SetCutoff(float freq) { freq_ = freq; }
+
+    inline void SetDrive(float drive) { drive_ = drive; }
     /** 
         Sets the resonance of the filter.
     */
-    inline void setResonance(float res) { res_ = res; }
+    inline void SetResonance(float res) { res_ = res; }
 
   private:
     float istor_, res_, freq_, delay_[6], tanhstg_[3], old_freq_, old_res_, one_sr_,
-        sample_rate_, old_acr_, old_tune_;
+        sample_rate_, acr, old_acr_, old_tune_, drive_, resQ_;
     float my_tanh(float x);
 };
 //#endif

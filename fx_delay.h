@@ -31,9 +31,9 @@ class FxDelay {
 				delayLine_l[i] = 0;
 				delayLine_r[i] = 0;
 			}
-			delayLen = MAX_DELAY / 4;
+			delayLen = 60.0f / 130.0f * 1.5f * (float)SAMPLE_RATE;
 			delayToMix = 1.0f;
-			delayFeedback = 0.1f;
+			delayFeedback = 0.2f;
 		};
 
 		inline void Process( float *signal_l, float *signal_r ){

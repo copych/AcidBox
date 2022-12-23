@@ -9,7 +9,9 @@ void Overdrive::Init()
 float Overdrive::Process(float in)
 {
     float pre = pre_gain_ * in;
-    return SoftClip(pre) * post_gain_;
+    
+    return fast_tanh(pre) * post_gain_;
+ //   return SoftClip(pre) * post_gain_;
 }
 
 void Overdrive::SetDrive(float drive)
@@ -23,6 +25,5 @@ void Overdrive::SetDrive(float drive)
     pre_gain_              = pre_gain_a + (pre_gain_b - pre_gain_a) * drive_2;
 
     const float drive_squashed = drive_ * (2.0f - drive_);
-    post_gain_ = 1.0f / SoftClip(0.33f + drive_squashed * (pre_gain_ - 0.33f));
+    post_gain_ = 1.0f / fast_tanh(0.33f + drive_squashed * (pre_gain_ - 0.33f));
 }
-

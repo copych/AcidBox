@@ -435,7 +435,7 @@ inline void Sampler::Process( float *left, float *right ){
             } sampleU;
             byte1 = psdRamBuffer[samplePlayer[i].sampleStart + dataOut];
             byte2 = psdRamBuffer[samplePlayer[i].sampleStart + dataOut + 1];
-            sampleU.u16 = (((uint16_t)byte2) << 8U) + (uint16_t)byte1;
+            sampleU.s16 = (((uint16_t)byte2) << 8U) + (uint16_t)byte1;
 
             samplePlayer[i].signal = (float)(samplePlayer[i].volume) * ((float)sampleU.s16) * 0.00005f;
 

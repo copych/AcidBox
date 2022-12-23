@@ -45,12 +45,6 @@
 
 //#define DEBF(...) 
 
-// Synth configuration
-#define SYNTH1_MIDI_CHAN        1
-#define SYNTH2_MIDI_CHAN        2
-
-// Drum configuration
-#define DRUM_MIDI_CHAN          10
 
 #define KICK_NOTE               60
 #define SNARE_NOTE              61
@@ -59,11 +53,11 @@
 #define PERCUSSION_NOTE         68
 
 // Pin numbers to which are buttons attached (connect one side of button to pin, the other to ground)
-#define GEN_SYNTH1_BUTTON_PIN   23
+#define GEN_SYNTH1_BUTTON_PIN   0
 #define GEN_SYNTH2_BUTTON_PIN   23
 #define GEN_NOTES_BUTTON        23
 #define GEN_DRUM_BUTTON         23
-#define PLAY_BUTTON             0
+#define PLAY_BUTTON             23
 #define MEM1_BUTTON             23
 #define MEM2_BUTTON             23
 #define MEM3_BUTTON             23
@@ -74,13 +68,56 @@
 // time between two midi ticks (1/6th of 16th note) has to be an integral number
 // of milliseconds...
 #define BPM 130
-#define NUM_RAMPS 4 // simultaneous knob rotatings
-#define SYNTH_CCS 4
-const uint8_t synth_cc_ramps[SYNTH_CCS] {71,74,10,75};
-const uint8_t synth_cc_values[SYNTH_CCS] {64,64,64,32};
-#define DRUM_CCS 2
-const uint8_t drum_cc_ramps[DRUM_CCS] {74,94};
-const uint8_t drum_cc_values[DRUM_CCS] {127,0};
+#define NUM_RAMPS 6 // simultaneous knob rotatings
+#define NUM_SYNTH_CCS 11
+#define NUM_DRUM_CCS 4
+
+struct sSynthCCs {
+  uint8_t cc_number;
+  uint8_t cc_couple;
+  uint8_t cc_default_value;
+  uint8_t cc_min_value;
+  uint8_t cc_max_value;
+  bool reset_after_use;  
+};
+
+sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
+ //cc   cpl def   min max   reset
+  {71,  74, 64,   0,  110,  true},
+  {74,  71, 20,   0,  70,   true},
+  {10,  0,  10,   0,  127,  true},
+  {75,  0,  100,  0,  127,  false},
+  {70,  0,  127,  0,  127,  true},
+  {91,  0,  8,    2,  127,  true},
+  {92,  0,  0,    64, 127,  true},
+  {94,  0,  10,   2,  120,  true},
+  {95,  0,  25,   25, 100,  true},
+  {72,  0,  20,   10, 80,   true},
+  {73,  0,  1,    1,  20,   true}
+};
+
+sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
+ //cc   cpl def   min max   reset
+  {71,  74, 64,   0,  122,  true},
+  {74,  71, 20,   0,  70,   true},
+  {10,  0,  117,  0,  127,  true},
+  {75,  0,  64,   0,  127,  false},
+  {70,  0,  0,    0,  127,  true},
+  {94,  0,  10,   2,  120,  true},
+  {95,  0,  25,   25, 100,  true},
+  {91,  0,  8,    2,  127,  true},
+  {92,  0,  0,    60, 127,  true},
+  {72,  0,  20,   10, 80,   true},
+  {73,  0,  0,    0,  20,   true}
+};
+
+sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
+ //cc   cpl def   min max   reset
+  {74,  0,  64,   0,  127,  true},
+  {71,  0,  0,    0,  127,  true},
+  {93,  0,  15,   15, 127,  true},
+  {94,  0,  6,    6,  100,  true}
+};
 
 #define send_midi_start() {} 
 #define send_midi_stop()  {}
@@ -90,6 +127,10 @@ struct sMidiRamp {
   uint8_t chan = 0;
   uint8_t cc_number = 0;
   float value = 0.0f;
+  float min_val = 0.0f;
+  float max_val = 127.0f;
+  float def_val = 64.0f;
+  bool need_reset = false;
   float stepPer16th = 0.0f;
   int16_t leftBars = 0;
 } midiRamps[NUM_RAMPS];
@@ -217,6 +258,7 @@ static uint16_t myRandomState = (uint16_t)(random(0,0xffff));
 
 static uint16_t myRandomAddEntropy(uint16_t data) {
   myRandomState = lfsr16_next((myRandomState << 1) ^ data);
+  return myRandomState;
 }
 
 static uint16_t myRandomRaw() {
@@ -234,11 +276,11 @@ static inline uint16_t myRandom(uint16_t max) {
 
 static void read_button(struct Button *button)
 {
-  if (button->numb==5) {
+  if (button->numb==1) {
     button->history = (button->history << 1) | (digitalRead(button->pin) == HIGH);
-  } else if (button->numb<5) {
-    uint32_t btnSeed = random(10000000);
-    if (btnSeed<10) {
+  } else if (button->numb<1 || button->numb>1) {
+    uint32_t btnSeed = random(1000000);
+    if (btnSeed<10 && button->numb!=5) {
       button->history = 0x80;
     } else {
       button->history = 0;
@@ -337,7 +379,7 @@ void sequencer_step(byte step) {
  */
 
 #define NOTE_LIST(x...) (int8_t[]) { x, -1 }
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+//#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 static const int8_t *const offset_choices[] = {
   NOTE_LIST(0, 0, 12, 24, 27),
@@ -642,18 +684,27 @@ static void do_midi_start() {
   send_midi_control(DRUM_MIDI_CHAN, 91, 5);
   send_midi_control(SYNTH1_MIDI_CHAN, 94, 3);
   send_midi_control(SYNTH2_MIDI_CHAN, 94, 2);
+  send_midi_control(SYNTH1_MIDI_CHAN, 93, 10);
   send_midi_start();
+}
+
+static bool ramp_cc_repeated(uint8_t test_cc, uint8_t chan) {
+  bool repeated = false ;
+  for (int i = 0; i < NUM_RAMPS; i++) {
+    if (midiRamps[i].cc_number == test_cc && midiRamps[i].chan == chan) repeated = true;
+  }
+  return repeated;
 }
 
 static void do_midi_ramps() {
   for (int i = 0; i < NUM_RAMPS; i++) {
     midiRamps[i].value += midiRamps[i].stepPer16th;
-    if (midiRamps[i].value >= 120.0f ) {
-      midiRamps[i].value = 120.0f;
+    if (midiRamps[i].value >= midiRamps[i].max_val ) {
+      midiRamps[i].value = midiRamps[i].max_val;
       midiRamps[i].stepPer16th = -midiRamps[i].stepPer16th;
     }
-    if (midiRamps[i].value <= 0.0f ) {
-      midiRamps[i].value = 0.0f;
+    if (midiRamps[i].value <= midiRamps[i].min_val ) {
+      midiRamps[i].value = midiRamps[i].min_val;
       midiRamps[i].stepPer16th = -midiRamps[i].stepPer16th;
     }
     uint8_t val = (uint8_t)(midiRamps[i].value);
@@ -671,44 +722,72 @@ static void check_midi_ramps() {
   // TODO escape doubling CCs
   for (int i = 0; i < NUM_RAMPS; i++) {
     midiRamps[i].leftBars--;
-    if (midiRamps[i].leftBars <= 0) {
-      if (midiRamps[i].cc_number == 10) {
-        if (midiRamps[i].chan == SYNTH1_MIDI_CHAN) {
-          send_midi_control(midiRamps[i].chan, 10, 10);
-        }            
-        if (midiRamps[i].chan == SYNTH2_MIDI_CHAN) {
-          send_midi_control(midiRamps[i].chan, 10, 117);
-        }            
-        if (midiRamps[i].chan == DRUM_MIDI_CHAN) {
-          send_midi_control(midiRamps[i].chan, 10, 64);
-        }
+    if (midiRamps[i].leftBars <= 0) { // no more bars left for the ramp
+      if (midiRamps[i].need_reset) {
+        send_midi_control(midiRamps[i].chan, midiRamps[i].cc_number, midiRamps[i].def_val);
       }
       uint8_t chanSeed = random(0,100); // probability
       uint8_t ccSeed;
+/*
+  uint8_t chan = 0;
+  uint8_t cc_number = 0;
+  float value = 0.0f;
+  float min_val = 0.0f;
+  float max_val = 127.0f;
+  float def_val = 64.0f;
+  bool need_reset = false;
+  float stepPer16th = 0.0f;
+  int16_t leftBars = 0;
+
+  uint8_t cc_number;
+  uint8_t cc_couple;
+  uint8_t cc_default_value;
+  uint8_t cc_min_value;
+  uint8_t cc_max_value;
+  bool reset_after_use;  
+*/
       if (chanSeed<50) {
+        do {
+          ccSeed = random(0, NUM_SYNTH_CCS);
+        } while (ramp_cc_repeated(synth1_ramps[ccSeed].cc_number, SYNTH1_MIDI_CHAN));
         midiRamps[i].chan = SYNTH1_MIDI_CHAN;
-        ccSeed = random(0,SYNTH_CCS);
-        midiRamps[i].cc_number = synth_cc_ramps[ccSeed];
-        midiRamps[i].value = (float)(synth_cc_values[ccSeed]);
-        midiRamps[i].stepPer16th = (float)(random(-100,100))*0.1f ;
+        midiRamps[i].cc_number = synth1_ramps[ccSeed].cc_number;
+        midiRamps[i].min_val = synth1_ramps[ccSeed].cc_min_value;
+        midiRamps[i].max_val = synth1_ramps[ccSeed].cc_max_value;
+        midiRamps[i].def_val = synth1_ramps[ccSeed].cc_default_value;
+        midiRamps[i].need_reset = synth1_ramps[ccSeed].reset_after_use;
+        midiRamps[i].value = synth1_ramps[ccSeed].cc_default_value;
+        midiRamps[i].stepPer16th = (float)(random(-100,100))*0.05f ;
         if (abs(midiRamps[i].stepPer16th) < 0.5 ) {midiRamps[i].stepPer16th = 0.5;}
-        midiRamps[i].leftBars = random(1,5);            
+        midiRamps[i].leftBars = random(1,3)*2;
       } else if (chanSeed < 86)  {
+        do {
+          ccSeed = random(0, NUM_SYNTH_CCS);
+        } while (ramp_cc_repeated(synth2_ramps[ccSeed].cc_number, SYNTH2_MIDI_CHAN));
         midiRamps[i].chan = SYNTH2_MIDI_CHAN;
-        ccSeed = random(0,SYNTH_CCS);
-        midiRamps[i].cc_number = synth_cc_ramps[ccSeed];
-        midiRamps[i].value = (float)(synth_cc_values[ccSeed]);
-        midiRamps[i].stepPer16th = (float)(random(-100,100))*0.1f ;
+        midiRamps[i].cc_number = synth2_ramps[ccSeed].cc_number;
+        midiRamps[i].min_val = synth2_ramps[ccSeed].cc_min_value;
+        midiRamps[i].max_val = synth2_ramps[ccSeed].cc_max_value;
+        midiRamps[i].def_val = synth2_ramps[ccSeed].cc_default_value;
+        midiRamps[i].need_reset = synth2_ramps[ccSeed].reset_after_use;
+        midiRamps[i].value = synth2_ramps[ccSeed].cc_default_value;
+        midiRamps[i].stepPer16th = (float)(random(-100,100))*0.05f ;
         if (abs(midiRamps[i].stepPer16th) < 0.5 ) {midiRamps[i].stepPer16th = 0.5;}
-        midiRamps[i].leftBars = random(1,5);   
-      } else {            
+        midiRamps[i].leftBars = random(1,3)*2; 
+      } else {
+        do {
+          ccSeed = random(0, NUM_DRUM_CCS);
+        } while (ramp_cc_repeated(drum_ramps[ccSeed].cc_number, DRUM_MIDI_CHAN));
         midiRamps[i].chan = DRUM_MIDI_CHAN;
-        ccSeed = random(0,DRUM_CCS);
-        midiRamps[i].cc_number = drum_cc_ramps[ccSeed];
-        midiRamps[i].value = (float)(drum_cc_values[ccSeed]);
-        midiRamps[i].leftBars = random(1,3);
+        midiRamps[i].cc_number = drum_ramps[ccSeed].cc_number;
+        midiRamps[i].min_val = drum_ramps[ccSeed].cc_min_value;
+        midiRamps[i].max_val = drum_ramps[ccSeed].cc_max_value;
+        midiRamps[i].def_val = drum_ramps[ccSeed].cc_default_value;
+        midiRamps[i].need_reset = drum_ramps[ccSeed].reset_after_use;
+        midiRamps[i].value = drum_ramps[ccSeed].cc_default_value;
         midiRamps[i].stepPer16th = (float)(random(-100,100))*0.1f ;
         if (abs(midiRamps[i].stepPer16th) < 0.5 ) {midiRamps[i].stepPer16th = 0.5;}
+        midiRamps[i].leftBars = random(1,3) ;
       }
     }
   }

@@ -27,11 +27,12 @@ inline float MoogLadder::my_tanh(float x)
 */
 
 void MoogLadder::Init(float sample_rate) {
-    sample_rate_ = sample_rate;
-    one_sr_ = 1.0 / sample_rate;
-    istor_       = 0.0f;
-    res_         = 0.4f;
-    freq_        = 1000.0f;
+    sample_rate_  = sample_rate;
+    one_sr_       = 1.0 / sample_rate;
+    istor_        = 0.0f;
+    res_          = 0.4f;
+    freq_         = 1000.0f;
+    drive_         = 1.0f;
 
     for(int i = 0; i < 6; i++)
     {
@@ -44,33 +45,29 @@ void MoogLadder::Init(float sample_rate) {
 }
 
 float MoogLadder::Process(float in) {
-    static uint32_t fx_prescaler=0;
-    fx_prescaler++;
     float  freq = freq_;
     float  res  = res_;
     float  res4;
     float* delay   = delay_;
     float* tanhstg = tanhstg_;
     float  stg[4];
-    float  acr, tune;
+    float  tune;
 
     static float THERMAL = 0.000025;
     static float ONE_THERMAL = 40000.0f;
-
-    
+    in *= drive_ ; // saturator ?
     if(res < 0)
     {
         res = 0;
     }
 
-    if ((old_freq_ != freq || old_res_ != res) && ( fx_prescaler % 4 == 0 )) {
-    //if (old_freq_ != freq || old_res_ != res) {
+    if (old_freq_ != freq || old_res_ != res) {
         float f, fc, fc2, fc3, fcr;
         old_freq_ = freq;
         fc        = (freq * one_sr_);
         f         = 0.5f * fc;
         fc2       = fc * fc;
-        fc3       = fc2 * fc2;
+        fc3       = fc2 * fc;
 
         fcr  = 1.8730f * fc3 + 0.4955f * fc2 - 0.6490f * fc + 0.9988f;
         acr  = -3.9364f * fc2 + 1.8409f * fc + 0.9968f;
@@ -104,5 +101,5 @@ float MoogLadder::Process(float in) {
         delay[5] = (stg[3] + delay[4]) * 0.5f;
         delay[4] = stg[3];
     }
-    return delay[5];
+    return fast_tanh(delay[5]);
 }
