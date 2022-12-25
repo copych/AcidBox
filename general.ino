@@ -7,8 +7,9 @@ static void drums() {
 }
 
 static void mixer() { // sum buffers 
-  float synth1_out_l, synth1_out_r, synth2_out_l, synth2_out_r, drums_out_l, drums_out_r;
-  float dly_l, dly_r, rvb_l, rvb_r;
+  static float synth1_out_l, synth1_out_r, synth2_out_l, synth2_out_r, drums_out_l, drums_out_r;
+  static float dly_l, dly_r, rvb_l, rvb_r, mono_mix;
+  static float meter;
     dly_k1 = Synth1._sendDelay;
     dly_k2 = Synth2._sendDelay;
     dly_k3 = Drums._sendDelay;
@@ -33,16 +34,24 @@ static void mixer() { // sum buffers
       
       mix_buf_l[i] = 0.2f * (synth1_out_l + synth2_out_l + drums_out_l + dly_l + rvb_l);
       mix_buf_r[i] = 0.2f * (synth1_out_r + synth2_out_r + drums_out_r + dly_r + rvb_r);
-
-      Comp.Process(0.5*(mix_buf_l[i] + mix_buf_r[i])); // calculate gain based on a mono mix, can be a side chain
+      mono_mix = 0.5*(mix_buf_l[i] + mix_buf_r[i]);
+      Comp.Process(mono_mix); // calculate gain based on a mono mix, can be a side chain
       mix_buf_l[i] = Comp.Apply(mix_buf_l[i]);
       mix_buf_r[i] = Comp.Apply(mix_buf_r[i]);
       
+#ifdef DEBUG_MASTER_OUT
+      if ( i % 16 == 0) meter = meter * 0.95f + abs( mono_mix); 
+#endif
    //   mix_buf_l[i] = fclamp(mix_buf_l[i] , -1.0f, 1.0f); // clipper
     //  mix_buf_r[i] = fclamp(mix_buf_r[i] , -1.0f, 1.0f);
    //    mix_buf_l[i] = fast_tanh( mix_buf_l[i]); // saturator
    //    mix_buf_r[i] = fast_tanh( mix_buf_r[i]);
    }
+#ifdef DEBUG_MASTER_OUT
+//  DEB( mono_mix * 10.0  );
+ // DEB (" " );
+  DEBF("%0.5f\r\n", meter);
+#endif
 }
 
 
@@ -63,18 +72,6 @@ inline float fclamp(float in, float min, float max){
     return fmin(fmax(in, min), max);
 }
 
-inline float SoftLimit(float x){
-    return x * (27.f + x * x) / (27.f + 9.f * x * x);
-}
-
-inline float SoftClip(float x){
-    if(x < -3.0f)
-        return -1.0f;
-    else if(x > 3.0f)
-        return 1.0f;
-    else
-        return SoftLimit(x);
-}
 
 inline float fast_tanh(float x){
   //return tanh(x);

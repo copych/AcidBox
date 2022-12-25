@@ -93,7 +93,7 @@ sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
   {94,  0,  10,   2,  120,  true},
   {95,  0,  25,   25, 100,  true},
   {72,  0,  20,   10, 80,   true},
-  {73,  0,  1,    1,  20,   true}
+  {73,  0,  1,    3,  20,   true}
 };
 
 sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
@@ -108,14 +108,14 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
   {91,  0,  8,    2,  127,  true},
   {92,  0,  0,    60, 127,  true},
   {72,  0,  20,   10, 80,   true},
-  {73,  0,  0,    0,  20,   true}
+  {73,  0,  0,    3,  20,   true}
 };
 
 sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
  //cc   cpl def   min max   reset
   {74,  0,  64,   0,  127,  true},
   {71,  0,  0,    0,  127,  true},
-  {93,  0,  15,   15, 127,  true},
+  {93,  0,  15,   80, 127,  true},
   {94,  0,  6,    6,  100,  true}
 };
 
@@ -679,9 +679,14 @@ static void do_midi_start() {
   send_midi_control(SYNTH2_MIDI_CHAN, 71, 100);
   send_midi_control(SYNTH1_MIDI_CHAN, 72, 64);
   send_midi_control(SYNTH2_MIDI_CHAN, 72, 64);
+  send_midi_control(SYNTH1_MIDI_CHAN, 73, 3);
+  send_midi_control(SYNTH2_MIDI_CHAN, 73, 3);
   send_midi_control(SYNTH1_MIDI_CHAN, 91, 5);
   send_midi_control(SYNTH2_MIDI_CHAN, 91, 5);
-  send_midi_control(DRUM_MIDI_CHAN, 91, 5);
+  send_midi_control(DRUM_MIDI_CHAN,   91, 5);
+  send_midi_control(SYNTH1_MIDI_CHAN, 7, 100);
+  send_midi_control(SYNTH2_MIDI_CHAN, 7, 100);
+  send_midi_control(DRUM_MIDI_CHAN,   7, 127);
   send_midi_control(SYNTH1_MIDI_CHAN, 94, 3);
   send_midi_control(SYNTH2_MIDI_CHAN, 94, 2);
   send_midi_control(SYNTH1_MIDI_CHAN, 93, 10);

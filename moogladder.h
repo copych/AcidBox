@@ -31,7 +31,11 @@ class MoogLadder
     */
     inline void SetCutoff(float freq) { freq_ = freq; }
 
-    inline void SetDrive(float drive) { drive_ = drive; }
+    inline void SetDrive(float drive) { 
+      drive_ = drive+0.01f;
+      compens_ = (drive_*0.85f+3.2f)/drive_;
+      DEBF("drive: %0.4f",drive);
+    }
     /** 
         Sets the resonance of the filter.
     */
@@ -39,8 +43,8 @@ class MoogLadder
 
   private:
     float istor_, res_, freq_, delay_[6], tanhstg_[3], old_freq_, old_res_, one_sr_,
-        sample_rate_, acr, old_acr_, old_tune_, drive_, resQ_;
-    float my_tanh(float x);
+        sample_rate_, acr, old_acr_, old_tune_, drive_, compens_;
+    inline float my_tanh(float x);
 };
 //#endif
 #endif

@@ -12,7 +12,7 @@ inline float MoogLadder::my_tanh(float x)
       return sign;
     }
     if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders    
-    return  sign * tanh_2048[(uint16_t)(x*409.6f)]; // lookup table 2048 / 5 = 409.6
+    return  sign * tanh_2048[(uint16_t)(x*TANH_LOOKUP_COEF)]; // lookup table 2048 / 5 = 409.6
  //  return sign * x/(x+1.0/(2.12-2.88*x+4.0*x*x)); // very good approximation for tanh() found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
   //  return sign * tanh(x);
 }
@@ -32,8 +32,8 @@ void MoogLadder::Init(float sample_rate) {
     istor_        = 0.0f;
     res_          = 0.4f;
     freq_         = 1000.0f;
-    drive_         = 1.0f;
-
+    drive_        = 0.001f;
+    compens_      = (drive_*0.85f+3.2f)/drive_;
     for(int i = 0; i < 6; i++)
     {
         delay_[i]       = 0.0;
@@ -101,5 +101,5 @@ float MoogLadder::Process(float in) {
         delay[5] = (stg[3] + delay[4]) * 0.5f;
         delay[4] = stg[3];
     }
-    return fast_tanh(delay[5]);
+    return (float)(my_tanh(delay[5]*2.0f) * (float)compens_);
 }

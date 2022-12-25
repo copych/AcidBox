@@ -2,22 +2,11 @@
 #define TB303VOICE_H
 
 
-// filter to use
-#define MOOGLADDER 
-//#define OPEN303 // NOT WORKING ANYMORE, TO BE DELETED
-
-#ifdef MOOGLADDER
-  #include "moogladder.h"
-#else 
-  #ifdef OPEN303
-    #include "rosic_TeeBeeFilter.h"
-  #endif
-#endif
-
+#include "moogladder.h"
 //#include "krajeski_flt.h"
 //#include "improved_flt.h"
 //#include "r-k_flt.h"
-#include "wavefolder.h"
+//#include "wavefolder.h"
 #include "overdrive.h"
 #include "midi_config.h"
 #include "smoother.h"
@@ -101,19 +90,12 @@ private:
   float _msToSteps = (float)WAVE_SIZE * DIV_SAMPLE_RATE * 1000.0f;
   
   Smoother ampDeclicker;
-  Smoother filtDeclicker;
-  
+  Smoother filtDeclicker;  
 //  KrajeskiMoog Filter;
 // ImprovedMoog Filter;
 //  RKSimulationMoog Filter;
-#ifdef MOOGLADDER
   MoogLadder Filter;
-#else
-  #ifdef OPEN303
-    rosic::TeeBeeFilter Filter;
-  #endif
-#endif
-  Wavefolder WFolder;
+//  Wavefolder WFolder;
   Overdrive Drive;
 };
 

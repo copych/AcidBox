@@ -1,8 +1,10 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v0.5"
+#define VERSION         "v0.6"
 
 //#define DEBUG_ON            // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it of for production
-//#define MIDI_ON             // use this option if you want to operate by MIDI
+//#define DEBUG_MASTER_OUT    // serial monitor plotter will draw the output waveform
+
+#define MIDI_ON             // use this option if you want to operate by MIDI
 //#define MIDI_VIA_SERIAL     // use this option together with MIDI_ON for Hairless MIDI style, this will block Serial debugging as well
 #define JUKEBOX               // not working with MIDI_ON yet
 
@@ -16,7 +18,9 @@ const float DIV_2SAMPLE_RATE = 0.5f / (float)SAMPLE_RATE;
 
 #define WAVE_SIZE       2048 // samples used for waveform lookup tables 
 const float DIV_WAVE_SIZE = 1.0f / (float)WAVE_SIZE;
-#define DMA_BUF_LEN     64
+#define TANH_LOOKUP_MAX 5.0f // maximum argument X value for tanh(X) lookup table, tanh(X)~=1 if X>4 
+const float TANH_LOOKUP_COEF = (float)WAVE_SIZE / TANH_LOOKUP_MAX;
+#define DMA_BUF_LEN     32
 #define DMA_NUM_BUF     2
 
 #define I2S_BCLK_PIN    5

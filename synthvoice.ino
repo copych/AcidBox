@@ -67,13 +67,8 @@ inline void SynthVoice::Generate() {
     }
     
     final_cut = MIN_CUTOFF_FREQ + (MAX_CUTOFF_FREQ - MIN_CUTOFF_FREQ) * (_cutoff * (1.0f - 0.2f * _envMod) + _envMod * (filtEnv - 0.15f));
-#ifdef MOOGLADDER
+
     if (prescaler % 4) Filter.SetCutoff( final_cut );
-#else
-  #ifdef OPEN303
-    if (prescaler % 8) Filter.setCutoff(final_cut, true);
-  #endif
-#endif
 
     samp = Filter.Process(samp); 
     samp *= ampEnv ;
@@ -106,7 +101,7 @@ void SynthVoice::Init() {
   Filter.setMode(rosic::TeeBeeFilter::TB_303);
   Filter.setFeedbackHighpassCutoff(150.0f);
   */
-  WFolder.Init(); 
+//  WFolder.Init(); 
   Drive.Init();
 }
 
@@ -158,9 +153,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       _accentLevel = (float)cc_value * MIDI_NORM;
       break;
     case CC_303_DISTORTION:
- /*     _gain = 1.0f + (float)cc_value * 60.0f * MIDI_NORM;
-      WFolder.SetGain(_gain); */
-      _gain = 0.125f + (float)cc_value * MIDI_NORM;
+      _gain = 0.125f + (float)cc_value * MIDI_NORM * (0.875f);
       Drive.SetDrive(_gain ); 
       break;
     case CC_303_SATURATOR:
