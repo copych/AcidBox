@@ -3,6 +3,7 @@
 
 //#define DEBUG_ON            // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it of for production
 //#define DEBUG_MASTER_OUT    // serial monitor plotter will draw the output waveform
+//#define DEBUG_SAMPLER
 
 #define MIDI_ON             // use this option if you want to operate by MIDI
 //#define MIDI_VIA_SERIAL     // use this option together with MIDI_ON for Hairless MIDI style, this will block Serial debugging as well
@@ -58,8 +59,6 @@ const float DIV_TWOPI = 1.0f/TWOPI;
 #define FORMAT_LITTLEFS_IF_FAILED true
 //#define CONFIG_LITTLEFS_CACHE_SIZE 1024
 
-/* use define to dump midi data */
-//#define DEBUG_SAMPLER
 
 
 #define PSRAM_BUFFER_SIZE 900000 // this cache's size must correspond to the largest sample set's size

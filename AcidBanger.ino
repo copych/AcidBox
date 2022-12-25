@@ -89,9 +89,9 @@ sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
   {75,  0,  100,  0,  127,  false},
   {70,  0,  127,  0,  127,  true},
   {91,  0,  8,    2,  127,  true},
-  {92,  0,  0,    64, 127,  true},
+  {92,  0,  0,    64, 127,  false},
   {94,  0,  10,   2,  120,  true},
-  {95,  0,  25,   25, 100,  true},
+  {95,  0,  25,   25, 100,  false},
   {72,  0,  20,   10, 80,   true},
   {73,  0,  1,    3,  20,   true}
 };
@@ -104,9 +104,9 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
   {75,  0,  64,   0,  127,  false},
   {70,  0,  0,    0,  127,  true},
   {94,  0,  10,   2,  120,  true},
-  {95,  0,  25,   25, 100,  true},
+  {95,  0,  25,   25, 100,  false},
   {91,  0,  8,    2,  127,  true},
-  {92,  0,  0,    60, 127,  true},
+  {92,  0,  0,    60, 127,  false},
   {72,  0,  20,   10, 80,   true},
   {73,  0,  0,    3,  20,   true}
 };
@@ -673,23 +673,24 @@ static void do_midi_start() {
   send_midi_control(SYNTH2_MIDI_CHAN, 10, 117);
   send_midi_control(SYNTH1_MIDI_CHAN, 74, 64);
   send_midi_control(SYNTH2_MIDI_CHAN, 74, 40);
-  send_midi_control(SYNTH1_MIDI_CHAN, 70, 64);
-  send_midi_control(SYNTH2_MIDI_CHAN, 70, 64);
+  send_midi_control(SYNTH1_MIDI_CHAN, 70, 127); // saw
+  send_midi_control(SYNTH2_MIDI_CHAN, 70, 0);   // square
   send_midi_control(SYNTH1_MIDI_CHAN, 71, 100);
   send_midi_control(SYNTH2_MIDI_CHAN, 71, 100);
-  send_midi_control(SYNTH1_MIDI_CHAN, 72, 64);
-  send_midi_control(SYNTH2_MIDI_CHAN, 72, 64);
+  send_midi_control(SYNTH1_MIDI_CHAN, 72, 30);
+  send_midi_control(SYNTH2_MIDI_CHAN, 72, 30);
   send_midi_control(SYNTH1_MIDI_CHAN, 73, 3);
   send_midi_control(SYNTH2_MIDI_CHAN, 73, 3);
-  send_midi_control(SYNTH1_MIDI_CHAN, 91, 5);
-  send_midi_control(SYNTH2_MIDI_CHAN, 91, 5);
-  send_midi_control(DRUM_MIDI_CHAN,   91, 5);
-  send_midi_control(SYNTH1_MIDI_CHAN, 7, 100);
-  send_midi_control(SYNTH2_MIDI_CHAN, 7, 100);
+  send_midi_control(SYNTH1_MIDI_CHAN, 91, 5);  // reverb send
+  send_midi_control(SYNTH2_MIDI_CHAN, 91, 5);  // reverb send
+  send_midi_control(DRUM_MIDI_CHAN,   91, 4);  // reverb send
+  send_midi_control(SYNTH1_MIDI_CHAN, 7, 80);
+  send_midi_control(SYNTH2_MIDI_CHAN, 7, 80);
   send_midi_control(DRUM_MIDI_CHAN,   7, 127);
-  send_midi_control(SYNTH1_MIDI_CHAN, 94, 3);
-  send_midi_control(SYNTH2_MIDI_CHAN, 94, 2);
-  send_midi_control(SYNTH1_MIDI_CHAN, 93, 10);
+  send_midi_control(DRUM_MIDI_CHAN,   87, 127); // reverb time
+  send_midi_control(SYNTH1_MIDI_CHAN, 94, 3);  // post-overdrive
+  send_midi_control(SYNTH2_MIDI_CHAN, 94, 2);  // post-overdrive
+  send_midi_control(SYNTH1_MIDI_CHAN, 93, 10); // compressor ratio
   send_midi_start();
 }
 

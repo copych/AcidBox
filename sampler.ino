@@ -10,7 +10,7 @@
  *             , added sampleRate to the structure of samplePlayerS to optimize the pitch based on lower samplerates
  * 2021-07-28 E.Heinemann, added pitch-decay and pan
  * 2021-08-03 E.Heinemann, changed Accent/normal Velocity in the code
- * 2022-11-27 Copych, made this a class
+ * 2022-11-27 Copych, made this a class, made it use one big PSRAM buffer for wave data
  */
  
 #include "sampler.h"

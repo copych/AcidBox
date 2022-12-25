@@ -14,13 +14,13 @@
  *
  */
 
-#define l_CB0 3620
-#define l_CB1 1288
-#define l_CB2 882
-#define l_CB3 312
-#define l_AP0 480
-#define l_AP1 161
-#define l_AP2 46
+#define l_CB0 3620*2
+#define l_CB1 1288*2
+#define l_CB2 882*2
+#define l_CB3 312*2
+#define l_AP0 480*2
+#define l_AP1 161*2
+#define l_AP2 46*2
 
 //rev_time 0.0 <-> 1.0
 //rev_delay 0.0 <-> 1.0

@@ -94,7 +94,7 @@ SynthVoice Synth1(0); // use synth_buf[0]
 SynthVoice Synth2(1); // use synth_buf[1]
 
 // 808-like drums
-Sampler Drums(6); // number of sample sets
+Sampler Drums(6,2); // first arg = total number of sample sets, second = starting drumset [0 .. total-1]
 
 // Global effects
 FxReverb Reverb;
@@ -128,6 +128,9 @@ static void audio_task2(void *userData) {
 	Delay.Init();
 	Drums.Init();
   Comp.Init(SAMPLE_RATE);
+#ifdef JUKEBOX
+  init_midi();
+#endif
     while(1) {
         // we can run it together with synth(), but not with mixer()
         c2 = micros();
@@ -177,9 +180,6 @@ void setup(void) {
   
   buildTables();
   
-#ifdef JUKEBOX
-  init_midi();
-#endif
 
 #ifdef MIDI_ON
   MIDI.setHandleNoteOn(handleNoteOn);
@@ -228,9 +228,9 @@ void loop() { // default loopTask running on the Core1
  
   #ifdef JUKEBOX
   if (micros()-last_ms>1000) {
+    last_ms = micros();
     run_tick();
     myRandomAddEntropy((uint16_t)(last_ms & 0x0000FFFF));
-    last_ms = micros();
   }
   #endif
   
