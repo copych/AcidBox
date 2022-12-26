@@ -19,6 +19,7 @@ inline void handleCC(uint8_t inChannel, uint8_t cc_number, uint8_t cc_value) {
     case CC_ANY_COMPRESSOR:
       Comp.SetRatio(3.0f + cc_value * 0.307081f);
       break;
+#ifndef NO_PSRAM
     case CC_ANY_DELAY_TIME:
       Delay.SetLength(cc_value * MIDI_NORM);
       break;
@@ -34,6 +35,7 @@ inline void handleCC(uint8_t inChannel, uint8_t cc_number, uint8_t cc_value) {
     case CC_ANY_REVERB_LVL:
       Reverb.SetLevel(cc_value * MIDI_NORM);
       break;
+#endif
     default:
       if (inChannel == SYNTH1_MIDI_CHAN ) {Synth1.ParseCC(cc_number, cc_value);}
       if (inChannel == SYNTH2_MIDI_CHAN ) {Synth2.ParseCC(cc_number, cc_value);}

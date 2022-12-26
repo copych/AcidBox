@@ -1,11 +1,17 @@
 #define PROG_NAME       "ESP32 AcidBox"
 #define VERSION         "v0.6"
 
-//#define DEBUG_ON            // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it of for production
+#define DEBUG_ON            // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it of for production
 //#define DEBUG_MASTER_OUT    // serial monitor plotter will draw the output waveform
+//#define DEBUG_I2S_OUT
 //#define DEBUG_SAMPLER
+//#define DEBUG_JUKEBOX
+//#define DEBUG_FX
 
-#define MIDI_ON             // use this option if you want to operate by MIDI
+//#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: 8BIT STEREO
+//#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB AND DELAY'D BE SACRIFICED, SMALL DRUM KIT SAMPLES USED 
+
+#define MIDI_ON               // use this option if you want to operate by MIDI
 //#define MIDI_VIA_SERIAL     // use this option together with MIDI_ON for Hairless MIDI style, this will block Serial debugging as well
 #define JUKEBOX               // not working with MIDI_ON yet
 
@@ -19,7 +25,7 @@ const float DIV_2SAMPLE_RATE = 0.5f / (float)SAMPLE_RATE;
 
 #define WAVE_SIZE       2048 // samples used for waveform lookup tables 
 const float DIV_WAVE_SIZE = 1.0f / (float)WAVE_SIZE;
-#define TANH_LOOKUP_MAX 5.0f // maximum argument X value for tanh(X) lookup table, tanh(X)~=1 if X>4 
+#define TANH_LOOKUP_MAX 5.0f // maximum X argument value for tanh(X) lookup table, tanh(X)~=1 if X>4 
 const float TANH_LOOKUP_COEF = (float)WAVE_SIZE / TANH_LOOKUP_MAX;
 #define DMA_BUF_LEN     32
 #define DMA_NUM_BUF     2
@@ -60,9 +66,16 @@ const float DIV_TWOPI = 1.0f/TWOPI;
 //#define CONFIG_LITTLEFS_CACHE_SIZE 1024
 
 
-
-#define PSRAM_BUFFER_SIZE 900000 // this cache's size must correspond to the largest sample set's size
-#define SAMPLECNT 12
+#define DRUMKITCNT 6                // how many drumkits do we have
+#ifdef NO_PSRAM
+  #define RAM_SAMPLER_CACHE  65000    // compact sample set is 132kB, first 8 is ~38kB
+  #define SAMPLECNT 8                 // how many sounds from the folder will be used
+  #define DEFAULT_DRUMKIT 4           // /data/4/ folder
+#else
+  #define PSRAM_SAMPLER_CACHE 900000  // this cache's size must correspond to the largest sample set's size
+  #define SAMPLECNT 12                // how many sounds from the folder will be used
+  #define DEFAULT_DRUMKIT 2           // folder number in /data/ 
+#endif
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 

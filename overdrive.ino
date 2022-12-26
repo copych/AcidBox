@@ -26,5 +26,7 @@ void Overdrive::SetDrive(float drive)
 
     const float drive_squashed = drive_ * (2.0f - drive_);
     post_gain_ = 0.5f / fast_tanh(0.33f + drive_squashed * (pre_gain_ - 0.33f));
+#ifdef DEBUG_FX    
     DEBF("pre %0.4f post %0.4f drive %0.4f\r\n", pre_gain_, post_gain_, drive_);
+#endif
 }

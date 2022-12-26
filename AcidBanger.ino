@@ -43,14 +43,12 @@
 //
 // Have fun!
 
-//#define DEBF(...) 
 
-
-#define KICK_NOTE               60
-#define SNARE_NOTE              61
-#define CLOSED_HAT_NOTE         67
-#define OPEN_HAT_NOTE           66
-#define PERCUSSION_NOTE         68
+#define KICK_NOTE               0 //001
+#define SNARE_NOTE              1 //002
+#define CLOSED_HAT_NOTE         6 //007
+#define OPEN_HAT_NOTE           7 //008
+#define PERCUSSION_NOTE         4 //005
 
 // Pin numbers to which are buttons attached (connect one side of button to pin, the other to ground)
 #define GEN_SYNTH1_BUTTON_PIN   0
@@ -69,8 +67,13 @@
 // of milliseconds...
 #define BPM 130
 #define NUM_RAMPS 6 // simultaneous knob rotatings
-#define NUM_SYNTH_CCS 11
-#define NUM_DRUM_CCS 4
+#ifndef NO_PSRAM
+  #define NUM_SYNTH_CCS 11
+  #define NUM_DRUM_CCS 6
+#else
+  #define NUM_SYNTH_CCS 9
+  #define NUM_DRUM_CCS 4
+#endif
 
 struct sSynthCCs {
   uint8_t cc_number;
@@ -88,8 +91,10 @@ sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
   {10,  0,  10,   0,  127,  true},
   {75,  0,  100,  0,  127,  false},
   {70,  0,  127,  0,  127,  true},
-  {91,  0,  8,    2,  127,  true},
+#ifndef NO_PSRAM
+  {91,  0,  5,    2,  127,  true},
   {92,  0,  0,    64, 127,  false},
+#endif
   {94,  0,  10,   2,  120,  true},
   {95,  0,  25,   25, 100,  false},
   {72,  0,  20,   10, 80,   true},
@@ -105,8 +110,10 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
   {70,  0,  0,    0,  127,  true},
   {94,  0,  10,   2,  120,  true},
   {95,  0,  25,   25, 100,  false},
-  {91,  0,  8,    2,  127,  true},
+#ifndef NO_PSRAM
+  {91,  0,  3,    2,  127,  true},
   {92,  0,  0,    60, 127,  false},
+#endif
   {72,  0,  20,   10, 80,   true},
   {73,  0,  0,    3,  20,   true}
 };
@@ -115,6 +122,10 @@ sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
  //cc   cpl def   min max   reset
   {74,  0,  64,   0,  127,  true},
   {71,  0,  0,    0,  127,  true},
+#ifndef NO_PSRAM
+  {91,  0,  5,    2,  127,  true},
+  {92,  0,  0,    64, 127,  false},
+#endif
   {93,  0,  15,   80, 127,  true},
   {94,  0,  6,    6,  100,  true}
 };
@@ -219,7 +230,9 @@ static const byte button_pins[ButLast] = {
 static void send_midi_noteon(byte chan, byte note, byte vol) {
   // MIDI.sendNoteOn(note, vol, chan);
   handleNoteOn( chan, note, vol) ;
+#ifdef DEBUG_JUKEBOX
   DEBUG("note on");
+#endif
 }
 static void send_midi_noteoff(byte chan, byte note) {
   //MIDI.sendNoteOn(note, 0, chan);
@@ -338,8 +351,9 @@ static void instr_noteon_raw(byte instr, byte note, byte vol, byte do_glide) {
 
 static void instr_noteon(byte instr, byte value, byte do_glide, byte do_accent) {
   Instrument *ins = &instruments[instr];
-  DEBF("glide=%d accent=%d", do_glide, do_accent);
-  DEBUG();
+#ifdef DEBUG_JUKEBOX
+  DEBF("glide=%d accent=%d\r\n", do_glide, do_accent);
+#endif
   if (ins->is_drum) {
     // For drums: value is volume, accent and glide are ignored
     instr_noteon_raw(instr, ins->drum_note, value, 0);
@@ -354,8 +368,9 @@ static void instr_noteon(byte instr, byte value, byte do_glide, byte do_accent) 
  */
 
 void sequencer_step(byte step) {
-  DEBF("midi step %d", step);
-  DEBUG();
+#ifdef DEBUG_JUKEBOX
+  DEBF("midi step %d\r\n", step);
+#endif
   do_midi_ramps();
   // Play all notes in current step
   for (byte i = 0; i < NumInstruments; i++) {
@@ -590,7 +605,9 @@ void mem_generate_melody(byte mem, byte voice) {
   // identical melody.
   uint16_t random_state = myRandomState;
   myRandomState = (m->random_seed << 1) ^ voice;
+#ifdef DEBUG_JUKEBOX
   DEBF("generating %d/%d with seed %u", mem, voice, myRandomState);
+#endif
   generate_melody(
     m->note_set, m->num_notes_in_set,
     p->notes, sizeof(p->notes),
@@ -630,23 +647,27 @@ void mem_generate_all(byte mem) {
 }
 
 void print_pattern(struct Pattern *p, byte is_drum) {
+#ifdef DEBUG_JUKEBOX
   for (byte i = 0; i < PatternLength; i++)
-  DEBF("%3d ", p->notes[i]);
-  DEBF("\n");
+  DEBF("%3d \r\n", p->notes[i]);
+
   if (!is_drum) {
     for (byte i = 0; i < PatternLength; i++)
-      DEBF(" %c%c ", (p->accent & (1u << i)) ? 'A' : ' ', (p->glide & (1u << i)) ? '~' : ' ');
+      DEBF(" %c%c \r\n", (p->accent & (1u << i)) ? 'A' : ' ', (p->glide & (1u << i)) ? '~' : ' ');
   }
-  DEBF("\n");
+#endif
 }
 
 void print_memory(byte mem) {
   Memory *m = &memories[mem];
+#ifdef DEBUG_JUKEBOX
   DEBF("--- memory %d ---", mem);
   DEBF("noteset[%d]:", m->num_notes_in_set);
+#endif
   for (byte i = 0; i < m->num_notes_in_set; i++)
-    DEBF(" %d", m->note_set[i]);
-  DEBF("\n");
+#ifdef DEBUG_JUKEBOX
+    DEBF(" %d\r\n", m->note_set[i]);
+#endif
   for (byte i = 0; i < NumInstruments; i++)
     print_pattern(&m->patterns[i], instruments[i].is_drum);
 }
@@ -715,12 +736,14 @@ static void do_midi_ramps() {
     }
     uint8_t val = (uint8_t)(midiRamps[i].value);
     send_midi_control(midiRamps[i].chan,  midiRamps[i].cc_number, val);
+#ifdef DEBUG_JUKEBOX
     DEB("ramp: ");
     DEB(midiRamps[i].chan);
     DEB(" ");
     DEB(midiRamps[i].cc_number);
     DEB(" ");
     DEBUG(val);
+#endif
   }
 }
 
@@ -883,10 +906,14 @@ void run_ui() {
   for (byte i = 0; i < NumMemories; i++) {
     if (just_pressed(ButMem1 + i)) {
       if (source_memory >= 0) {
-        DEBF("copy %d to %d", source_memory, i);
+#ifdef DEBUG_JUKEBOX
+        DEBF("copy %d to %d\r\n", source_memory, i);
+#endif
         memcpy(&memories[i], &memories[source_memory], sizeof(memories[0]));
       } else {
+#ifdef DEBUG_JUKEBOX
         DEBF("switching to memory %d", i);
+#endif
         cur_memory = i;
       }
     }
@@ -913,10 +940,14 @@ void run_ui() {
   // Handle play
   if (just_pressed(ButPlay)) {
     if (midi_playing) {
+#ifdef DEBUG_JUKEBOX
       DEBUG("stopping midi");
+#endif
       do_midi_stop();
     } else {
+#ifdef DEBUG_JUKEBOX
       DEBF("starting midi clock, dt=%lu", midi_tick_ms);
+#endif
       last_midi_tick = now;
       do_midi_start();
       do_midi_tick();

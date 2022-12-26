@@ -8,14 +8,16 @@ static void drums() {
 
 static void mixer() { // sum buffers 
   static float synth1_out_l, synth1_out_r, synth2_out_l, synth2_out_r, drums_out_l, drums_out_r;
-  static float dly_l, dly_r, rvb_l, rvb_r, mono_mix;
-  static float meter;
+  static float dly_l, dly_r, rvb_l, rvb_r;
+  static float meter, mono_mix;
+#ifndef NO_PSRAM 
     dly_k1 = Synth1._sendDelay;
     dly_k2 = Synth2._sendDelay;
     dly_k3 = Drums._sendDelay;
     rvb_k1 = Synth1._sendReverb;
     rvb_k2 = Synth2._sendReverb;
     rvb_k3 = Drums._sendReverb;
+#endif
     for (int i=0; i < DMA_BUF_LEN; i++) { 
       synth1_out_l = Synth1.pan*synth_buf[0][i];
       synth1_out_r = (1.0f-Synth1.pan)*synth_buf[0][i];
@@ -23,7 +25,7 @@ static void mixer() { // sum buffers
       synth2_out_r = (1.0f-Synth2.pan)*synth_buf[1][i];
       drums_out_l = drums_buf_l[i];
       drums_out_r = drums_buf_r[i];
-      
+#ifndef NO_PSRAM      
       dly_l = dly_k1 * synth1_out_l + dly_k2 * synth2_out_l + dly_k3 * drums_out_l; // delay bus
       dly_r = dly_k1 * synth1_out_r + dly_k2 * synth2_out_r + dly_k3 * drums_out_r;
       Delay.Process( &dly_l, &dly_r );
@@ -31,9 +33,13 @@ static void mixer() { // sum buffers
       rvb_l = rvb_k1 * synth1_out_l + rvb_k2 * synth2_out_l + rvb_k3 * drums_out_l; // reverb bus
       rvb_r = rvb_k1 * synth1_out_r + rvb_k2 * synth2_out_r + rvb_k3 * drums_out_r;
       Reverb.Process( &rvb_l, &rvb_r );
-      
+
       mix_buf_l[i] = 0.2f * (synth1_out_l + synth2_out_l + drums_out_l + dly_l + rvb_l);
       mix_buf_r[i] = 0.2f * (synth1_out_r + synth2_out_r + drums_out_r + dly_r + rvb_r);
+#else
+      mix_buf_l[i] = 0.33f * (synth1_out_l + synth2_out_l + drums_out_l);
+      mix_buf_r[i] = 0.33f * (synth1_out_r + synth2_out_r + drums_out_r);
+#endif
       mono_mix = 0.5*(mix_buf_l[i] + mix_buf_r[i]);
       Comp.Process(mono_mix); // calculate gain based on a mono mix, can be a side chain
       mix_buf_l[i] = Comp.Apply(mix_buf_l[i]);
@@ -55,16 +61,26 @@ static void mixer() { // sum buffers
 }
 
 
-
-inline void i2s_output () {  
-  for (int i=0; i < DMA_BUF_LEN; i++) {      
-      out_buf._signed[i*2] = 0x7fff * ( mix_buf_l[i]) + 1; // 1 offset to prevent auto-zero-detect analog mute of 5102 DAC
-      out_buf._signed[i*2+1] = 0x7fff * ( mix_buf_r[i]) + 1 ;
-  }
+inline void i2s_output () {
   // now out_buf is ready, output
-
-  //i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY); // NO-DAC case
+#ifdef USE_INTERNAL_DAC
+  for (int i=0; i < DMA_BUF_LEN; i++) {      
+      out_buf._signed[i*2] = 255.0f * ( mix_buf_l[i]+1.0f) ; 
+      out_buf._signed[i*2+1] = 255.0f * ( mix_buf_r[i]+1.0f)  ;
+      out_buf._unsigned[i*2] *= 0x100 ; 
+      out_buf._unsigned[i*2+1] *= 0x100;
+  }
+#ifdef DEBUG_I2S_OUT
+  DEBF("%d %d\r\n", out_buf._unsigned[0],out_buf._unsigned[1]);
+#endif
+  i2s_write(i2s_num,  out_buf._unsigned , sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY);
+#else
+  for (int i=0; i < DMA_BUF_LEN; i++) {      
+      out_buf._signed[i*2] = 0x7fff * ( mix_buf_l[i]) ; 
+      out_buf._signed[i*2+1] = 0x7fff * ( mix_buf_r[i]) ;
+  }
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
+#endif
 }
 
 

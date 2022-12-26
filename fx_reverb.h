@@ -65,12 +65,16 @@ class FxReverb {
       ap0_lim = (int)(rev_time * l_AP0);
       ap1_lim = (int)(rev_time * l_AP1);
       ap2_lim = (int)(rev_time * l_AP2);
+#ifdef DEBUG_FX
       DEBF("reverb time: %0.3f\n", value);
+#endif
     };
     
     inline void SetLevel( float value ){
       rev_level = value;
+#ifdef DEBUG_FX
       DEBF("reverb level: %0.3f\n", value);
+#endif
     };
 		
 	private:

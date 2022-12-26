@@ -9,7 +9,7 @@
 class Sampler {
   public:
     Sampler(){}
-    Sampler(uint8_t countPrg, uint8_t progNow) { countPrograms = countPrg; program_tmp = progNow;};
+    Sampler(uint8_t countPrg, uint8_t progNow) { countPrograms = countPrg; program_tmp = progNow; progNumber = progNow; };
     inline void Init();
     void ScanContents(fs::FS &fs, const char *dirname, uint8_t levels);
     inline void SelectNote( uint8_t note ){  selectedNote = note % sampleInfoCount;     };
@@ -50,8 +50,8 @@ class Sampler {
     String shortInstr[17] ={ "ACC", "111","222","333","HHop", "Cr","Cl","LT","HT", "S1","S2","S3","S4", "T1","T2","T3","T4" };
     // Soundset/Program-Settings
     uint8_t  program_midi = 0; 
-    uint8_t  program_tmp = 0; 
-    uint8_t  progNumber = 0; // first subdirectory in /data 
+    uint8_t  program_tmp = DEFAULT_DRUMKIT; 
+    uint8_t  progNumber = DEFAULT_DRUMKIT; 
     uint8_t  countPrograms = 7;
     float _volume = 1.0f;
     float sampler_playback = 1.0f;
@@ -115,7 +115,7 @@ class Sampler {
     
     uint32_t sampleInfoCount = 0; /*!< storing the count if found samples in file system */
     float slowRelease; /*!< slow releasing signal will be used when sample playback stopped */
-    uint8_t* psdRamBuffer=NULL ;
+    uint8_t* RamCache = NULL ;
 
     FxFilterCrusher Effects;
 };

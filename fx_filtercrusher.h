@@ -81,17 +81,23 @@ class FxFilterCrusher {
 		void SetCutoff( float value ){
 			highpassC = value >= 0.5 ? (value - 0.5f) * 2.0f : 0.0f;
 			lowpassC = value <= 0.5 ? (value) * 2.0f : 1.0f;
+#ifdef DEBUG_FX
 			DEBF("Filter TP: %0.2f, HP: %02f\n", lowpassC, highpassC);
+#endif
 		};
 
 		void SetResonance( float value ){
 			filtReso =  0.5f + 10 * value * value * value; /* min q is 0.5 here */
+#ifdef DEBUG_FX
 			DEBF("main filter reso: %0.3f\n", filtReso);
+#endif
 		};
 
 		void SetBitCrusher( float value ){
 			bitCrusher = pow(2, -32.0f * value);
+#ifdef DEBUG_FX
 			DEBF("main filter bitCrusher: %0.3f\n", bitCrusher);
+#endif
 		};
 		
 	private:

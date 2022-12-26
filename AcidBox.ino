@@ -14,22 +14,15 @@
 * https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 * And then use Tools -> ESP32 Sketch Data Upload
 *
-* ####\ /###\ ####\  /#\  #   #    /###\ #   #
-* #   # #     #   # /# #\ #\ /#    #   # #\  #        
-* #   # #     #   # #   # ## ##    #   # ##\ #
-* ####/ \###\ ####/ ##### # # #    #   # # #\#
-* #         # # #   #   # #   #    #   # #  ##
-* #         # #  #  #   # #   #    #   # #   #
-* #     \###/ #   # #   # #   #    \###/ #   #
-*
-* ! SAMPLER WON'T RUN WITHOUT PSRAM ON BOARD !
 *
 */
 
 #include "config.h"
 #include "driver/i2s.h"
-#include "fx_delay.h"
-#include "fx_reverb.h"
+#ifndef NO_PSRAM
+  #include "fx_delay.h"
+  #include "fx_reverb.h"
+#endif
 #include "compressor.h"
 #include "synthvoice.h"
 #include "sampler.h"
@@ -60,6 +53,7 @@
 #endif
 
 const i2s_port_t i2s_num = I2S_NUM_0; // i2s port number
+  
 // lookuptables
 static float midi_pitches[128];
 static float midi_phase_steps[128];
@@ -75,7 +69,9 @@ static float drums_buf_r[DMA_BUF_LEN]; //  808 stereo
 static float mix_buf_l[DMA_BUF_LEN]; // mix L and R channels
 static float mix_buf_r[DMA_BUF_LEN]; // mix L and R channels
 
+#ifndef NO_PSRAM
 static float dly_k1, dly_k2, dly_k3, rvb_k1, rvb_k2, rvb_k3;
+#endif
 
 static union { // a dirty trick, instead of true converting
   int16_t _signed[DMA_BUF_LEN * 2];
@@ -94,11 +90,13 @@ SynthVoice Synth1(0); // use synth_buf[0]
 SynthVoice Synth2(1); // use synth_buf[1]
 
 // 808-like drums
-Sampler Drums(6,2); // first arg = total number of sample sets, second = starting drumset [0 .. total-1]
+Sampler Drums(DRUMKITCNT , DEFAULT_DRUMKIT); // first arg = total number of sample sets, second = starting drumset [0 .. total-1]
 
 // Global effects
-FxReverb Reverb;
-FxDelay Delay;
+#ifndef NO_PSRAM
+  FxReverb Reverb;
+  FxDelay Delay;
+#endif
 Compressor Comp;
 
 // Core0 task
@@ -123,9 +121,10 @@ static void audio_task1(void *userData) {
 
 // task for Core1, which tipically runs user's code on ESP32
 static void audio_task2(void *userData) {
-  
+#ifndef NO_PSRAM
 	Reverb.Init();  
 	Delay.Init();
+#endif
 	Drums.Init();
   Comp.Init(SAMPLE_RATE);
 #ifdef JUKEBOX

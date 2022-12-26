@@ -7,7 +7,7 @@
  * Author: Marcel Licence
  */
 
-#define MAX_DELAY  44100
+#define MAX_DELAY SAMPLE_RATE // 1 second
 
 class FxDelay {
 	public:
@@ -62,17 +62,23 @@ class FxDelay {
 
 		inline void SetFeedback( float value){
 			delayFeedback = value;
+#ifdef DEBUG_FX
 			DEBF("delay feedback: %0.3f\n", value);
+#endif
 		};
 
 		inline void SetLevel( float value ){
 			delayToMix = value;
+#ifdef DEBUG_FX
 			DEBF("delay level: %0.3f\n", value);
+#endif
 		};
 
 		inline void SetLength( float value ){
 			delayLen = (uint32_t)(((float)MAX_DELAY - 1.0f) * value);
+#ifdef DEBUG_FX
 			DEBF("delay length: %0.3fms\n", delayLen * (1000.0f / ((float)SAMPLE_RATE)));
+#endif
 		};
 
 	private:

@@ -3,7 +3,7 @@ float noteToFreq(int note) {
     return (440.0f / 32.0f) * pow(2, ((float)(note - 9) / 12.0));
 }
 
-float expSaw2048(uint16_t i) { // this one contains a piece of exp(-x) normalized to fit into (-1.0 .. 1.0) , "saw" and "square" waves are generated from this table
+float expSaw2048(uint16_t i) { // this one contains a piece of exp(-x) normalized to fit into (-1.0 .. 1.0) , "saw", "square" and envelopes are generated basing on this table
   float res = exp((float)(-i)/486.0f) * 2.03f - 1.03f;
   return res;
 }
@@ -13,7 +13,7 @@ float tanh2048(uint16_t i) {
   return res;
 }
 
-float expSquare2048(uint16_t i) { // requires saw table
+float expSquare2048(uint16_t i) { // requires exp() table
   uint16_t j = i + WAVE_SIZE/2;
   if (j>=WAVE_SIZE) j = j - WAVE_SIZE;
   float res = 0.685f * (exp_2048[i]-exp_2048[j]);

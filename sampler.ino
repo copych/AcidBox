@@ -85,18 +85,37 @@ inline void Sampler::Init(){
     sampleInfoCount = 0;
     ScanContents(LittleFS, myDir.c_str() , 5);
 
-    // allocate ~1MB buffer in PSRAM to be able to load a whole sample set of 12 samples
+#ifndef NO_PSRAM
+    // allocate ~1MB buffer in PSRAM to be able to load a whole sample set of SAMPLECNT {12} samples
     if (psramFound()) {
-      if ( psdRamBuffer==NULL ) {
+      if ( RamCache == NULL ) {
         psramInit();
-        psdRamBuffer = (uint8_t*)ps_malloc(PSRAM_BUFFER_SIZE);
+        RamCache = (uint8_t*)ps_malloc(PSRAM_SAMPLER_CACHE);
+      }   
+      if (RamCache == NULL){
+        DEBUG ("FAILED TO ALLOCATE PSRAM CACHE BUFFER!");
+      } else {
+        DEBUG ("PSRAM BUFFER ALLOCATED! STANDARD CONFIG ENGAGED!");
       }
-      DEBUG ("PSRAM BUFFER ALLOCATED!");
     } else {
-      DEBUG("NO PSRAM! HALT!");
+      DEBUG("STOP! Use #define NO_PSRAM option in config.h");
       while(1){}
     }
-    
+#else
+      DEBF("Free heap: %d\r\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
+      heap_caps_print_heap_info(MALLOC_CAP_8BIT);
+      if ( RamCache==NULL ) {
+        RamCache = (uint8_t*)malloc(RAM_SAMPLER_CACHE); 
+       // RamCache = (uint8_t*)heap_caps_malloc(RAM_SAMPLER_CACHE, MALLOC_CAP_8BIT);
+      }
+      if (RamCache == NULL){
+        DEBUG ("FAILED TO ALLOCATE RAM CACHE BUFFER!");
+      } else {
+        DEBUG ("HEAP BUFFER ALLOCATED! MINIMAL CONFIG ENGAGED!");
+      }
+
+#endif
+
 #ifdef DEBUG_SAMPLER
     DEBUG("---\nListSamples:");
 #endif
@@ -116,11 +135,11 @@ inline void Sampler::Init(){
             }
 
             j = 0;
-            // load sample data to the PSRAM buffer
+            // load sample data to the RAM/PSRAM buffer
             samplePlayer[i].sampleStart = buffPointer;
             while( f.available() ){
-                toRead = 512; 
-                f.read(&(psdRamBuffer[buffPointer]), toRead);
+                toRead = 512;
+                f.read(&(RamCache[buffPointer]), toRead);
                 buffPointer += toRead;
             }
 
@@ -429,12 +448,12 @@ inline void Sampler::Process( float *left, float *right ){
             // reconstruct signal from data
             //
             uint8_t byte2 , byte1;
-            union{
+            union {
                 uint16_t u16;
                 int16_t s16;
             } sampleU;
-            byte1 = psdRamBuffer[samplePlayer[i].sampleStart + dataOut];
-            byte2 = psdRamBuffer[samplePlayer[i].sampleStart + dataOut + 1];
+            byte1 = RamCache[samplePlayer[i].sampleStart + dataOut];
+            byte2 = RamCache[samplePlayer[i].sampleStart + dataOut + 1];
             sampleU.s16 = (((uint16_t)byte2) << 8U) + (uint16_t)byte1;
 
             samplePlayer[i].signal = (float)(samplePlayer[i].volume) * ((float)sampleU.s16) * 0.00005f;
