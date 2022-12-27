@@ -11,7 +11,11 @@ A modified version of http://tips.ibawizard.net/acid-banger/, initially taken fr
 [demo2.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox2.mp3?raw=true)
 
 # To build the thing
-You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external DAC, like PCM5102. In ArduinoIDE (2.0.6 is working, 2.0.0 is not) select: 
+You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external DAC, like PCM5102. 
+
+<b>ATTENTION! PSRAM handling requires up-to-date Arduino ESP32 core. Of what I tested, versions 2.0.4, 2.0.5, 2.0.6 are working, 2.0.0 is not</b>
+
+In ArduinoIDE (I've used v.1.8.20) select: 
 * board: ESP32 Dev Module
 * partition scheme: No OTA (1MB APP/ 3MB SPDIFF)
 * PSRAM: enabled
@@ -19,9 +23,9 @@ You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
 # What if you only have WROOM module (no PSRAM)
-You can still compile and run the app, with NO_PSRAM option in the config.h.
+You can still compile and run the app, with NO_PSRAM option in the config.h. Note, that in this case you will get NO DELAY, NO REVERB and just ONE DRUM KIT. 
 
-In ArduinoIDE select: 
+In ArduinoIDE (I used v.1.8.20) select: 
 * board: ESP32 Dev Module
 * partition scheme: No OTA (1MB APP/ 3MB SPDIFF)
 * PSRAM: disabled
@@ -29,16 +33,17 @@ In ArduinoIDE select:
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
 # What if you don't have an external DAC module (PCM5102)
-You can still compile and run the app, with USE_INTERNAL_DAC option in the config.h.
+You can still compile and run the app, with USE_INTERNAL_DAC option in the config.h. BUT sound output is just terrible with internal DAC. Stereo 8-bit audio you can get form GPIO25 and GPIO26. Probably you can improve it a bit playing with the multipliers in i2s_output() method in general.ino file.
 
-In ArduinoIDE select: 
+<b>ATTENTION! Built-in DAC works with Arduino ESP32 core 2.0.0, but not with newer versions (cause AFAIK they're still fixing that killing 2.0.1 update), so it may be a problem to get a working PSRAM + Internal DAC app</b>
+
+In ArduinoIDE (I used v.1.8.20) select:
 * board: ESP32 Dev Module
 * partition scheme: No OTA (1MB APP/ 3MB SPDIFF)
 * PSRAM: disabled
 
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
-Sound output is just terrible. Stereo 8-bit audio you can get form GPIO25 and GPIO26. Probably you can improve it a bit playing with the multipliers in i2s_output() method in general.ino file
 
 
 # Functional diagram 
