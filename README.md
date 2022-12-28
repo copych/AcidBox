@@ -1,6 +1,6 @@
 # AcidBox
 ESP32 headless acid combo of 2 x 303 + 1 x 808 like synths. Filter cutoff, reso, saturation, overdrive within each 303, hipass/lopass filter and bitcrusher in drums, send to reverb and delay and master compression.
-All MIDI driven. 44100, 16bit stereo I2S output. No indication. Uses both cores of ESP32. Cheap ~$10.
+All MIDI driven. 44100, 16bit stereo I2S output to the external DAC or 8bit to the built-in DAC. No indication. Uses both cores of ESP32. Cheap ~$10.
 Consult with midi_config.h to find out and to set up MIDI continous control messages.
 
 # It can be a JukeBox
@@ -35,12 +35,9 @@ Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do s
 # What if you don't have an external DAC module (PCM5102)
 You can still compile and run the app, with USE_INTERNAL_DAC option in the config.h. BUT sound output is just terrible with internal DAC. Stereo 8-bit audio you can get form GPIO25 and GPIO26. Probably you can improve it a bit playing with the multipliers in i2s_output() method in general.ino file.
 
-<b>ATTENTION! Built-in DAC works with Arduino ESP32 core 2.0.0, but not with newer versions (cause AFAIK they're still fixing that killing 2.0.1 update), so it may be a problem to get a working PSRAM + Internal DAC app</b>
-
 In ArduinoIDE (I used v.1.8.20) select:
 * board: ESP32 Dev Module
 * partition scheme: No OTA (1MB APP/ 3MB SPDIFF)
-* PSRAM: disabled
 
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
