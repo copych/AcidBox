@@ -18,6 +18,7 @@
 */
 
 #include "config.h"
+
 #include "driver/i2s.h"
 #ifndef NO_PSRAM
   #include "fx_delay.h"
@@ -64,19 +65,18 @@ static float tanh_2048[WAVE_SIZE];
 
 // Audio buffers of all kinds
 static float synth_buf[2][DMA_BUF_LEN]; // 2 * 303 mono
-static float drums_buf_l[DMA_BUF_LEN]; //  808 stereo 
-static float drums_buf_r[DMA_BUF_LEN]; //  808 stereo 
-static float mix_buf_l[DMA_BUF_LEN]; // mix L and R channels
-static float mix_buf_r[DMA_BUF_LEN]; // mix L and R channels
+static float drums_buf_l[DMA_BUF_LEN];  // 808 stereo L
+static float drums_buf_r[DMA_BUF_LEN];  // 808 stereo R
+static float mix_buf_l[DMA_BUF_LEN];    // mix L channel
+static float mix_buf_r[DMA_BUF_LEN];    // mix R channel
+static union { // a dirty trick, instead of true converting
+  int16_t _signed[DMA_BUF_LEN * 2];
+  uint16_t _unsigned[DMA_BUF_LEN * 2];
+} out_buf; // i2s L+R output buffer
 
 #ifndef NO_PSRAM
 static float dly_k1, dly_k2, dly_k3, rvb_k1, rvb_k2, rvb_k3;
 #endif
-
-static union { // a dirty trick, instead of true converting
-  int16_t _signed[DMA_BUF_LEN * 2];
-  uint16_t _unsigned[DMA_BUF_LEN * 2];
-} out_buf;
 
 size_t bytes_written; // i2s
 static uint32_t c1=0, c2=0, c3=0, d1=0, d2=0, d3=0, prescaler; // debug timing
@@ -200,8 +200,7 @@ void setup(void) {
     mix_buf_r[i] = 0.0f;
   }
   
-  i2sInit();
-//  i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY); NO_DAC case
+  i2sInit(); 
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
   
   xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 10000, NULL, 1, &SynthTask1, 0 );

@@ -3,7 +3,6 @@
 
 #define DEBUG_ON            // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it of for production
 //#define DEBUG_MASTER_OUT    // serial monitor plotter will draw the output waveform
-//#define DEBUG_I2S_OUT
 //#define DEBUG_SAMPLER
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
@@ -29,6 +28,8 @@ const float DIV_WAVE_SIZE = 1.0f / (float)WAVE_SIZE;
 const float TANH_LOOKUP_COEF = (float)WAVE_SIZE / TANH_LOOKUP_MAX;
 #define DMA_BUF_LEN     32
 #define DMA_NUM_BUF     2
+
+float bpm = 130.0;
 
 #define I2S_BCLK_PIN    5
 #define I2S_WCLK_PIN    19
