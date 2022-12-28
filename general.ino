@@ -63,24 +63,11 @@ static void mixer() { // sum buffers
 
 inline void i2s_output () {
   // now out_buf is ready, output
-#ifdef USE_INTERNAL_DAC
-  for (int i=0; i < DMA_BUF_LEN; i++) {      
-      out_buf._signed[i*2] = 255.0f * ( mix_buf_l[i]+1.0f) ; 
-      out_buf._signed[i*2+1] = 255.0f * ( mix_buf_r[i]+1.0f)  ;
-      out_buf._unsigned[i*2] *= 0x100 ; 
-      out_buf._unsigned[i*2+1] *= 0x100;
-  }
-#ifdef DEBUG_I2S_OUT
-  DEBF("%d %d\r\n", out_buf._unsigned[0],out_buf._unsigned[1]);
-#endif
-  i2s_write(i2s_num,  out_buf._unsigned , sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY);
-#else
   for (int i=0; i < DMA_BUF_LEN; i++) {      
       out_buf._signed[i*2] = 0x7fff * ( mix_buf_l[i]) ; 
       out_buf._signed[i*2+1] = 0x7fff * ( mix_buf_r[i]) ;
   }
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
-#endif
 }
 
 
