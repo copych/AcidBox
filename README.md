@@ -12,7 +12,7 @@ A modified version of http://tips.ibawizard.net/acid-banger/, initially taken fr
 
 [demo2.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox2.mp3?raw=true) a bit of improvements
 
-[demo3.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox3.mp3?raw=true) this time reverb and delay engaged (all onboard, all managed by AcidBanger)
+[demo3.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox3.mp3?raw=true) this time reverb and delay engaged (all onboard, all managed by AcidBanger), I have restarted it several times to show the variety of patterns generated.
 
 
 # To build the thing
