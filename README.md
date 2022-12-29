@@ -11,7 +11,7 @@ A modified version of http://tips.ibawizard.net/acid-banger/, initially taken fr
 [demo2.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox2.mp3?raw=true)
 
 # To build the thing
-You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external DAC, like PCM5102. 
+Ideally, you need an ESP32 with PSRAM (ESP32 WROVER module). Also an external DAC, like PCM5102 is highly preferrable. 
 
 <b>ATTENTION! PSRAM handling requires up-to-date Arduino ESP32 core. Of what I tested, versions 2.0.4, 2.0.5, 2.0.6 are working, 2.0.0 is not</b>
 
@@ -23,7 +23,7 @@ In ArduinoIDE (I've used v.1.8.20) select:
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
 # What if you only have WROOM module (no PSRAM)
-You can still compile and run the app, with NO_PSRAM option in the config.h. Note, that in this case you will get NO DELAY, NO REVERB and just ONE DRUM KIT. 
+You can still compile and run the app, with NO_PSRAM option (line 11 in config.h). Note, that in this case you will get NO REVERB and just ONE SMALL DRUM KIT. 
 
 In ArduinoIDE (I used v.1.8.20) select: 
 * board: ESP32 Dev Module
@@ -33,7 +33,7 @@ In ArduinoIDE (I used v.1.8.20) select:
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
 # What if you don't have an external DAC module (PCM5102)
-You can still compile and run the app, with USE_INTERNAL_DAC option in the config.h. BUT sound output is just terrible with internal DAC. Stereo 8-bit audio you can get form GPIO25 and GPIO26. Probably you can improve it a bit playing with the multipliers in i2s_output() method in general.ino file.
+You can still compile and run the app, with USE_INTERNAL_DAC option (line 10 in config.h). BUT you should understand that sound output is 8-bit. You just get it form GPIO25 and GPIO26. Probably you can improve it a bit playing with the multipliers in i2s_output() method in general.ino file.
 
 In ArduinoIDE (I used v.1.8.20) select:
 * board: ESP32 Dev Module
