@@ -20,8 +20,8 @@
 #include "config.h"
 
 #include "driver/i2s.h"
-#ifndef NO_PSRAM
   #include "fx_delay.h"
+#ifndef NO_PSRAM
   #include "fx_reverb.h"
 #endif
 #include "compressor.h"
@@ -75,8 +75,9 @@ static union { // a dirty trick, instead of true converting
 } out_buf; // i2s L+R output buffer
 
 #ifndef NO_PSRAM
-static float dly_k1, dly_k2, dly_k3, rvb_k1, rvb_k2, rvb_k3;
+static float rvb_k1, rvb_k2, rvb_k3;
 #endif
+static float dly_k1, dly_k2, dly_k3;
 
 size_t bytes_written; // i2s
 static uint32_t c1=0, c2=0, c3=0, d1=0, d2=0, d3=0, prescaler; // debug timing
@@ -93,9 +94,9 @@ SynthVoice Synth2(1); // use synth_buf[1]
 Sampler Drums(DRUMKITCNT , DEFAULT_DRUMKIT); // first arg = total number of sample sets, second = starting drumset [0 .. total-1]
 
 // Global effects
+  FxDelay Delay;
 #ifndef NO_PSRAM
   FxReverb Reverb;
-  FxDelay Delay;
 #endif
 Compressor Comp;
 
@@ -123,9 +124,9 @@ static void audio_task1(void *userData) {
 static void audio_task2(void *userData) {
 #ifndef NO_PSRAM
 	Reverb.Init();  
-	Delay.Init();
 #endif
 	Drums.Init();
+  Delay.Init();
   Comp.Init(SAMPLE_RATE);
 #ifdef JUKEBOX
   init_midi();

@@ -10,10 +10,10 @@ static void mixer() { // sum buffers
   static float synth1_out_l, synth1_out_r, synth2_out_l, synth2_out_r, drums_out_l, drums_out_r;
   static float dly_l, dly_r, rvb_l, rvb_r;
   static float meter, mono_mix;
-#ifndef NO_PSRAM 
     dly_k1 = Synth1._sendDelay;
     dly_k2 = Synth2._sendDelay;
     dly_k3 = Drums._sendDelay;
+#ifndef NO_PSRAM 
     rvb_k1 = Synth1._sendReverb;
     rvb_k2 = Synth2._sendReverb;
     rvb_k3 = Drums._sendReverb;
@@ -25,10 +25,10 @@ static void mixer() { // sum buffers
       synth2_out_r = (1.0f-Synth2.pan)*synth_buf[1][i];
       drums_out_l = drums_buf_l[i];
       drums_out_r = drums_buf_r[i];
-#ifndef NO_PSRAM      
       dly_l = dly_k1 * synth1_out_l + dly_k2 * synth2_out_l + dly_k3 * drums_out_l; // delay bus
       dly_r = dly_k1 * synth1_out_r + dly_k2 * synth2_out_r + dly_k3 * drums_out_r;
       Delay.Process( &dly_l, &dly_r );
+#ifndef NO_PSRAM      
       
       rvb_l = rvb_k1 * synth1_out_l + rvb_k2 * synth2_out_l + rvb_k3 * drums_out_l; // reverb bus
       rvb_r = rvb_k1 * synth1_out_r + rvb_k2 * synth2_out_r + rvb_k3 * drums_out_r;
@@ -37,8 +37,8 @@ static void mixer() { // sum buffers
       mix_buf_l[i] = 0.2f * (synth1_out_l + synth2_out_l + drums_out_l + dly_l + rvb_l);
       mix_buf_r[i] = 0.2f * (synth1_out_r + synth2_out_r + drums_out_r + dly_r + rvb_r);
 #else
-      mix_buf_l[i] = 0.33f * (synth1_out_l + synth2_out_l + drums_out_l);
-      mix_buf_r[i] = 0.33f * (synth1_out_r + synth2_out_r + drums_out_r);
+      mix_buf_l[i] = 0.25f * (synth1_out_l + synth2_out_l + drums_out_l + dly_l);
+      mix_buf_r[i] = 0.25f * (synth1_out_r + synth2_out_r + drums_out_r + dly_r);
 #endif
       mono_mix = 0.5*(mix_buf_l[i] + mix_buf_r[i]);
       Comp.Process(mono_mix); // calculate gain based on a mono mix, can be a side chain
@@ -65,8 +65,8 @@ inline void i2s_output () {
   // now out_buf is ready, output
 #ifdef USE_INTERNAL_DAC
   for (int i=0; i < DMA_BUF_LEN; i++) {      
-    out_buf._unsigned[i*2] = (int16_t)(125.0f * ( mix_buf_l[i] +1.0f)) << 8  ; 
-    out_buf._unsigned[i*2+1] = (int16_t)(125.0f * ( mix_buf_r[i]+1.0f)) << 8 ;
+    out_buf._unsigned[i*2] = (int16_t)(127.0f * (1.1f * fast_tanh( mix_buf_l[i]) +1.0f)) << 8 ; // 256 output levels is way to little
+    out_buf._unsigned[i*2+1] = (int16_t)(127.0f * (1.1f * fast_tanh( mix_buf_r[i])+1.0f)) << 8 ; // maybe you'll be lucky to fully use this range
   }
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
 #else

@@ -1,14 +1,14 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v0.6"
+#define VERSION         "v0.7"
 
-#define DEBUG_ON            // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it of for production
+//#define DEBUG_ON            // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it of for production
 //#define DEBUG_MASTER_OUT    // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
 
-//#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: 8BIT STEREO
-//#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB AND DELAY'D BE SACRIFICED, SMALL DRUM KIT SAMPLES USED 
+#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: 8BIT STEREO
+#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB AND DELAY'D BE SACRIFICED, SMALL DRUM KIT SAMPLES USED 
 
 #define MIDI_ON               // use this option if you want to operate by MIDI
 //#define MIDI_VIA_SERIAL     // use this option together with MIDI_ON for Hairless MIDI style, this will block Serial debugging as well
@@ -17,7 +17,11 @@
 #define MAX_CUTOFF_FREQ 3000.0f
 #define MIN_CUTOFF_FREQ 250.0f
 
+#ifdef USE_INTERNAL_DAC
+#define SAMPLE_RATE     22050 // price for increasing this value is less delay time
+#else
 #define SAMPLE_RATE     44100
+#endif
 
 const float DIV_SAMPLE_RATE = 1.0f / (float)SAMPLE_RATE;
 const float DIV_2SAMPLE_RATE = 0.5f / (float)SAMPLE_RATE;
@@ -69,7 +73,7 @@ const float DIV_TWOPI = 1.0f/TWOPI;
 
 #define DRUMKITCNT 6                // how many drumkits do we have
 #ifdef NO_PSRAM
-  #define RAM_SAMPLER_CACHE  65000    // compact sample set is 132kB, first 8 is ~38kB
+  #define RAM_SAMPLER_CACHE  40000    // compact sample set is 132kB, first 8 is ~38kB
   #define SAMPLECNT 8                 // how many sounds from the folder will be used
   #define DEFAULT_DRUMKIT 4           // /data/4/ folder
 #else

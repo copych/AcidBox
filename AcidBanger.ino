@@ -51,11 +51,11 @@
 #define PERCUSSION_NOTE         4 //005
 
 // Pin numbers to which are buttons attached (connect one side of button to pin, the other to ground)
-#define GEN_SYNTH1_BUTTON_PIN   0
+#define GEN_SYNTH1_BUTTON_PIN   23
 #define GEN_SYNTH2_BUTTON_PIN   23
 #define GEN_NOTES_BUTTON        23
 #define GEN_DRUM_BUTTON         23
-#define PLAY_BUTTON             23
+#define PLAY_BUTTON             0
 #define MEM1_BUTTON             23
 #define MEM2_BUTTON             23
 #define MEM3_BUTTON             23
@@ -65,14 +65,16 @@
 // The BPM setting is very coarse, because it's based on `millis` clock and the
 // time between two midi ticks (1/6th of 16th note) has to be an integral number
 // of milliseconds...
-#define BPM 130
+
 #define NUM_RAMPS 6 // simultaneous knob rotatings
 #ifndef NO_PSRAM
   #define NUM_SYNTH_CCS 11
-  #define NUM_DRUM_CCS 6
+  #define NUM_DRUM_CCS  6
+  #define VOL_SYNTH     80
 #else
-  #define NUM_SYNTH_CCS 9
-  #define NUM_DRUM_CCS 4
+  #define NUM_SYNTH_CCS 10
+  #define NUM_DRUM_CCS  5
+  #define VOL_SYNTH     60
 #endif
 
 struct sSynthCCs {
@@ -93,8 +95,8 @@ sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
   {70,  0,  127,  0,  127,  true},
 #ifndef NO_PSRAM
   {91,  0,  5,    2,  127,  true},
-  {92,  0,  0,    64, 127,  false},
 #endif
+  {92,  0,  0,    64, 127,  false},
   {94,  0,  10,   2,  120,  true},
   {95,  0,  25,   25, 100,  false},
   {72,  0,  20,   10, 80,   true},
@@ -112,8 +114,8 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
   {95,  0,  25,   25, 100,  false},
 #ifndef NO_PSRAM
   {91,  0,  3,    2,  127,  true},
-  {92,  0,  0,    60, 127,  false},
 #endif
+  {92,  0,  0,    60, 127,  false},
   {72,  0,  20,   10, 80,   true},
   {73,  0,  0,    3,  20,   true}
 };
@@ -124,8 +126,8 @@ sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
   {71,  0,  0,    0,  127,  true},
 #ifndef NO_PSRAM
   {91,  0,  5,    2,  127,  true},
-  {92,  0,  0,    64, 127,  false},
 #endif
+  {92,  0,  0,    64, 127,  false},
   {93,  0,  15,   80, 127,  true},
   {94,  0,  6,    6,  100,  true}
 };
@@ -289,7 +291,7 @@ static inline uint16_t myRandom(uint16_t max) {
 
 static void read_button(struct Button *button)
 {
-  if (button->numb==1) {
+  if (button->numb==5) {
     button->history = (button->history << 1) | (digitalRead(button->pin) == HIGH);
   } else if (button->numb<1 || button->numb>1) {
     uint32_t btnSeed = random(1000000);
@@ -445,7 +447,7 @@ static void generate_melody(uint8_t *note_set, byte note_set_len,
       pattern[i] = note_set[myRandom(note_set_len)];
       if (flip(30))
         *accent |= 1u << i;
-      if (flip(10))
+      if (flip(30))
         *glide |= 1u << i;
     } else {
       pattern[i] = 0;
@@ -683,7 +685,7 @@ void init_patterns() {
 
 #define MIDI_TICKS_PER_16TH 6
 
-static const unsigned long midi_tick_ms = 1000ul * 15 / BPM / MIDI_TICKS_PER_16TH;
+static unsigned long midi_tick_ms = 1000ul * 15 / bpm / MIDI_TICKS_PER_16TH;
 static byte midi_playing, midi_tick, midi_step;
 
 static void do_midi_start() {
@@ -705,8 +707,8 @@ static void do_midi_start() {
   send_midi_control(SYNTH1_MIDI_CHAN, 91, 5);  // reverb send
   send_midi_control(SYNTH2_MIDI_CHAN, 91, 5);  // reverb send
   send_midi_control(DRUM_MIDI_CHAN,   91, 4);  // reverb send
-  send_midi_control(SYNTH1_MIDI_CHAN, 7, 80);
-  send_midi_control(SYNTH2_MIDI_CHAN, 7, 80);
+  send_midi_control(SYNTH1_MIDI_CHAN, 7, VOL_SYNTH);
+  send_midi_control(SYNTH2_MIDI_CHAN, 7, VOL_SYNTH);
   send_midi_control(DRUM_MIDI_CHAN,   7, 127);
   send_midi_control(DRUM_MIDI_CHAN,   87, 127); // reverb time
   send_midi_control(SYNTH1_MIDI_CHAN, 94, 3);  // post-overdrive

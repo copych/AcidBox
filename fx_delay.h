@@ -7,7 +7,6 @@
  * Author: Marcel Licence
  */
 
-#define MAX_DELAY SAMPLE_RATE // 1 second
 
 class FxDelay {
 	public:
@@ -15,15 +14,36 @@ class FxDelay {
    
 		// max delay can be changed but changes also the PSRAM consumption
 		void Init( void ){
+#ifdef NO_PSRAM
+  #define MAX_DELAY 42000/4 // 
+    // heap_caps_print_heap_info(MALLOC_CAP_8BIT);
+     delayLine_l = (float *)malloc(sizeof(float) * MAX_DELAY);
+      if( delayLine_l == NULL){
+        DEBUG("No more RAM for delay L !");
+      } else {
+        DEBUG("Memory allocated for delay L");
+      }
+   // heap_caps_print_heap_info(MALLOC_CAP_8BIT);
+      delayLine_r = (float *)malloc(sizeof(float) * MAX_DELAY);
+      if( delayLine_r == NULL ){
+        DEBF("No more RAM for delay R !");
+      } else {
+        DEBUG("Memory allocated in RAM for delay R");
+      }
+      Reset();
+      
+#else
+#define MAX_DELAY SAMPLE_RATE // 1 second
 			delayLine_l = (float *)ps_malloc(sizeof(float) * MAX_DELAY);
 			if( delayLine_l == NULL){
-				DEBF("No more PSRAM memory!\n");
+				DEBF("No more PSRAM!\n");
 			}
 			delayLine_r = (float *)ps_malloc(sizeof(float) * MAX_DELAY);
 			if( delayLine_r == NULL ){
-				DEBF("No more PSRAM memory!\n");
+				DEBF("No more PSRAM!\n");
 			}
 			Reset();
+#endif
 		};
 
 		void Reset( void ){
@@ -31,7 +51,7 @@ class FxDelay {
 				delayLine_l[i] = 0;
 				delayLine_r[i] = 0;
 			}
-			delayLen = 60.0f / 130.0f * 1.5f * (float)SAMPLE_RATE;
+			delayLen = 60.0f / bpm * 1.5f * (float)min(SAMPLE_RATE,MAX_DELAY);
 			delayToMix = 1.0f;
 			delayFeedback = 0.2f;
 		};
