@@ -22,7 +22,7 @@ Ideally, you need an ESP32 with PSRAM (ESP32 WROVER module). Also an external DA
 
 In ArduinoIDE (I've used v.1.8.20) select: 
 * board: ESP32 Dev Module
-* partition scheme: No OTA (1MB APP/ 3MB SPDIFF)
+* partition scheme: No OTA (1MB APP/ 3MB SPIFFS)
 * PSRAM: enabled
 
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
@@ -32,7 +32,7 @@ You can still compile and run the app, with NO_PSRAM option (line 11 in config.h
 
 In ArduinoIDE (I used v.1.8.20) select: 
 * board: ESP32 Dev Module
-* partition scheme: No OTA (1MB APP/ 3MB SPDIFF)
+* partition scheme: No OTA (1MB APP/ 3MB SPIFFS)
 * PSRAM: disabled
 
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
@@ -42,7 +42,7 @@ You can still compile and run the app, with USE_INTERNAL_DAC option (line 10 in 
 
 In ArduinoIDE (I used v.1.8.20) select:
 * board: ESP32 Dev Module
-* partition scheme: No OTA (1MB APP/ 3MB SPDIFF)
+* partition scheme: No OTA (1MB APP/ 3MB SPIFFS)
 
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
