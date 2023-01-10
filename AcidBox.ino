@@ -17,10 +17,19 @@
 *
 */
 
+// sorry for this declaration, it should be in acidbanger.ino or in acidbanger.h, but the compiler doesn't see it there
+typedef enum drum_kinds{
+  DrumBreak,
+  DrumStraight,
+  DrumHang,
+  DrumAny,
+  DrumNone
+} drum_kinds ;
+
 #include "config.h"
 
 #include "driver/i2s.h"
-  #include "fx_delay.h"
+#include "fx_delay.h"
 #ifndef NO_PSRAM
   #include "fx_reverb.h"
 #endif

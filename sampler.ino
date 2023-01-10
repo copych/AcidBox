@@ -482,6 +482,8 @@ inline void Sampler::Process( float *left, float *right ){
     Effects.Process( &signal_l, &signal_r );
     signal_l *= _volume;
     signal_r *= _volume;
-    *left  = fclamp(signal_l, -1.0f, 1.0f);
-    *right = fclamp(signal_r, -1.0f, 1.0f);;
+  //  *left  = fclamp(signal_l, -1.0f, 1.0f);
+  //  *right = fclamp(signal_r, -1.0f, 1.0f);
+    *left  = fast_tanh(signal_l);
+    *right = fast_tanh(signal_r);
 }

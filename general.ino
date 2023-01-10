@@ -65,10 +65,10 @@ inline void i2s_output () {
   // now out_buf is ready, output
 #ifdef USE_INTERNAL_DAC
   for (int i=0; i < DMA_BUF_LEN; i++) {      
-    out_buf._unsigned[i*2] = (int16_t)(127.0f * (1.1f * fast_tanh( mix_buf_l[i]) +1.0f)) << 8 ; // 256 output levels is way to little
-    out_buf._unsigned[i*2+1] = (int16_t)(127.0f * (1.1f * fast_tanh( mix_buf_r[i])+1.0f)) << 8 ; // maybe you'll be lucky to fully use this range
+    out_buf._unsigned[i*2] = (uint16_t)(127.0f * ( fast_tanh( mix_buf_l[i]) + 1.0f)) << 8U; // 256 output levels is way to little
+    out_buf._unsigned[i*2+1] = (uint16_t)(127.0f * ( fast_tanh( mix_buf_r[i]) + 1.0f)) << 8U ; // maybe you'll be lucky to fully use this range
   }
-  i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
+  i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY);
 #else
   for (int i=0; i < DMA_BUF_LEN; i++) {      
     out_buf._signed[i*2] = 0x7fff * ( mix_buf_l[i]) ; 
@@ -78,6 +78,27 @@ inline void i2s_output () {
 #endif
 }
 
+
+static __attribute__((always_inline)) inline float recipsf2(float a) {
+    float result;
+    asm volatile (
+        "wfr f1, %1\n"
+
+        "recip0.s f0, f1\n"
+        "const.s f2, 1\n"
+        "msub.s f2, f1, f0\n"
+        "maddn.s f0, f0, f2\n"
+        "const.s f2, 1\n"
+        "msub.s f2, f1, f0\n"
+        "maddn.s f0, f0, f2\n"
+
+        "rfr %0, f0\n"
+        :"=r"(result):"r"(a):"f0","f1","f2"
+    );
+    return result;
+}
+
+#define DIV(a, b) (a)*recipsf2(b)
 
 inline float fclamp(float in, float min, float max){
     return fmin(fmax(in, min), max);

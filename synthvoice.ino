@@ -72,12 +72,11 @@ inline void SynthVoice::Generate() {
 
     samp = Filter.Process(samp); 
     samp *= ampEnv ;
- //   samp = WFolder.Process(samp);
     samp = Drive.Process(samp);
     samp *=  volume;
 //   if ( prescaler % DMA_BUF_LEN*2 == 0 && _index == 0 ) DEBUG( final_cut );
     
-    if ((_slide || _portamento) && _deltaStep != 0.0f) {
+    if ((_slide || _portamento) && _deltaStep != 0.0f) {     // portamento / slide processing
       if (fabs(_targetStep - _currentStep) >= fabs(_deltaStep)) {
         _currentStep += _deltaStep;
       } else {
@@ -90,18 +89,12 @@ inline void SynthVoice::Generate() {
     if ( _phaze >= WAVE_SIZE) {
       _phaze -= WAVE_SIZE ;
     }
-    synth_buf[_index][i] = (samp); // mono
+    synth_buf[_index][i] = fast_tanh(samp); // mono
   }
 }
 
 void SynthVoice::Init() {
   Filter.Init((float)SAMPLE_RATE);  
-  /*
-  Filter.setSampleRate((float)SAMPLE_RATE);
-  Filter.setMode(rosic::TeeBeeFilter::TB_303);
-  Filter.setFeedbackHighpassCutoff(150.0f);
-  */
-//  WFolder.Init(); 
   Drive.Init();
 }
 
@@ -175,7 +168,7 @@ float SynthVoice::GetAmpEnv() {
       _ampEnvReleaseStep = _msToSteps / _ampReleaseMs;
       if (_accent) {
         _ampEnvAttackStep *= 1.4f;
-        _ampEnvDecayStep *= 1.4f;
+        _ampEnvDecayStep *= 1.6f;
       }
       _eAmpEnvState = ENV_ATTACK;
       ret_val = (-exp_2048[ 0 ] + 1.0f) * 0.5f;
@@ -239,7 +232,7 @@ inline float SynthVoice::GetFilterEnv() {
       _filterEnvDecayStep = _msToSteps / _filterDecayMs;
       if (_accent) {
         _filterEnvAttackStep *= 1.4f;
-        _filterEnvDecayStep *= 1.4f;
+        _filterEnvDecayStep *= 1.8f;
       }
       _eFilterEnvState = ENV_ATTACK;
       ret_val = (-exp_2048[ 0 ] + 1.0f) * 0.5f;
