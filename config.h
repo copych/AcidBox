@@ -4,7 +4,7 @@
 #define DEBUG_ON            // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT    // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
-#define DEBUG_JUKEBOX
+//#define DEBUG_JUKEBOX
 //#define DEBUG_FX
 
 //#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: 8BIT STEREO
@@ -81,6 +81,10 @@ const float DIV_TWOPI = 1.0f/TWOPI;
   #define PSRAM_SAMPLER_CACHE 900000  // this cache's size must correspond to the largest sample set's size
   #define SAMPLECNT 12                // how many sounds from the folder will be used
   #define DEFAULT_DRUMKIT 0           // folder number in /data/ 
+#endif
+
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 0
 #endif
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))

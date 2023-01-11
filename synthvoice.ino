@@ -58,10 +58,11 @@ inline void SynthVoice::Generate() {
   prescaler++;
   filtEnv = GetFilterEnv();
   ampEnv = GetAmpEnv();
-  ampEnv = ampDeclicker.Process(ampEnv);
-  filtEnv = filtDeclicker.Process(filtEnv);
+//  filtEnv = filtDeclicker.Process(filtEnv);
+//  ampEnv = ampDeclicker.Process(ampEnv);
     if (_eAmpEnvState != ENV_IDLE) {
-      samp = (((1.0f - _waveMix) * (square_2048[ (uint16_t)(_phaze) ] ) ) + ( _waveMix * exp_2048[ (uint16_t)(_phaze) ] )); // lookup and mix waveforms
+      //samp = (((1.0f - _waveMix) * (square_2048[ (uint16_t)(_phaze) ] ) ) + ( _waveMix * exp_2048[ (uint16_t)(_phaze) ] )); // lookup and mix waveforms
+      samp = (1.0f - _waveMix) * lookupTable(square_2048,_phaze) + _waveMix * lookupTable(exp_2048,_phaze) ; // lookup and mix waveforms
     } else {
       samp = 0.0f;
     }
@@ -180,7 +181,7 @@ float SynthVoice::GetAmpEnv() {
         _ampEnvPosition = 0;
         ret_val = (-exp_2048[ WAVE_SIZE-1 ] + 1.0f) * 0.5f;
       } else {
-        ret_val = (-exp_2048[ (uint16_t)_ampEnvPosition ] + 1.0f) * 0.5f;
+        ret_val = (-lookupTable(exp_2048, _ampEnvPosition ) + 1.0f) * 0.5f;
         if (pass_val > ret_val) ret_val = pass_val;
       }
       pass_val = ret_val;
@@ -192,7 +193,7 @@ float SynthVoice::GetAmpEnv() {
         _ampEnvPosition = 0;
         ret_val = sust_level;
       } else {
-        ret_val = sust_level + k_sust * (exp_2048[ (uint16_t)_ampEnvPosition ] + 1.0f) * 0.5f;
+        ret_val = sust_level + k_sust * (lookupTable(exp_2048, _ampEnvPosition) + 1.0f) * 0.5f;
       }
       pass_val = ret_val;
       break;
@@ -208,7 +209,7 @@ float SynthVoice::GetAmpEnv() {
         ret_val = 0.0f;
       } else {
         if (_ampEnvPosition <= _ampEnvReleaseStep) release_lvl = pass_val;
-        ret_val = release_lvl * (exp_2048[ (uint16_t)_ampEnvPosition ] + 1.0f) * 0.5f;
+        ret_val = release_lvl * (lookupTable(exp_2048, _ampEnvPosition) + 1.0f) * 0.5f;
       }
       _ampEnvPosition += _ampEnvReleaseStep;
       pass_val=ret_val;
@@ -243,7 +244,7 @@ inline float SynthVoice::GetFilterEnv() {
         _filterEnvPosition = 0.0f;
         ret_val = (-exp_2048[ WAVE_SIZE-1 ] + 1.0f) * 0.5f;
       } else {
-        ret_val = (-exp_2048[ (uint16_t)_filterEnvPosition ] + 1.0f) * 0.5f ;
+        ret_val = (-lookupTable(exp_2048, _filterEnvPosition) + 1.0f) * 0.5f ;
       }
       _filterEnvPosition += _filterEnvAttackStep;
       ret_val += _offset;
@@ -254,7 +255,7 @@ inline float SynthVoice::GetFilterEnv() {
         _filterEnvPosition = 0.0f;
         ret_val = 0.0f;
       } else {
-        ret_val =  (exp_2048[ (uint16_t)_filterEnvPosition ] + 1.0f) * 0.5f ;
+        ret_val =  (lookupTable(exp_2048, _filterEnvPosition) + 1.0f) * 0.5f ;
       }
       _filterEnvPosition += _filterEnvDecayStep;
       ret_val *= (1.0f + _offset);

@@ -113,7 +113,6 @@ Compressor Comp;
 static void audio_task1(void *userData) {
 
   Synth1.Init();
-  Synth2.Init();
   
     while(1) {
         // this part of the code never intersects with mixer buffers
@@ -121,7 +120,6 @@ static void audio_task1(void *userData) {
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
             c1=micros();
             Synth1.Generate(); 
-            Synth2.Generate();
             d1=micros()-c1;
             xTaskNotifyGive(SynthTask2); // if you have glitches, you may want to place this string in the end of audio_task1
         }
@@ -134,7 +132,8 @@ static void audio_task2(void *userData) {
 #ifndef NO_PSRAM
 	Reverb.Init();  
 #endif
-	Drums.Init();
+  Drums.Init();
+  Synth2.Init();
   Delay.Init();
   Comp.Init(SAMPLE_RATE);
 #ifdef JUKEBOX
@@ -143,17 +142,15 @@ static void audio_task2(void *userData) {
     while(1) {
         // we can run it together with synth(), but not with mixer()
         c2 = micros();
-        drums();
-        d2 = micros() - c2;
-
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
-
+        drums_generate();
+        Synth2.Generate();
+        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
           c3 = micros();
-          mixer();
-          
-          xTaskNotifyGive(SynthTask1);
-        }
-        d3 = micros() - c3;
+          mixer(); // actually we could send Notify before mixer() is done, but then we'd need tic-tac buffers for generation. Todo maybe
+          d3 = micros() - c3;
+          xTaskNotifyGive(SynthTask1); 
+        }        
+        d2 = micros() - c2;
         
         i2s_output();
         
@@ -242,13 +239,7 @@ void loop() { // default loopTask running on the Core1
   }
   #endif
   
-  /*
-  DEB (d1);
-  DEB(" ");
-  DEB (d2);
-  DEB(" ");
-  DEBUG (d3);
- */
+ // DEBF ("%d %d %d \r\n" , d1, d2, d3);
 
   taskYIELD(); // breath for all the rest of the Core1 
 }

@@ -57,6 +57,7 @@
 #define CLOSED_HAT_NOTE         6 //007
 #define OPEN_HAT_NOTE           7 //008
 #define PERCUSSION_NOTE         4 //005
+#define CRASH_NOTE              9 //010
 
 // Pin numbers to which are buttons attached (connect one side of button to pin, the other to ground)
 #define GEN_SYNTH1_BUTTON_PIN   23
@@ -163,8 +164,8 @@ struct Button {
 };
 
 enum {
-  NumInstruments = 2 + 5,
-  AccentedMidiVol = 110,
+  NumInstruments = 2 + 6,
+  AccentedMidiVol = 120,
   NormalMidiVol = 70,
 };
 
@@ -261,7 +262,7 @@ static void send_midi_noteoff(byte chan, byte note) {
 static void init_midi() {
 //  Serial.begin(115200);
 //  MIDI.begin(MIDI_CHANNEL_OMNI);
-  
+  pinMode(LED_BUILTIN, OUTPUT);
   for (byte i = 0; i < ButLast; i++) {
     init_button(&buttons[i], button_pins[i], i+1 );
   }
@@ -375,7 +376,7 @@ static void instr_noteon(byte instr, byte value, byte do_glide, byte do_accent) 
     // For drums: value is volume, accent and glide are ignored
     instr_noteon_raw(instr, ins->drum_note, value, 0);
   } else {
-    // For drums: value is note, volume is accent, glide is used
+    // For non-drums: value is note, volume is accent, glide is used
     instr_noteon_raw(instr, value, do_accent ? AccentedMidiVol : NormalMidiVol, do_glide);
   }
 }
@@ -385,10 +386,10 @@ static void instr_noteon(byte instr, byte value, byte do_glide, byte do_accent) 
  */
 
 void sequencer_step(byte step) {
+  do_midi_ramps();
 #ifdef DEBUG_JUKEBOX_
   DEBF("midi step %d\r\n", step);
 #endif
-  do_midi_ramps();
   // Play all notes in current step
   for (byte i = 0; i < NumInstruments; i++) {
     Pattern *pat = &memories[cur_memory].patterns[i];
@@ -400,6 +401,18 @@ void sequencer_step(byte step) {
       instr_noteon(i, value, glide, accent);
     else
       instr_noteoff(i);
+  }
+  if (Break.after == bar_current && step == 0) {
+    instr_noteon(NumInstruments-1, 127, 0, 0);
+//    instr_noteon_raw(NumInstruments-1, CRASH_NOTE, 127, 0);
+    DEBUG("CRASH!!!!!!!!!!!!!!!!!!!!!");
+    check_midi_ramps();
+  }
+  if (step % 4 == 0 || step == 1) { 
+    digitalWrite(LED_BUILTIN, HIGH);
+    DEBUG(step);
+  }  else {
+    digitalWrite(LED_BUILTIN, LOW);
   }
 }
 
@@ -482,6 +495,7 @@ enum {
   SnareBackbeat,
   SnareSkip,
   SnareFill,
+  SnareBreak,
   SnareStraight,
   SnareNone,
   /* anything bellow this line will never be picked */
@@ -490,6 +504,8 @@ enum {
 enum {
   HatsOffbeats,
   HatsClosed,
+  HatsPop,
+  HatsPat1,
   HatsNone,
   /* anything bellow this line will never be picked */
 };
@@ -506,7 +522,7 @@ enum {
 
 
 
-static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *perc, drum_kinds drum_kind ) {
+static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *perc, byte *crash, drum_kinds drum_kind ) {
   memset(kick,  0, PatternLength); // zero patterns
   memset(snare, 0, PatternLength);
   memset(oh,    0, PatternLength);
@@ -531,10 +547,12 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
       }
       
       rndVal = myRandom(100);
-      if (rndVal < 60) {
+      if (rndVal < 40) {
         snare_mode = SnareFill;
+      } else if (rndVal < 80) {
+        snare_mode = SnareBreak;
       } else {
-        snare_mode = SnareBackbeat;
+        snare_mode = SnareBackbeat;  
       }
       
       hat_mode = myRandom(HatsNone);      
@@ -555,7 +573,9 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
         snare_mode = SnareBackbeat;
       }
       
-      hat_mode = myRandom(HatsNone);      
+      if (flip(70)) hat_mode = HatsPop;
+      else hat_mode = myRandom(HatsNone);      
+      
       perc_mode = myRandom(PercNone);
       break;
     case DrumHang:
@@ -592,8 +612,6 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
     for (byte i = 0; i < PatternLength; i++) {
       if (i % 4 == 0)
         kick[i] = 120;
-      else if (i % 2 == 0 && flip(10))
-        kick[i] = 80;
     }
   } else if (kick_mode == KickElectro) {
     for (byte i = 0; i < PatternLength; i++) {
@@ -608,8 +626,8 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
     for (byte i = 0; i < PatternLength; i++) {
       if (i == 0)
         kick[i] = 127;
-      else if (flip(5))
-        kick[i] = myRandom(50);
+      else if (i == 14 && flip(20))
+        kick[i] = myRandom(80);
     }
   }
 
@@ -625,7 +643,22 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
   } else if (snare_mode == SnareStraight) {
     for (byte i = 0; i < PatternLength; i++) {
       if (i % 8 == 4)
-        snare[i] = 120;
+        snare[i] = 80;
+    }
+  } else if (snare_mode == SnareBreak) {
+    for (byte i = 0; i < PatternLength; i++) {
+      switch (i) {
+        case 2:
+        case 6:
+        case 8:
+        case 10:
+          break;
+        case 4:
+          snare[i] = myRandom(100);
+          break;
+        default:
+          snare[i] = 120;
+      }
     }
   } else if (snare_mode == SnareSkip) {
     for (byte i = 0; i < PatternLength; i++) {
@@ -655,6 +688,19 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
         ch[i] = 50;
       else if (flip(50))
         ch[i] = myRandom(40);
+    }
+  } else if (hat_mode == HatsPop) {
+    for (byte i = 0; i < PatternLength; i++) {
+      if (i % 4 == 2)
+        oh[i] = 60;
+      else {
+        ch[i] = 40 + myRandom(40);
+      }
+    }
+  } else if (hat_mode == HatsPat1) {
+    for (byte i = 0; i < PatternLength; i++) {
+      if (i % 8 != 1 && i % 8 != 4 && i % 8 != 7 )
+        ch[i] = 80;
     }
   }
 
@@ -749,6 +795,7 @@ void mem_generate_drums(byte mem, enum drum_kinds drum_kind) {
     m->patterns[5].notes,
     m->patterns[4].notes,
     m->patterns[6].notes,
+    m->patterns[7].notes,
     drum_kind);
 }
 
@@ -1034,7 +1081,7 @@ static void do_midi_stop() {
  * Instrument definition
  */
 
-static const byte drum_notes[5] = { KICK_NOTE, SNARE_NOTE, CLOSED_HAT_NOTE, OPEN_HAT_NOTE, PERCUSSION_NOTE };
+static const byte drum_notes[6] = { KICK_NOTE, SNARE_NOTE, CLOSED_HAT_NOTE, OPEN_HAT_NOTE, PERCUSSION_NOTE, CRASH_NOTE };
 static const byte synth_midi_channels[2] = { SYNTH1_MIDI_CHAN, SYNTH2_MIDI_CHAN };
 
 static void init_instruments() {
@@ -1050,7 +1097,7 @@ static void init_instruments() {
   }
 
   // Make drum instruments
-  for (byte i = 0; i < 5; i++) {
+  for (byte i = 0; i < 6; i++) {
     ins->midi_channel = DRUM_MIDI_CHAN;
     ins->is_drum = 1;
     ins->drum_note = drum_notes[i];

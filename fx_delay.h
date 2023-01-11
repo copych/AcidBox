@@ -28,7 +28,7 @@ class FxDelay {
       if( delayLine_r == NULL ){
         DEBF("No more RAM for delay R !");
       } else {
-        DEBUG("Memory allocated in RAM for delay R");
+        DEBUG("Memory allocated for delay R");
       }
       Reset();
       

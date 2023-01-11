@@ -128,6 +128,26 @@ class FxFilterCrusher {
 
 		float bitCrusher = 1.0f;
 		
+    static __attribute__((always_inline)) inline float recipsf2(float a) {
+      float result;
+      asm volatile (
+        "wfr f1, %1\n"
+
+        "recip0.s f0, f1\n"
+        "const.s f2, 1\n"
+        "msub.s f2, f1, f0\n"
+        "maddn.s f0, f0, f2\n"
+        "const.s f2, 1\n"
+        "msub.s f2, f1, f0\n"
+        "maddn.s f0, f0, f2\n"
+
+        "rfr %0, f0\n"
+        :"=r"(result):"r"(a):"f0","f1","f2"
+      );
+      return result;
+    }
+    
+    #define DIV(a, b) (a)*recipsf2(b)
 		
 			// calculate coefficients of the 2nd order IIR filter
 	
@@ -155,8 +175,8 @@ class FxFilterCrusher {
 			cosOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega + (float)((1ULL << 30) - 1)))];
 			sinOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega))];
 
-			alpha = sinOmega / (2.0 * Q);
-			b[0] = (1 - cosOmega) / 2;
+			alpha = DIV(sinOmega , (2.0 * Q));
+			b[0] = (1 - cosOmega) * 0.5f;
 			b[1] = 1 - cosOmega;
 			b[2] = b[0];
 			a[0] = 1 + alpha;
@@ -164,7 +184,7 @@ class FxFilterCrusher {
 			a[2] = 1 - alpha;
 
 			// Normalize filter coefficients
-			float factor = 1.0f / a[0];
+			float factor = recipsf2 (a[0]);
 
 			aNorm[0] = a[1] * factor;
 			aNorm[1] = a[2] * factor;
@@ -200,8 +220,8 @@ class FxFilterCrusher {
 			cosOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega + (float)((1ULL << 30) - 1)))];
 			sinOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega))];
 
-			alpha = sinOmega / (2.0 * Q);
-			b[0] = (1 + cosOmega) / 2;
+			alpha = DIV(sinOmega , (2.0 * Q));
+			b[0] = (1 + cosOmega) * 0.5f;
 			b[1] = -(1 + cosOmega);
 			b[2] = b[0];
 			a[0] = 1 + alpha;
@@ -209,7 +229,7 @@ class FxFilterCrusher {
 			a[2] = 1 - alpha;
 
 			// Normalize filter coefficients
-			float factor = 1.0f / a[0];
+			float factor = recipsf2( a[0] );
 
 			aNorm[0] = a[1] * factor;
 			aNorm[1] = a[2] * factor;
@@ -226,6 +246,7 @@ class FxFilterCrusher {
 			*signal = out;
 		};
 		
+   
 
 };
 #endif

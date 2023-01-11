@@ -1,4 +1,4 @@
-static void drums() {
+static void drums_generate() {
   // float fl_sample = 0.0f;
   // float fr_sample = 0.0f;
     for (int i=0; i < DMA_BUF_LEN; i++){
@@ -28,8 +28,7 @@ static void mixer() { // sum buffers
       dly_l = dly_k1 * synth1_out_l + dly_k2 * synth2_out_l + dly_k3 * drums_out_l; // delay bus
       dly_r = dly_k1 * synth1_out_r + dly_k2 * synth2_out_r + dly_k3 * drums_out_r;
       Delay.Process( &dly_l, &dly_r );
-#ifndef NO_PSRAM      
-      
+#ifndef NO_PSRAM
       rvb_l = rvb_k1 * synth1_out_l + rvb_k2 * synth2_out_l + rvb_k3 * drums_out_l; // reverb bus
       rvb_r = rvb_k1 * synth1_out_r + rvb_k2 * synth2_out_r + rvb_k3 * drums_out_r;
       Reverb.Process( &rvb_l, &rvb_r );
@@ -71,19 +70,36 @@ inline void i2s_output () {
   i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY);
 #else
   for (int i=0; i < DMA_BUF_LEN; i++) {      
-    out_buf._signed[i*2] = 0x7fff * ( mix_buf_l[i]) ; 
-    out_buf._signed[i*2+1] = 0x7fff * ( mix_buf_r[i]) ;
+    out_buf._signed[i*2] = 0x7fff * (fast_tanh( mix_buf_l[i])) ; 
+    out_buf._signed[i*2+1] = 0x7fff * (fast_tanh( mix_buf_r[i])) ;
   }
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
 #endif
 }
 
 
+inline float lookupTable(float (&table)[WAVE_SIZE], float index ) { // lookup value in a table by float index, using linear interpolation
+ /* static float v1, v2, res;
+  static int32_t i;
+  static float f;
+  i = (int32_t)index;
+  f = index - i;
+  v1 = table[i];
+  if (i<WAVE_SIZE-1) {
+    v2 = table[i+1];
+  } else {
+    v2 = table[i];
+  }
+  res = (float)f * (float)((v2-v1) + v1);
+  return res;
+  */
+  return table[(uint16_t)index];
+}
+
 static __attribute__((always_inline)) inline float recipsf2(float a) {
     float result;
     asm volatile (
         "wfr f1, %1\n"
-
         "recip0.s f0, f1\n"
         "const.s f2, 1\n"
         "msub.s f2, f1, f0\n"
@@ -91,7 +107,6 @@ static __attribute__((always_inline)) inline float recipsf2(float a) {
         "const.s f2, 1\n"
         "msub.s f2, f1, f0\n"
         "maddn.s f0, f0, f2\n"
-
         "rfr %0, f0\n"
         :"=r"(result):"r"(a):"f0","f1","f2"
     );
@@ -116,7 +131,5 @@ inline float fast_tanh(float x){
       return sign;
     }
     if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders    
-    return  sign * tanh_2048[(uint16_t)(x*409.6f)]; // lookup table 2048 / 5 = 409.6
- //  return sign * x/(x+1.0/(2.12-2.88*x+4.0*x*x)); // very good approximation for tanh() found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
-  //  return sign * tanh(x);
+    return  sign * lookupTable(tanh_2048,(x*TANH_LOOKUP_COEF)); // lookup table 2048 / 5 = 409.6
 }
