@@ -521,7 +521,7 @@ static void generate_melody(uint8_t *note_set, byte note_set_len,
       pattern[i] = note_set[myRandom(note_set_len)];
       if (flip(30))
         *accent |= 1u << i;
-      if (flip(60))
+      if (flip(70))
         *glide |= 1u << i;
     } else {
       pattern[i] = 0;

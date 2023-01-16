@@ -124,12 +124,12 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       //Filter.setResonance(_reso);
       break;    
     case CC_303_DECAY: // Env release
-      _filterDecayMs = 5.0f + (float)cc_value * MIDI_NORM * 5000.0f ;
-      _ampDecayMs = 5.0f + (float)cc_value * MIDI_NORM * 7500.0f;
+      _filterDecayMs = 15.0f + (float)cc_value * MIDI_NORM * 5000.0f ;
+      _ampDecayMs = 15.0f + (float)cc_value * MIDI_NORM * 7500.0f;
       break;
     case CC_303_ATTACK: // Env attack
-      _filterAttackMs = (float)cc_value * MIDI_NORM * 500.0f ;
-      _ampAttackMs =  (float)cc_value * MIDI_NORM * 700.0f;
+      _filterAttackMs = 3.0f + (float)cc_value * MIDI_NORM * 500.0f ;
+      _ampAttackMs =  3.0f + (float)cc_value * MIDI_NORM * 700.0f;
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
