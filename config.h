@@ -7,15 +7,15 @@
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
 
-//#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: 8BIT STEREO
-//#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB AND DELAY'D BE SACRIFICED, SMALL DRUM KIT SAMPLES USED 
+//#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: samplerate 22050Hz, 8BIT STEREO
+//#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB would be SACRIFICED, SMALL DRUM KIT SAMPLES USED 
 
 #define MIDI_ON               // use this option if you want to operate by MIDI
 //#define MIDI_VIA_SERIAL       // use this option together with MIDI_ON for Hairless MIDI style, this will block Serial debugging as well
 #define JUKEBOX               // not working with MIDI_ON yet
 #define JUKEBOX_PLAY_ON_START // should it play on power on, or should it wait for "boot" button to be pressed
 
-#define MAX_CUTOFF_FREQ 3000.0f
+#define MAX_CUTOFF_FREQ 3000.0f // synth filter cutoff, this value is actually extended by envMod and accent 
 #define MIN_CUTOFF_FREQ 250.0f
 
 #ifdef USE_INTERNAL_DAC
