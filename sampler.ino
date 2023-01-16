@@ -412,7 +412,8 @@ inline void Sampler::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       _sendReverb = cc_value * MIDI_NORM;
       break;
     case CC_808_DISTORTION:
-      Effects.SetBitCrusher( cc_value * MIDI_NORM );
+      if ( cc_value == 0 ) Effects.SetBitCrusher(0.0f);
+      else Effects.SetBitCrusher( 0.66f + (cc_value * MIDI_NORM * 0.23f) );
       break;
     case CC_808_NOTE_SEL:
       SelectNote( cc_value );

@@ -164,9 +164,9 @@ float SynthVoice::GetAmpEnv() {
   switch (_eAmpEnvState) {
     case ENV_INIT:
       _ampEnvPosition = 0;
-      _ampEnvAttackStep = _msToSteps / _ampAttackMs;
-      _ampEnvDecayStep = _msToSteps / _ampDecayMs;
-      _ampEnvReleaseStep = _msToSteps / _ampReleaseMs;
+      _ampEnvAttackStep = _msToSteps * one_div( _ampAttackMs+0.0001);
+      _ampEnvDecayStep = _msToSteps * one_div(_ampDecayMs+0.0001);
+      _ampEnvReleaseStep = _msToSteps * one_div(_ampReleaseMs+0.0001);
       if (_accent) {
         _ampEnvAttackStep *= 1.4f;
         _ampEnvDecayStep *= 1.6f;
@@ -229,8 +229,8 @@ inline float SynthVoice::GetFilterEnv() {
     case ENV_INIT:
       _offset = ret_val;
       _filterEnvPosition = 0.0f;
-      _filterEnvAttackStep = _msToSteps / _filterAttackMs;
-      _filterEnvDecayStep = _msToSteps / _filterDecayMs;
+      _filterEnvAttackStep = _msToSteps * one_div(_filterAttackMs+0.0001);
+      _filterEnvDecayStep = _msToSteps * one_div(_filterDecayMs+0.0001);
       if (_accent) {
         _filterEnvAttackStep *= 1.4f;
         _filterEnvDecayStep *= 1.8f;

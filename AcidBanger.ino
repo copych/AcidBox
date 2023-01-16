@@ -51,7 +51,6 @@
 // removed/modified buttons processing
 // 
 
-
 #define KICK_NOTE               0 //001
 #define SNARE_NOTE              1 //002
 #define CLOSED_HAT_NOTE         6 //007
@@ -139,10 +138,10 @@ sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
   {71,  0,  0,    0,  127,  true},
 #ifndef NO_PSRAM
   {91,  0,  5,    2,  127,  true},  // reverb is not available with no psram
-  {92,  0,  0,    64, 127,  false}, // delay for drums needs more delay-time than we can afford
+  {92,  0,  0,    64, 127,  true}, // delay for drums needs more delay-time than we can afford
 #endif
   {93,  0,  15,   80, 127,  true},
-  {94,  0,  6,    6,  100,  true}
+  {94,  0,  0,    6,  123,  true}
 };
 
 struct sMidiRamp {
@@ -157,10 +156,50 @@ struct sMidiRamp {
   int16_t leftBars = 0;
 } midiRamps[NUM_RAMPS];
 
-struct Button {
-  uint8_t history;
-  byte pin;
-  uint8_t numb;
+
+typedef enum drum_kinds{
+  DrumBreak,
+  DrumStraight,
+  DrumHang,
+  DrumAny,
+  DrumNone
+} drum_kinds ;
+
+enum {
+  KickElectro,
+  KickFourFloor,
+  KickBigbeat,
+  KickNone,
+  /* anything bellow this line will never be picked */
+};
+
+enum {
+  SnareBackbeat,
+  SnareSkip,
+  SnareFill,
+  SnareBreak,
+  SnareStraight,
+  SnareNone,
+  /* anything bellow this line will never be picked */
+};
+
+enum {
+  HatsOffbeats,
+  HatsClosed,
+  HatsPop,
+  HatsPat1,
+  HatsNone,
+  /* anything bellow this line will never be picked */
+};
+
+enum {
+  PercFiller,
+  PercXor1,
+  PercXor2,
+  PercEcho,
+  PercRolls,
+  PercNone,
+  /* anything bellow this line will never be picked */
 };
 
 enum {
@@ -169,7 +208,32 @@ enum {
   NormalMidiVol = 70,
 };
 
+enum {
+  NumMemories = 5,
+  MaxNoteSet = 16,
+  PatternLength = 16,
+};
+
+enum {
+  ButPat1 = 0,
+  ButNotes = 2,
+  ButDrums = 3,
+  ButPlay = 4,
+  ButMem1 = 5,
+  ButLast = ButMem1 + NumMemories,
+};
+
+typedef struct Pattern Pattern;
+typedef struct Memory Memory;
 typedef struct Instrument Instrument;
+typedef enum  {sIdle, sPlaying} bStatus;
+
+
+struct Button {
+  uint8_t history;
+  byte pin;
+  uint8_t numb;
+};
 
 struct Instrument {
   // 1-base indexed MIDI channel (first channel is 1)
@@ -184,7 +248,6 @@ static Instrument instruments[NumInstruments];
 
 static uint32_t bar_current = 0; // it counts bars 
 
-typedef enum  {sIdle, sPlaying} bStatus;
 
 struct sBreak {
   bStatus status = sIdle;
@@ -192,15 +255,6 @@ struct sBreak {
   uint32_t start = 0;
   uint32_t after = 0;
 } Break;
-
-enum {
-  NumMemories = 5,
-  MaxNoteSet = 16,
-  PatternLength = 16,
-};
-
-typedef struct Pattern Pattern;
-typedef struct Memory Memory;
 
 struct Pattern {
   uint16_t accent, glide;
@@ -217,14 +271,6 @@ struct Memory {
 static Memory memories[NumMemories];
 static byte cur_memory;
 
-enum {
-  ButPat1 = 0,
-  ButNotes = 2,
-  ButDrums = 3,
-  ButPlay = 4,
-  ButMem1 = 5,
-  ButLast = ButMem1 + NumMemories,
-};
 
 #define is_pressed(x) (buttons[x].history == 0)
 #define just_pressed(x) (buttons[x].history == 0x80)
@@ -483,44 +529,7 @@ static void generate_melody(uint8_t *note_set, byte note_set_len,
   }
 }
 
-enum {
-  KickElectro,
-  KickFourFloor,
-  KickBigbeat,
-  KickNone,
-  /* anything bellow this line will never be picked */
-};
-
-enum {
-  SnareBackbeat,
-  SnareSkip,
-  SnareFill,
-  SnareBreak,
-  SnareStraight,
-  SnareNone,
-  /* anything bellow this line will never be picked */
-};
-
-enum {
-  HatsOffbeats,
-  HatsClosed,
-  HatsPop,
-  HatsPat1,
-  HatsNone,
-  /* anything bellow this line will never be picked */
-};
-
-enum {
-  PercFiller,
-  PercXor1,
-  PercXor2,
-  PercEcho,
-  PercRolls,
-  PercNone,
-  /* anything bellow this line will never be picked */
-};
-
-
+static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *perc, byte *crash, drum_kinds drum_kind );
 
 static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *perc, byte *crash, drum_kinds drum_kind ) {
   memset(kick,  0, PatternLength); // zero patterns
@@ -787,6 +796,7 @@ void mem_generate_note_set(byte mem) {
     mem_generate_melody(mem, i);
 }
 
+void mem_generate_drums(byte mem, enum drum_kinds drum_kind);
 void mem_generate_drums(byte mem, enum drum_kinds drum_kind) {
   Memory *m = &memories[mem];
   generate_drums(

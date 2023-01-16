@@ -7,7 +7,7 @@
 * You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external DAC, like PCM5102. In ArduinoIDE Tools menu select:
 * 
 * * Board: ESP32 Dev Module
-* * Partition scheme: No OTA (1MB APP/ 3MB SPDIFF)
+* * Partition scheme: No OTA (1MB APP/ 3MB SPIFFS)
 * * PSRAM: enabled
 *
 * Also you will need to upload samples from /data folder to the ESP32 flash. To do so follow the instructions:
@@ -16,15 +16,6 @@
 *
 *
 */
-
-// sorry for this declaration, it should be in acidbanger.ino or in acidbanger.h, but the compiler doesn't see it there
-typedef enum drum_kinds{
-  DrumBreak,
-  DrumStraight,
-  DrumHang,
-  DrumAny,
-  DrumNone
-} drum_kinds ;
 
 #include "config.h"
 

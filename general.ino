@@ -79,7 +79,7 @@ inline void i2s_output () {
 
 
 inline float lookupTable(float (&table)[WAVE_SIZE], float index ) { // lookup value in a table by float index, using linear interpolation
- /* static float v1, v2, res;
+  static float v1, v2, res;
   static int32_t i;
   static float f;
   i = (int32_t)index;
@@ -90,35 +90,15 @@ inline float lookupTable(float (&table)[WAVE_SIZE], float index ) { // lookup va
   } else {
     v2 = table[i];
   }
-  res = (float)f * (float)((v2-v1) + v1);
+  res = (float)f * (float)(v2-v1) + v1;
   return res;
-  */
-  return table[(uint16_t)index];
+  
+  //return table[(uint16_t)index];
 }
-
-static __attribute__((always_inline)) inline float recipsf2(float a) {
-    float result;
-    asm volatile (
-        "wfr f1, %1\n"
-        "recip0.s f0, f1\n"
-        "const.s f2, 1\n"
-        "msub.s f2, f1, f0\n"
-        "maddn.s f0, f0, f2\n"
-        "const.s f2, 1\n"
-        "msub.s f2, f1, f0\n"
-        "maddn.s f0, f0, f2\n"
-        "rfr %0, f0\n"
-        :"=r"(result):"r"(a):"f0","f1","f2"
-    );
-    return result;
-}
-
-#define DIV(a, b) (a)*recipsf2(b)
 
 inline float fclamp(float in, float min, float max){
     return fmin(fmax(in, min), max);
 }
-
 
 inline float fast_tanh(float x){
   //return tanh(x);
@@ -132,4 +112,23 @@ inline float fast_tanh(float x){
     }
     if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders    
     return  sign * lookupTable(tanh_2048,(x*TANH_LOOKUP_COEF)); // lookup table 2048 / 5 = 409.6
+}
+
+static __attribute__((always_inline)) inline float one_div(float a) {
+    float result;
+    asm volatile (
+        "wfr f1, %1"          "\n\t"
+        "recip0.s f0, f1"     "\n\t"
+        "const.s f2, 1"       "\n\t"
+        "msub.s f2, f1, f0"   "\n\t"
+        "maddn.s f0, f0, f2"  "\n\t"
+        "const.s f2, 1"       "\n\t"
+        "msub.s f2, f1, f0"   "\n\t"
+        "maddn.s f0, f0, f2"  "\n\t"
+        "rfr %0, f0"          "\n\t"
+        : "=r" (result)
+        : "r" (a)
+        : "f0","f1","f2"
+    );
+    return result;
 }
