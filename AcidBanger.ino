@@ -81,11 +81,11 @@
 #define NUM_RAMPS 6           // simultaneous knob rotatings
 #ifndef NO_PSRAM
   #define NUM_SYNTH_CCS 11    // how many synth CC params do we have to play
-  #define NUM_DRUM_CCS  6     // how many drum CC params do we have to play
+  #define NUM_DRUM_CCS  7     // how many drum CC params do we have to play
   #define VOL_SYNTH     80
 #else
   #define NUM_SYNTH_CCS 10    // how many synth CC params do we have to play
-  #define NUM_DRUM_CCS  4     // how many drum CC params do we have to play
+  #define NUM_DRUM_CCS  5     // how many drum CC params do we have to play
   #define VOL_SYNTH     60
 #endif
 
@@ -100,48 +100,49 @@ struct sSynthCCs {
 
 sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
  //cc   cpl def   min max   reset
-  {71,  74, 64,   0,  110,  true},
-  {74,  71, 20,   0,  70,   true},
+  {71,  74, 64,   60,  127,  true},
+  {74,  71, 20,   0,  90,  true},
   {10,  0,  10,   0,  127,  true},
   {75,  0,  100,  0,  127,  false},
-  {70,  0,  127,  0,  127,  true},
+  {70,  0,  127,  64, 127,  true},
 #ifndef NO_PSRAM
   {91,  0,  5,    2,  127,  true},
 #endif
   {92,  0,  0,    64, 127,  false},
-  {94,  0,  10,   2,  120,  true},
-  {95,  0,  25,   25, 100,  false},
-  {72,  0,  20,   15, 120,   true},
-  {73,  0,  1,    3,  20,   true}
+  {94,  0,  0,   2,  127,  true},
+  {95,  0,  0,   25, 100,  false},
+  {72,  0,  20,   15, 120,  true},
+  {73,  0,  1,    3,  60,   true}
 };
 
 sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
  //cc   cpl def   min max   reset
-  {71,  74, 64,   0,  122,  true},
-  {74,  71, 20,   0,  70,   true},
+  {71,  74, 64,   60,  127,  true},
+  {74,  71, 20,   0,  60,  true},
   {10,  0,  117,  0,  127,  true},
   {75,  0,  64,   0,  127,  false},
-  {70,  0,  0,    0,  127,  true},
-  {94,  0,  10,   2,  120,  true},
-  {95,  0,  25,   25, 100,  false},
+  {70,  0,  0,    0,  64,   true},
+  {94,  0,  0,   2,  127,  true},
+  {95,  0,  0,   25, 127,  false},
 #ifndef NO_PSRAM
   {91,  0,  3,    2,  127,  true},  //reverb is not available with no psram
 #endif
   {92,  0,  0,    60, 127,  false},
-  {72,  0,  50,   15, 120,   true},
-  {73,  0,  0,    3,  20,   true}
+  {72,  0,  50,   15, 90,  true},
+  {73,  0,  0,    3,  60,   true}
 };
 
 sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
  //cc   cpl def   min max   reset
-  {74,  0,  64,   0,  127,  true},
+  {74,  0,  64,   64,  127, true},
+  {74,  0,  64,   0,  64,   true},
   {71,  0,  0,    0,  127,  true},
 #ifndef NO_PSRAM
   {91,  0,  5,    2,  127,  true},  // reverb is not available with no psram
-  {92,  0,  0,    64, 127,  true}, // delay for drums needs more delay-time than we can afford
+  {92,  0,  0,    64, 127,  true}, // delay for drums needs more delay time (read 'RAM') than we can afford
 #endif
   {93,  0,  15,   80, 127,  true},
-  {94,  0,  0,    6,  123,  true}
+  {94,  0,  0,    15,  80,  true}
 };
 
 struct sMidiRamp {
@@ -451,12 +452,16 @@ void sequencer_step(byte step) {
   if (Break.after == bar_current && step == 0) {
     instr_noteon(NumInstruments-1, 127, 0, 0);
 //    instr_noteon_raw(NumInstruments-1, CRASH_NOTE, 127, 0);
+#ifdef DEBUG_JUKEBOX    
     DEBUG("CRASH!!!!!!!!!!!!!!!!!!!!!");
-    check_midi_ramps();
+#endif
+    check_midi_ramps(true);
   }
   if (step % 4 == 0 || step == 1) { 
     digitalWrite(LED_BUILTIN, HIGH);
+#ifdef DEBUG_JUKEBOX  
     DEBUG(step);
+#endif
   }  else {
     digitalWrite(LED_BUILTIN, LOW);
   }
@@ -994,11 +999,11 @@ static void do_midi_ramps() {
   }
 }
 
-static void check_midi_ramps() {
-  if (Break.status == sIdle) {
+static void check_midi_ramps(boolean force_restart) {
+  if (Break.status == sIdle || force_restart) {
     for (int i = 0; i < NUM_RAMPS; i++) {
       midiRamps[i].leftBars--;
-      if (midiRamps[i].leftBars <= 0) { // no more bars left for the ramp
+      if (midiRamps[i].leftBars <= 0 || force_restart) { // no more bars left for the ramp
         if (midiRamps[i].need_reset) {
           send_midi_control(midiRamps[i].chan, midiRamps[i].cc_number, midiRamps[i].def_val);
         }
@@ -1075,7 +1080,7 @@ static void do_midi_tick() {
       bar_current++;
       midi_step = 0;
       decide_on_break();      
-      check_midi_ramps(); // every bar
+      check_midi_ramps(false); // every bar
     }
     sequencer_step(midi_step);
   }

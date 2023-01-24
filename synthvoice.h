@@ -1,13 +1,24 @@
 #ifndef TB303VOICE_H
 #define TB303VOICE_H
 
+#define FILTER_TYPE 1       // 0 = Moogladder by Victor Lazzarini
+                            // 1 = Tim Stilson's model by Aaron Krajeski
 
+/* 
+ *  You shouldn't need to change something below this line
+*/
+
+
+#if FILTER_TYPE == 0
 #include "moogladder.h"
-//#include "krajeski_flt.h"
-//#include "improved_flt.h"
-//#include "r-k_flt.h"
-//#include "wavefolder.h"
+#endif
+#if FILTER_TYPE == 1
+#include "krajeski_flt.h"
+#endif
+
+#include "wavefolder.h"
 #include "overdrive.h"
+
 #include "midi_config.h"
 #include "smoother.h"
 
@@ -25,11 +36,11 @@ public:
   inline void SetAccentOff()              {_accent=false;};
   inline void SetVolume(uint8_t val)      {volume = (float)val;};
   inline void SetPan(uint8_t pan)         {pan = (float)pan;};
-  inline void SetDelaySend(uint8_t lvl)  {_sendDelay = (float)lvl;};
+  inline void SetDelaySend(uint8_t lvl)   {_sendDelay = (float)lvl;};
   inline void SetReverbSend(uint8_t lvl)  {_sendReverb = (float)lvl;};
   inline void SetDistortionLevel(uint8_t lvl) {_gain = (float)lvl;};
-  inline void SetCutoff(uint8_t lvl) {_cutoff = (float)lvl;};
-  inline void SetReso(uint8_t lvl)   {_reso = (float)lvl;};
+  inline void SetCutoff(uint8_t lvl)      {_cutoff = (float)lvl;};
+  inline void SetReso(uint8_t lvl)        {_reso = (float)lvl;};
   inline void SetEnvModLevel(uint8_t lvl) {_envMod = (float)lvl;};
   inline void SetAccentLevel(uint8_t lvl) {_accentLevel = (float)lvl;};
   inline void SetTempo(uint8_t tempo)     {_tempo = (float)tempo;};
@@ -90,12 +101,15 @@ private:
   float _msToSteps = (float)WAVE_SIZE * DIV_SAMPLE_RATE * 1000.0f;
   
   Smoother ampDeclicker;
-  Smoother filtDeclicker;  
-//  KrajeskiMoog Filter;
-// ImprovedMoog Filter;
-//  RKSimulationMoog Filter;
+  Smoother filtDeclicker;
+#if FILTER_TYPE == 0
   MoogLadder Filter;
-//  Wavefolder WFolder;
+#endif
+#if FILTER_TYPE == 1
+  KrajeskiMoog Filter;
+#endif
+
+  Wavefolder Wfolder;
   Overdrive Drive;
 };
 

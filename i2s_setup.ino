@@ -31,7 +31,7 @@ void i2sInit() {
       .intr_alloc_flags = ESP_INTR_FLAG_LEVEL2,
       .dma_buf_count = DMA_NUM_BUF,
       .dma_buf_len = DMA_BUF_LEN,
-      .use_apll = false,
+      .use_apll = true,
   };
   
   i2s_pin_config_t i2s_pin_config = {

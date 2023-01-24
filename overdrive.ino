@@ -3,7 +3,7 @@
 
 void Overdrive::Init()
 {
-    SetDrive(.5f);
+    SetDrive(0.0f);
 }
 
 float Overdrive::Process(float in)
@@ -16,7 +16,8 @@ float Overdrive::Process(float in)
 
 void Overdrive::SetDrive(float drive)
 {
-    drive  = fclamp(drive, 0.f, 1.f);
+    drive = 0.125f + drive * (0.875f);
+    //drive  = fclamp(drive, 0.f, 1.f);
     drive_ = 1.999f * drive;
 
     const float drive_2    = drive_ * drive_;

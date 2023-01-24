@@ -102,9 +102,6 @@ Compressor Comp;
 
 // Core0 task
 static void audio_task1(void *userData) {
-
-  Synth1.Init();
-  
     while(1) {
         // this part of the code never intersects with mixer buffers
         // this part of the code is operating with shared resources, so we should make it safe
@@ -120,20 +117,11 @@ static void audio_task1(void *userData) {
 
 // task for Core1, which tipically runs user's code on ESP32
 static void audio_task2(void *userData) {
-#ifndef NO_PSRAM
-	Reverb.Init();  
-#endif
-  Drums.Init();
-  Synth2.Init();
-  Delay.Init();
-  Comp.Init(SAMPLE_RATE);
-#ifdef JUKEBOX
-  init_midi();
-#endif
     while(1) {
         // we can run it together with synth(), but not with mixer()
         c2 = micros();
         drums_generate();
+ //     Synth1.Generate(); 
         Synth2.Generate();
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
           c3 = micros();
@@ -146,7 +134,6 @@ static void audio_task2(void *userData) {
         i2s_output();
         
         taskYIELD();
-      
     }
 }
 
@@ -186,6 +173,18 @@ void setup(void) {
   MIDI.begin(MIDI_CHANNEL_OMNI);
 #endif
 
+#ifndef NO_PSRAM
+  Reverb.Init();  
+#endif
+  Delay.Init();
+  Drums.Init();
+  Synth1.Init();
+  Synth2.Init();
+  Comp.Init(SAMPLE_RATE);
+#ifdef JUKEBOX
+  init_midi();
+#endif
+
  // silence while we haven't loaded anything reasonable
   for (int i=0; i < DMA_BUF_LEN; i++) { 
     drums_buf_l[i] = 0.0f ;
@@ -201,8 +200,8 @@ void setup(void) {
   i2sInit(); 
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
   
-  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 10000, NULL, 1, &SynthTask1, 0 );
-  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 10000, NULL, 1, &SynthTask2, 1 );
+  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, 1, &SynthTask1, 0 );
+  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, 1, &SynthTask2, 1 );
   
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
@@ -230,7 +229,7 @@ void loop() { // default loopTask running on the Core1
   }
   #endif
   
- // DEBF ("%d %d %d \r\n" , d1, d2, d3);
+  //DEBF ("%d %d %d \r\n" , d1, d2, d3);
 
   taskYIELD(); // breath for all the rest of the Core1 
 }

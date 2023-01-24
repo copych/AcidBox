@@ -53,7 +53,8 @@ void SynthVoice::EndNote(uint8_t midiNote, uint8_t velo) {
 
 
 inline void SynthVoice::Generate() {
-  float samp = 0.0f, saw_blep = 0.0f, sqr_blep = 0.0f, filtEnv = 0.0f, ampEnv = 0.0f, final_cut = 0.0f;
+  float samp = 0.0f, filtEnv = 0.0f, ampEnv = 0.0f, final_cut = 0.0f;
+  //, saw_blep = 0.0f, sqr_blep = 0.0f
   for (int i = 0; i < DMA_BUF_LEN; ++i) {
   prescaler++;
   filtEnv = GetFilterEnv();
@@ -62,18 +63,25 @@ inline void SynthVoice::Generate() {
 //  ampEnv = ampDeclicker.Process(ampEnv);
     if (_eAmpEnvState != ENV_IDLE) {
       //samp = (((1.0f - _waveMix) * (square_2048[ (uint16_t)(_phaze) ] ) ) + ( _waveMix * exp_2048[ (uint16_t)(_phaze) ] )); // lookup and mix waveforms
-      samp = (1.0f - _waveMix) * lookupTable(square_2048,_phaze) + _waveMix * lookupTable(exp_2048,_phaze) ; // lookup and mix waveforms
+      samp = (float)(1.0f - _waveMix) * (float)lookupTable(square_2048,_phaze) + (float)_waveMix * (float)lookupTable(exp_2048,_phaze) ; // lookup and mix waveforms
     } else {
       samp = 0.0f;
     }
-    
-    final_cut = MIN_CUTOFF_FREQ + (MAX_CUTOFF_FREQ - MIN_CUTOFF_FREQ) * (_cutoff * (1.0f - 0.2f * _envMod) + _envMod * (filtEnv - 0.15f));
-
-    if (prescaler % 4) Filter.SetCutoff( final_cut );
-
+    if (prescaler % 2) {
+      final_cut = (float)MIN_CUTOFF_FREQ + (float)(MAX_CUTOFF_FREQ - MIN_CUTOFF_FREQ) * (float)(_cutoff * (float)(1.0f - (float)0.2f * _envMod) + (float)(_envMod * (float)(filtEnv - 0.15f)));
+      Filter.SetCutoff( final_cut );
+    }
     samp = Filter.Process(samp); 
     samp *= ampEnv ;
-    samp = Drive.Process(samp);
+    switch (_index) {
+      case 0:
+        samp = Wfolder.Process(samp);
+        break;
+      case 1:
+      default:
+        samp = Drive.Process(samp);
+        break;
+    }
     samp *=  volume;
 //   if ( prescaler % DMA_BUF_LEN*2 == 0 && _index == 0 ) DEBUG( final_cut );
     
@@ -90,13 +98,21 @@ inline void SynthVoice::Generate() {
     if ( _phaze >= WAVE_SIZE) {
       _phaze -= WAVE_SIZE ;
     }
-    synth_buf[_index][i] = fast_tanh(samp); // mono
+    //synth_buf[_index][i] = fast_tanh(samp); // mono    
+    //synth_buf[_index][i] = ampDeclicker.Process(samp);
+    synth_buf[_index][i] = samp;
+    
   }
+  //DEBF("synt%d = %0.5f\r\n", _index , samp);
 }
 
 void SynthVoice::Init() {
   Filter.Init((float)SAMPLE_RATE);  
-  Drive.Init();
+  if (_index==0) {
+    Wfolder.Init();
+  } else {
+    Drive.Init();
+  }
 }
 
 
@@ -147,17 +163,21 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       _accentLevel = (float)cc_value * MIDI_NORM;
       break;
     case CC_303_DISTORTION:
-      _gain = 0.125f + (float)cc_value * MIDI_NORM * (0.875f);
-      Drive.SetDrive(_gain ); 
+      _gain = (float)cc_value * MIDI_NORM ;
+      if (_index == 0 ) {
+        Wfolder.SetDrive(_gain );
+      } else {
+        Drive.SetDrive(_gain ); 
+      }
       break;
     case CC_303_SATURATOR:
-      Filter.SetDrive((float)cc_value * MIDI_NORM * 5.0);
+      Filter.SetDrive((float)cc_value * MIDI_NORM );
       break;
   }
 }
 
 float SynthVoice::GetAmpEnv() {
-  const static float sust_level = 0.25f;
+  const static float sust_level = 0.5f;
   const static float k_sust = 1.0f - sust_level;
   static float ret_val = 0.0f;
   static float pass_val = 0.0f, release_lvl = 0.0f;  
@@ -169,7 +189,8 @@ float SynthVoice::GetAmpEnv() {
       _ampEnvReleaseStep = _msToSteps * one_div(_ampReleaseMs+0.0001);
       if (_accent) {
         _ampEnvAttackStep *= 1.4f;
-        _ampEnvDecayStep *= 1.6f;
+        _ampEnvDecayStep *= 3.0f;
+        _ampEnvReleaseStep = _msToSteps * one_div(50.0f +0.0001);
       }
       _eAmpEnvState = ENV_ATTACK;
       ret_val = (-exp_2048[ 0 ] + 1.0f) * 0.5f;
@@ -233,7 +254,7 @@ inline float SynthVoice::GetFilterEnv() {
       _filterEnvDecayStep = _msToSteps * one_div(_filterDecayMs+0.0001);
       if (_accent) {
         _filterEnvAttackStep *= 1.4f;
-        _filterEnvDecayStep *= 1.8f;
+        _filterEnvDecayStep *= 5.0f;
       }
       _eFilterEnvState = ENV_ATTACK;
       ret_val = (-exp_2048[ 0 ] + 1.0f) * 0.5f;
@@ -266,5 +287,6 @@ inline float SynthVoice::GetFilterEnv() {
     default:      
       ret_val =  0.0f;
   }
+  if (_accent) ret_val *= 1.2;
   return ret_val;
 }

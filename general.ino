@@ -7,9 +7,12 @@ static void drums_generate() {
 }
 
 static void mixer() { // sum buffers 
+#ifdef DEBUG_MASTER_OUT
+  static float meter = 0.0f;
+#endif
   static float synth1_out_l, synth1_out_r, synth2_out_l, synth2_out_r, drums_out_l, drums_out_r;
   static float dly_l, dly_r, rvb_l, rvb_r;
-  static float meter, mono_mix;
+  static float mono_mix;
     dly_k1 = Synth1._sendDelay;
     dly_k2 = Synth2._sendDelay;
     dly_k3 = Drums._sendDelay;
@@ -44,18 +47,18 @@ static void mixer() { // sum buffers
       mix_buf_l[i] = Comp.Apply(mix_buf_l[i]);
       mix_buf_r[i] = Comp.Apply(mix_buf_r[i]);
       
-#ifdef DEBUG_MASTER_OUT
+#ifdef DEBUG_MASTER_OUT______________
       if ( i % 16 == 0) meter = meter * 0.95f + abs( mono_mix); 
 #endif
    //   mix_buf_l[i] = fclamp(mix_buf_l[i] , -1.0f, 1.0f); // clipper
     //  mix_buf_r[i] = fclamp(mix_buf_r[i] , -1.0f, 1.0f);
-   //    mix_buf_l[i] = fast_tanh( mix_buf_l[i]); // saturator
-   //    mix_buf_r[i] = fast_tanh( mix_buf_r[i]);
+       mix_buf_l[i] = fast_tanh( mix_buf_l[i]); // saturator
+       mix_buf_r[i] = fast_tanh( mix_buf_r[i]);
    }
 #ifdef DEBUG_MASTER_OUT
-//  DEB( mono_mix * 10.0  );
- // DEB (" " );
-  DEBF("%0.5f\r\n", meter);
+  meter *= 0.95f;
+  meter += abs(mono_mix); 
+  DEBF("out= %0.5f\r\n", meter);
 #endif
 }
 
@@ -70,8 +73,8 @@ inline void i2s_output () {
   i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY);
 #else
   for (int i=0; i < DMA_BUF_LEN; i++) {      
-    out_buf._signed[i*2] = 0x7fff * (fast_tanh( mix_buf_l[i])) ; 
-    out_buf._signed[i*2+1] = 0x7fff * (fast_tanh( mix_buf_r[i])) ;
+    out_buf._signed[i*2] = 0x7fff * (float)(fast_tanh( mix_buf_l[i])) ; 
+    out_buf._signed[i*2+1] = 0x7fff * (float)(fast_tanh( mix_buf_r[i])) ;
   }
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
 #endif
