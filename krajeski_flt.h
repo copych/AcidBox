@@ -59,7 +59,7 @@ public:
   
   inline void SetResonance(float r) 
 	{
-		resonance = r;
+		resonance = r*1.3f;
 		gRes = (float)( resonance * (1.0029f + 0.0526f * wc - 0.926f * wc*wc + 0.0218f * wc*wc*wc));
 	}
 	
@@ -74,7 +74,7 @@ public:
     drive = dr * 2.0f + 1.0f;  
   }
 private:
-	// volatile is a workaround because of spurious NANs during Process()???
+	// volatile is a workaround because of random NANs during Process()???
   float state[5];
   float delay[5];
 	float wc; // The angular frequency of the cutoff.

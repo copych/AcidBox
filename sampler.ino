@@ -205,7 +205,8 @@ inline void Sampler::SetNotePan_Midi( uint8_t data1){
 inline void Sampler::SetNoteDecay_Midi( uint8_t data1){
   samplePlayer[ selectedNote ].decay_midi = data1;
   float value = MIDI_NORM * (float)data1;
-  samplePlayer[ selectedNote ].decay = 1 - (0.000005 * pow( 5000, 1.0f - value) );
+ // samplePlayer[ selectedNote ].decay = 1.0f - (0.000005f * pow( 5000.0f, 1.0f - value) );
+  samplePlayer[ selectedNote ].decay = 1.0f -  value * 0.05 ;
 #ifdef DEBUG_SAMPLER
   DEBF("Sampler - Note[%d].decay: %0.2f\n",  selectedNote, samplePlayer[ selectedNote ].decay);
 #endif  
@@ -219,13 +220,13 @@ inline void Sampler::SetNoteOffset_Midi( uint8_t data1){
 #endif  
 }
 
-void Sampler::SetSoundPitch_Midi( uint8_t value){
-  DEBUG("Pitch");
+inline void Sampler::SetSoundPitch_Midi( uint8_t value){
+  DEB("Pitch Midi ");
   samplePlayer[ selectedNote ].pitch_midi = value;
   SetSoundPitch( MIDI_NORM * value );
 }
 
-void Sampler::SetSoundPitch(float value){
+inline void Sampler::SetSoundPitch(float value){
   samplePlayer[ selectedNote ].pitch = pow( 2.0f, 4.0f * ( value - 0.5f ) );
 #ifdef DEBUG_SAMPLER  
   DEBF("Sampler - Note[%d] pitch: %0.3f\n",  selectedNote, samplePlayer[ selectedNote ].pitch );
@@ -366,7 +367,7 @@ inline void Sampler::NoteOff( uint8_t note ){
        if( sampleInfoCount == 0 ){
         return;
     }
-    int j = note % sampleInfoCount;
+   // int j = note % sampleInfoCount;
     // samplePlayer[j]->active = false;
 }
 
@@ -417,7 +418,36 @@ inline void Sampler::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_808_NOTE_SEL:
       SelectNote( cc_value );
-      break; 
+      break;
+    case CC_808_BD_DECAY:
+      SelectNote( 0 ); // BD
+      SetNoteDecay_Midi( cc_value );
+      break;
+    case CC_808_BD_TONE:
+      SelectNote( 0 ); // BD
+      SetSoundPitch_Midi ( cc_value ); 
+      break;
+    case CC_808_SD_SNAP:
+      SelectNote( 1 ); // SD
+      SetNoteDecay_Midi( cc_value );
+      break;
+    case CC_808_SD_TONE:
+      SelectNote( 1 ); // SD
+      SetSoundPitch_Midi( cc_value );
+      break;
+/*
+#define CC_808_BD_TONE    21  // Specific per drum control
+#define CC_808_BD_DECAY   23
+#define CC_808_BD_LEVEL   24
+#define CC_808_SD_TONE    25
+#define CC_808_SD_SNAP    26
+#define CC_808_SD_LEVEL   29
+#define CC_808_CH_TUNE    61
+#define CC_808_CH_LEVEL   63
+#define CC_808_OH_TUNE    80
+#define CC_808_OH_DECAY   81
+#define CC_808_OH_LEVEL   82
+*/
   }
 
 }

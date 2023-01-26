@@ -12,10 +12,17 @@ class Sampler {
     Sampler(uint8_t countPrg, uint8_t progNow) { countPrograms = countPrg; program_tmp = progNow; progNumber = progNow; };
     inline void Init();
     void ScanContents(fs::FS &fs, const char *dirname, uint8_t levels);
-    inline void SelectNote( uint8_t note ){  selectedNote = note % sampleInfoCount;     };
+    inline void SelectNote( uint8_t note ){  
+      selectedNote = note % sampleInfoCount;  
+#ifdef DEBUG_SAMPLER
+DEBF("Select note: %d\r\n", note);
+#endif
+    };
     inline void SetNotePan_Midi( uint8_t data1);
     inline void SetNoteOffset_Midi( uint8_t data1 );
-    inline void SetNoteDecay_Midi( uint8_t data1);    
+    inline void SetNoteDecay_Midi( uint8_t data1); 
+    inline void SetSoundPitch_Midi( uint8_t value);
+    inline void SetSoundPitch(float value);   
     inline void SetNoteVolume_Midi( uint8_t data1){      samplePlayer[ selectedNote ].volume_midi = data1;    };
     inline void SetDelaySend(uint8_t lvl)  {_sendDelay = (float)lvl;};
     inline void SetReverbSend(uint8_t lvl)  {_sendReverb = (float)lvl;};
@@ -24,8 +31,6 @@ class Sampler {
     uint16_t GetSoundPan_Midi(){      return samplePlayer[ selectedNote ].pan_midi;    };
     uint8_t GetSoundPitch_Midi(){      return samplePlayer[ selectedNote ].pitch_midi;    };
     uint8_t GetSoundVolume_Midi(){      return samplePlayer[ selectedNote ].volume_midi;    };
-    void SetSoundPitch_Midi( uint8_t value);
-    void SetSoundPitch(float value);
     // Offset   for the Sample-Playback to cut the sample from the left
     inline void NoteOn( uint8_t note, uint8_t vol );
     inline void NoteOff( uint8_t note );
@@ -55,7 +60,7 @@ class Sampler {
     uint8_t  countPrograms = 7;
     float _volume = 1.0f;
     float sampler_playback = 1.0f;
-    uint8_t selectedNote = 0;
+    volatile uint8_t selectedNote = 0;
     // union is very handy for easy conversion of bytes to the wav header information
     union wavHeader{
         struct{
@@ -113,8 +118,8 @@ class Sampler {
     
     // float global_pitch_decay = 0.0f; // good from -0.2 to +1.0
     
-    uint32_t sampleInfoCount = 0; /*!< storing the count if found samples in file system */
-    float slowRelease; /*!< slow releasing signal will be used when sample playback stopped */
+    volatile uint32_t sampleInfoCount = 0; // storing the count if found samples in file system 
+    float slowRelease; // slow releasing signal will be used when sample playback stopped 
     uint8_t* RamCache = NULL ;
 
     FxFilterCrusher Effects;

@@ -46,3 +46,8 @@ void i2sInit() {
   i2s_zero_dma_buffer(i2s_num);
 }
 #endif
+
+void i2sDeinit() {
+  i2s_zero_dma_buffer(i2s_num);
+  i2s_driver_uninstall(i2s_num);
+}

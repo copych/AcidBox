@@ -65,19 +65,21 @@ static void mixer() { // sum buffers
 
 inline void i2s_output () {
   // now out_buf is ready, output
-#ifdef USE_INTERNAL_DAC
-  for (int i=0; i < DMA_BUF_LEN; i++) {      
-    out_buf._unsigned[i*2] = (uint16_t)(127.0f * ( fast_tanh( mix_buf_l[i]) + 1.0f)) << 8U; // 256 output levels is way to little
-    out_buf._unsigned[i*2+1] = (uint16_t)(127.0f * ( fast_tanh( mix_buf_r[i]) + 1.0f)) << 8U ; // maybe you'll be lucky to fully use this range
+  if (processing) {
+  #ifdef USE_INTERNAL_DAC
+    for (int i=0; i < DMA_BUF_LEN; i++) {      
+      out_buf._unsigned[i*2] = (uint16_t)(127.0f * ( fast_tanh( mix_buf_l[i]) + 1.0f)) << 8U; // 256 output levels is way to little
+      out_buf._unsigned[i*2+1] = (uint16_t)(127.0f * ( fast_tanh( mix_buf_r[i]) + 1.0f)) << 8U ; // maybe you'll be lucky to fully use this range
+    }
+    i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY);
+  #else
+    for (int i=0; i < DMA_BUF_LEN; i++) {      
+      out_buf._signed[i*2] = 0x7fff * (float)(fast_tanh( mix_buf_l[i])) ; 
+      out_buf._signed[i*2+1] = 0x7fff * (float)(fast_tanh( mix_buf_r[i])) ;
+    }
+    i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
+  #endif
   }
-  i2s_write(i2s_num, out_buf._unsigned, sizeof(out_buf._unsigned), &bytes_written, portMAX_DELAY);
-#else
-  for (int i=0; i < DMA_BUF_LEN; i++) {      
-    out_buf._signed[i*2] = 0x7fff * (float)(fast_tanh( mix_buf_l[i])) ; 
-    out_buf._signed[i*2+1] = 0x7fff * (float)(fast_tanh( mix_buf_r[i])) ;
-  }
-  i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
-#endif
 }
 
 

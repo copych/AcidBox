@@ -42,7 +42,7 @@ class MoogLadder
     /** 
         Sets the resonance of the filter.
     */
-    inline void SetResonance(float res) { res_ = res; }
+    inline void SetResonance(float res) { res_ = res * 0.96f; }
 
   private:
     float istor_, res_, freq_, delay_[6], tanhstg_[3], old_freq_, old_res_, one_sr_,

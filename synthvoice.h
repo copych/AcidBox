@@ -1,19 +1,23 @@
 #ifndef TB303VOICE_H
 #define TB303VOICE_H
 
-#define FILTER_TYPE 1       // 0 = Moogladder by Victor Lazzarini
+#define FILTER_TYPE 2       // 0 = Moogladder by Victor Lazzarini
                             // 1 = Tim Stilson's model by Aaron Krajeski
-
+							              // 2 = open303 filter
 /* 
  *  You shouldn't need to change something below this line
 */
 
 
+#define MIDI_MVA_SZ 8
 #if FILTER_TYPE == 0
 #include "moogladder.h"
 #endif
 #if FILTER_TYPE == 1
 #include "krajeski_flt.h"
+#endif
+#if FILTER_TYPE == 2
+#include "rosic_TeeBeeFilter.h"
 #endif
 
 #include "wavefolder.h"
@@ -22,6 +26,12 @@
 #include "midi_config.h"
 #include "smoother.h"
 
+typedef struct 
+{
+  uint8_t buf[MIDI_MVA_SZ];
+  uint8_t n;
+} mva_data;
+
 class SynthVoice {
 public:
   SynthVoice();
@@ -29,11 +39,12 @@ public:
   void Init();
 	void StartNote(uint8_t midiNote, uint8_t velo);
   void EndNote(uint8_t midiNote, uint8_t velo);
+  
+  inline void on_midi_noteON(uint8_t note, uint8_t velocity);
+  inline void on_midi_noteOFF(uint8_t note, uint8_t velocity);
   inline void StopSound();
   inline void SetSlideOn()                {_slide=true;};
   inline void SetSlideOff()               {_slide=false;};
-  inline void SetAccentOn()               {_accent=true;};
-  inline void SetAccentOff()              {_accent=false;};
   inline void SetVolume(uint8_t val)      {volume = (float)val;};
   inline void SetPan(uint8_t pan)         {pan = (float)pan;};
   inline void SetDelaySend(uint8_t lvl)   {_sendDelay = (float)lvl;};
@@ -46,6 +57,7 @@ public:
   inline void SetTempo(uint8_t tempo)     {_tempo = (float)tempo;};
   inline void SetIndex(uint8_t ind)       {_index = ind;};
   inline void ParseCC(uint8_t cc_number, uint8_t cc_value);
+  inline void allNotesOff()               {mva1.n=0; _ampEnvPosition = 0.0; _filterEnvPosition = 0.0; _eAmpEnvState = ENV_IDLE; _eFilterEnvState = ENV_IDLE;};
   inline float GetAmpEnv();                // call once per sample
   inline float GetFilterEnv();             // call once per sample
   inline void Generate() ;
@@ -54,11 +66,15 @@ public:
   float _sendDelay = 0.0f;
   float _sendReverb = 0.0f;
   int midiNotes[2] = {-1, -1};
-    
+
+
+  mva_data mva1;
+
+
+  
 private:
   // most CC controlled values internally are float, nevertheless their range maps to MIDI 0-127 (internally 0.0f-1.0f)
   uint8_t _index = 0;
-  bool _accent = false;
   bool _slide = false;
   bool _portamento = false; // slide, but managed by CC 65 
   float _tempo = 100.0f;
@@ -66,11 +82,14 @@ private:
   float _sampleRate = (float)SAMPLE_RATE;
   uint16_t bufSize = DMA_BUF_LEN;
   float _detuneCents = 0.0f;
-  float _envMod = 0.0f;   
-  float _accentLevel = 0.0f; 
-  float _cutoff = 0.2f; // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically doubles this range
+  float _envMod = 0.5f;
+  bool _accent = false;
+  float _accentLevel = 0.5f;
+  float _accentation = 0.0f;
+  float _cutoff = 0.2f;   // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically doubles this range
   float _reso = 0.4f;
-  float _gain = 1.0; // values >1 will distort sound
+  float _saturator = 0.0; // pre shaper
+  float _gain = 0.0;      // post distortion
   enum eEnvState_t {ENV_IDLE, ENV_INIT, ENV_ATTACK, ENV_DECAY, ENV_SUSTAIN, ENV_RELEASE, ENV_WAITING};
   volatile eEnvState_t _eAmpEnvState = ENV_IDLE;
   volatile eEnvState_t _eFilterEnvState = ENV_IDLE;
@@ -84,22 +103,28 @@ private:
   float  _phaze = 0.0f;
   
   // MEG and FEG params
-  float _ampEnvPosition = 0.0;
-  float _filterEnvPosition = 0.0;
-  float _ampAttackMs = 3.0;
-  float _ampDecayMs = 300.0;
-  float _ampReleaseMs = 3.0;
-  float _ampEnvAttackStep = 15.0;
-  float _ampEnvDecayStep = 1.0;
-  float _ampEnvReleaseStep = 15.0;
-  float _filterAttackMs = 5.0;
-  float _filterDecayMs = 200.0;
-  float _filterEnvAttackStep = 15.0;
-  float _filterEnvDecayStep = 1.0;
-  float _offset = 0.0; // filter discharge inertia
-  float _offset_leak = 0.93; 
+  float _ampEnvPosition = 0.0f;
+  float _filterEnvPosition = 0.0f;
+  float _ampAttackMs = 3.0f;
+  float _ampDecayMs = 300.0f;
+  float _ampReleaseMs = 3.0f;
+  float _ampEnvAttackStep = 15.0f;
+  float _ampEnvDecayStep = 1.0f;
+  float _ampEnvReleaseStep = 15.0f;
+  float _filterAttackMs = 5.0f;
+  float _filterDecayMs = 200.0f;
+  float _filterEnvAttackStep = 15.0f;
+  float _filterEnvDecayStep = 1.0f;
+  float _offset = 0.0f; // filter discharge inertia
+  float _offset_leak = 0.9999f; 
   float _msToSteps = (float)WAVE_SIZE * DIV_SAMPLE_RATE * 1000.0f;
   
+  void mva_note_on(mva_data *p, uint8_t note, uint8_t accent);
+  void mva_note_off(mva_data *p, uint8_t note);
+  void mva_reset(mva_data *p);
+  void note_off() ;
+  void note_on(uint8_t midiNote, bool slide, bool accent) ;
+
   Smoother ampDeclicker;
   Smoother filtDeclicker;
 #if FILTER_TYPE == 0
@@ -107,6 +132,9 @@ private:
 #endif
 #if FILTER_TYPE == 1
   KrajeskiMoog Filter;
+#endif
+#if FILTER_TYPE == 2
+  rosic::TeeBeeFilter Filter;
 #endif
 
   Wavefolder Wfolder;

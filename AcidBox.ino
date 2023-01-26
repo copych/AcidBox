@@ -14,7 +14,6 @@
 * https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 * And then use Tools -> ESP32 Sketch Data Upload
 *
-*
 */
 
 #include "config.h"
@@ -62,6 +61,7 @@ static float midi_2048_steps[128];
 static float exp_2048[WAVE_SIZE];
 static float square_2048[WAVE_SIZE];
 static float tanh_2048[WAVE_SIZE];
+static uint32_t last_reset = 0;
 
 // Audio buffers of all kinds
 static float synth_buf[2][DMA_BUF_LEN]; // 2 * 303 mono
@@ -73,6 +73,8 @@ static union { // a dirty trick, instead of true converting
   int16_t _signed[DMA_BUF_LEN * 2];
   uint16_t _unsigned[DMA_BUF_LEN * 2];
 } out_buf; // i2s L+R output buffer
+
+volatile boolean processing = false;
 
 #ifndef NO_PSRAM
 static float rvb_k1, rvb_k2, rvb_k3;
@@ -123,13 +125,13 @@ static void audio_task2(void *userData) {
         drums_generate();
  //     Synth1.Generate(); 
         Synth2.Generate();
+        d2 = micros() - c2;
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
           c3 = micros();
           mixer(); // actually we could send Notify before mixer() is done, but then we'd need tic-tac buffers for generation. Todo maybe
           d3 = micros() - c3;
           xTaskNotifyGive(SynthTask1); 
         }        
-        d2 = micros() - c2;
         
         i2s_output();
         
@@ -206,7 +208,7 @@ void setup(void) {
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
   xTaskNotifyGive(SynthTask2);
-
+  processing = true;
 }
 
 static uint32_t last_ms = micros();
