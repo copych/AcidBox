@@ -1,5 +1,5 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v0.8"
+#define VERSION         "v0.9"
 
 #define DEBUG_ON            // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT    // serial monitor plotter will draw the output waveform
@@ -12,10 +12,10 @@
 
 #define MIDI_ON               // use this option if you want to operate by MIDI
 //#define MIDI_VIA_SERIAL       // use this option together with MIDI_ON for Hairless MIDI style, this will block Serial debugging as well
-#define JUKEBOX               // not working with MIDI_ON yet
+#define JUKEBOX               // real-time auto-compose acid tunes
 //#define JUKEBOX_PLAY_ON_START // should it play on power on, or should it wait for "boot" button to be pressed
 
-#define MAX_CUTOFF_FREQ 3000.0f
+#define MAX_CUTOFF_FREQ 4000.0f
 #define MIN_CUTOFF_FREQ 250.0f
 
 #ifdef USE_INTERNAL_DAC
@@ -31,7 +31,7 @@ const float DIV_2SAMPLE_RATE = 0.5f / (float)SAMPLE_RATE;
 const float DIV_WAVE_SIZE = 1.0f / (float)WAVE_SIZE;
 #define TANH_LOOKUP_MAX 5.0f // maximum X argument value for tanh(X) lookup table, tanh(X)~=1 if X>4 
 const float TANH_LOOKUP_COEF = (float)WAVE_SIZE / TANH_LOOKUP_MAX;
-#define DMA_BUF_LEN     32
+#define DMA_BUF_LEN     64
 #define DMA_NUM_BUF     2
 
 float bpm = 130.0;
@@ -39,6 +39,9 @@ float bpm = 130.0;
 #define I2S_BCLK_PIN    5
 #define I2S_WCLK_PIN    19
 #define I2S_DOUT_PIN    18
+
+#define POT_NUM 3
+const uint8_t POT_PINS[POT_NUM] = {34,35,36};
 
 #define SYNTH1_MIDI_CHAN        1
 #define SYNTH2_MIDI_CHAN        2

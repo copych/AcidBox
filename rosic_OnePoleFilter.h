@@ -1,21 +1,12 @@
 #ifndef rosic_OnePoleFilter_h
 #define rosic_OnePoleFilter_h
 
-// rosic-indcludes:
-#include "rosic_RealFunctions.h"
-
-namespace rosic
-{
-
-  /**
-
+/**
   This is an implementation of a simple one-pole filter unit.
+*/
 
-  */
-
-  class OnePoleFilter
-  {
-
+class OnePoleFilter
+{
   public:
 
     /** This is an enumeration of the available filter modes. */
@@ -28,14 +19,14 @@ namespace rosic
       HIGHSHELV,
       ALLPASS
     };
-    // \todo (maybe): let the user choose between LP/HP versions obtained via bilinear trafo and 
+    // \todo (maybe): let the user choose between LP/HP versions obtained via bilinear trafo and
     // impulse invariant trafo
 
     //---------------------------------------------------------------------------------------------
     // construction/destruction:
 
     /** Constructor. */
-    OnePoleFilter();   
+    OnePoleFilter();
 
     //---------------------------------------------------------------------------------------------
     // parameter settings:
@@ -49,10 +40,12 @@ namespace rosic
     /** Sets the cutoff-frequency for this filter. */
     void setCutoff(float newCutoff);
 
-    /** This will set the time constant 'tau' for the case, when lowpass mode is chosen. This is 
-    the time, it takes for the impulse response to die away to 1/e = 0.368... or equivalently, the
-    time it takes for the step response to raise to 1-1/e = 0.632... */
-    void setLowpassTimeConstant(float newTimeConstant) { setCutoff(1.0/(2*PI*newTimeConstant)); }
+    /** This will set the time constant 'tau' for the case, when lowpass mode is chosen. This is
+      the time, it takes for the impulse response to die away to 1/e = 0.368... or equivalently, the
+      time it takes for the step response to raise to 1-1/e = 0.632... */
+    void setLowpassTimeConstant(float newTimeConstant) {
+      setCutoff(1.0 / (2 * PI * newTimeConstant));
+    }
 
     /** Sets the gain factor for the shelving modes (this is not in decibels). */
     void setShelvingGain(float newGain);
@@ -70,7 +63,9 @@ namespace rosic
     // inquiry
 
     /** Returns the cutoff-frequency. */
-    float getCutoff() const { return cutoff; }
+    float getCutoff() const {
+      return cutoff;
+    }
 
     //---------------------------------------------------------------------------------------------
     // audio processing:
@@ -99,30 +94,27 @@ namespace rosic
     // filter parameters:
     float cutoff;
     float shelvingGain;
-    int    mode;  
+    int    mode;
 
-    float sampleRate; 
+    float sampleRate;
     float sampleRateRec;  // reciprocal of the sampleRate
 
     // internal functions:
     void calcCoeffs();  // calculates filter coefficients from filter parameters
 
-  };
+};
 
-  //-----------------------------------------------------------------------------------------------
-  // inlined functions:
+//-----------------------------------------------------------------------------------------------
+// inlined functions:
 
-  inline float OnePoleFilter::getSample(float in)
-  {
-    // calculate the output sample:
-    y1 = (float)b0*in + b1*x1 + a1*y1 + (float)TINY;
+inline float OnePoleFilter::getSample(float in)
+{
+  // calculate the output sample:
+  y1 = (float)b0 * in + b1 * x1 + a1 * y1 + (float)1.1e-38;
 
-    // update the buffer variables:
-    x1 = in;
+  // update the buffer variables:
+  x1 = in;
 
-    return y1;
-  }
-
-} // end namespace rosic
-
-#endif // rosic_OnePoleFilter_h
+  return y1;
+}
+#endif

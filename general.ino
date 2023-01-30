@@ -44,8 +44,8 @@ static void mixer() { // sum buffers
 #endif
       mono_mix = 0.5*(mix_buf_l[i] + mix_buf_r[i]);
       Comp.Process(mono_mix); // calculate gain based on a mono mix, can be a side chain
-      mix_buf_l[i] = Comp.Apply(mix_buf_l[i]);
-      mix_buf_r[i] = Comp.Apply(mix_buf_r[i]);
+      mix_buf_l[i] = (Comp.Apply(mix_buf_l[i]));
+      mix_buf_r[i] = (Comp.Apply(mix_buf_r[i]));
       
 #ifdef DEBUG_MASTER_OUT______________
       if ( i % 16 == 0) meter = meter * 0.95f + abs( mono_mix); 
@@ -98,7 +98,6 @@ inline float lookupTable(float (&table)[WAVE_SIZE], float index ) { // lookup va
   res = (float)f * (float)(v2-v1) + v1;
   return res;
   
-  //return table[(uint16_t)index];
 }
 
 inline float fclamp(float in, float min, float max){
@@ -113,10 +112,13 @@ inline float fast_tanh(float x){
         x= -x;
     }
     if (x>=4.95f) {
-      return sign;
+      return sign; // tanh(x) ~= 1, when |x| > 4
     }
-    if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders    
-    return  sign * lookupTable(tanh_2048,(x*TANH_LOOKUP_COEF)); // lookup table 2048 / 5 = 409.6
+    if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders; tanh(x) ~= x, when |x| < 0.4    
+    return  sign * lookupTable(tanh_2048, (x*TANH_LOOKUP_COEF)); // lookup table 2048 / 5 = 409.6
+ //  float poly = (2.12-2.88*x+4.0*x*x);
+ //  return sign * x * (poly * one_div(poly * x + 1.0f)); // very good approximation found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
+                                                    // but it uses float division which is not that fast on esp32
 }
 
 static __attribute__((always_inline)) inline float one_div(float a) {
@@ -136,4 +138,34 @@ static __attribute__((always_inline)) inline float one_div(float a) {
         : "f0","f1","f2"
     );
     return result;
+}
+
+
+inline float linToLin(float in, float inMin, float inMax, float outMin, float outMax)
+{
+  // map input to the range 0.0...1.0:
+  float tmp = (in-inMin) * one_div(inMax-inMin);
+
+  // map the tmp-value to the range outMin...outMax:
+  tmp *= (outMax-outMin);
+  tmp += outMin;
+
+  return tmp;
+}
+
+inline float linToExp(float in, float inMin, float inMax, float outMin, float outMax)
+{
+  // map input to the range 0.0...1.0:
+  float tmp = (in-inMin) * one_div(inMax-inMin);
+
+  // map the tmp-value exponentially to the range outMin...outMax:
+  //tmp = outMin * exp( tmp*(log(outMax)-log(outMin)) );
+  return outMin * expf( tmp*(logf(outMax * one_div(outMin))) );
+}
+
+
+inline float expToLin(float in, float inMin, float inMax, float outMin, float outMax)
+{
+  float tmp = logf(in * one_div(inMin)) * one_div( logf(inMax * one_div(inMin)));
+  return outMin + tmp * (outMax-outMin);
 }

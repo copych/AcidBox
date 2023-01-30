@@ -99,50 +99,50 @@ struct sSynthCCs {
 };
 
 sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
- //cc   cpl def   min max   reset
-  {71,  74, 64,   60,  127,  true},
-  {74,  71, 20,   0,  90,  true},
-  {10,  0,  10,   0,  127,  true},
-  {75,  0,  100,  0,  127,  false},
-  {70,  0,  127,  64, 127,  true},
+ //cc                 cpl             def   min max   reset
+  {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
+  {CC_303_CUTOFF,     CC_303_RESO,    20,   5,  120,   true},
+  {CC_303_PAN,        0,              20,   0,  127,  true},
+  {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
+  {CC_303_WAVEFORM,   0,              127,  64, 127,  true},
 #ifndef NO_PSRAM
-  {91,  0,  5,    2,  127,  true},
+  {CC_303_REVERB_SEND,0,              5,    2,  127,  true},
 #endif
-  {92,  0,  0,    64, 127,  false},
-  {94,  0,  0,   2,  127,  true},
-  {95,  0,  0,   25, 100,  false},
-  {72,  0,  20,   15, 120,  true},
-  {73,  0,  1,    3,  60,   true}
+  {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
+  {CC_303_DISTORTION, 0,              0,    2,  127,  true},
+  {CC_303_ACCENT_LVL, 0,              0,    25, 100,  false},
+  {CC_303_DECAY,      0,              20,   15, 120,  true},
+  {CC_303_ATTACK,     0,              1,    3,  60,   true}
 };
 
 sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
- //cc   cpl def   min max   reset
-  {71,  74, 64,   60,  127,  true},
-  {74,  71, 20,   0,  60,  true},
-  {10,  0,  117,  0,  127,  true},
-  {75,  0,  64,   0,  127,  false},
-  {70,  0,  0,    0,  64,   true},
-  {94,  0,  0,   2,  127,  true},
-  {95,  0,  0,   25, 127,  false},
+ //cc                 cpl             def   min max   reset
+  {CC_303_RESO,       CC_303_CUTOFF,  64,   60, 127,  true},
+  {CC_303_CUTOFF,     CC_303_RESO,    20,   0,  120,  false},
+  {CC_303_PAN,        0,              107,  0,  127,  true},
+  {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
+  {CC_303_WAVEFORM,   0,              0,    0,  64,   true},
 #ifndef NO_PSRAM
-  {91,  0,  3,    2,  127,  true},  //reverb is not available with no psram
+  {CC_303_REVERB_SEND,0,              5,    2,  127,  true},
 #endif
-  {92,  0,  0,    60, 127,  false},
-  {72,  0,  50,   15, 90,  true},
-  {73,  0,  0,    3,  60,   true}
+  {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
+  {CC_303_OVERDRIVE,  0,              0,    2,  127,  true},
+  {CC_303_ACCENT_LVL, 0,              0,    25, 100,  false},
+  {CC_303_DECAY,      0,              20,   15, 120,  true},
+  {CC_303_ATTACK,     0,              1,    3,  60,   true}
 };
 
 sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
- //cc   cpl def   min max   reset
-  {74,  0,  64,   64,  127, true},
-  {74,  0,  64,   0,  64,   true},
-  {71,  0,  0,    0,  127,  true},
+ //cc                   cpl def   min max   reset
+  {CC_808_CUTOFF,       0,  64,   64,  127, true},
+  {CC_808_CUTOFF,       0,  64,   0,  64,   true},
+  {CC_808_RESO,         0,  0,    0,  127,  true},
 #ifndef NO_PSRAM
-  {91,  0,  5,    2,  127,  true},  // reverb is not available with no psram
-  {92,  0,  0,    64, 127,  true}, // delay for drums needs more delay time (read 'RAM') than we can afford
+  {CC_808_REVERB_SEND,  0,  5,    30,  127,  true},  // reverb is not available with no psram
+  {CC_808_DELAY_SEND,   0,  0,    64, 127,  true}, // delay for drums needs more delay time (read 'RAM') than we can afford
 #endif
-  {93,  0,  15,   80, 127,  true},
-  {94,  0,  0,    15,  80,  true}
+  {CC_808_BD_DECAY,     0,  64,   50, 90,   true},
+  {CC_808_SD_TONE,      0,  64,    40,  70,  true}
 };
 
 struct sMidiRamp {

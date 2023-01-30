@@ -4,6 +4,7 @@ inline float MoogLadder::my_tanh(float x)
 {
   //return tanh(x);
     float sign = 1.0f;
+    float poly;
     if (x<0.0f) {
         sign=-1.0f;
         x= -x;
@@ -13,7 +14,8 @@ inline float MoogLadder::my_tanh(float x)
     }
     if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders    
     return  sign * lookupTable(tanh_2048,(x*TANH_LOOKUP_COEF)); // lookup table 2048 / 5 = 409.6, 2048 is table size, 5 is max argument value 
- //  return sign * x/(x+1.0/(2.12-2.88*x+4.0*x*x)); // very good approximation found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
+ //  poly = (2.12-2.88*x+4.0*x*x);
+ //  return sign * x * (poly / (poly * x + 1.0f)); // very good approximation found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
                                                     // but it uses float division which is not that fast on esp32
   //  return sign * tanh(x);  // this version uses native tanh() which makes it slow in some cases
 }

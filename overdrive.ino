@@ -8,7 +8,7 @@ void Overdrive::Init()
 
 float Overdrive::Process(float in)
 {
-    float pre = pre_gain_ * in * 2.0;
+    float pre = pre_gain_ * in * 2.0f;
     
     return fast_tanh(pre) * post_gain_;
  //   return SoftClip(pre) * post_gain_;

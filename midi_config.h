@@ -20,7 +20,8 @@
 #define CC_303_REVERB_SEND 91
 #define CC_303_DELAY_SEND  92
 #define CC_303_DISTORTION 94
-#define CC_303_SATURATOR  95
+#define CC_303_OVERDRIVE  95
+#define CC_303_SATURATOR  128
 
 // 808 Drums MIDI CC
 #define CC_808_VOLUME     7

@@ -62,6 +62,7 @@ static float exp_2048[WAVE_SIZE];
 static float square_2048[WAVE_SIZE];
 static float tanh_2048[WAVE_SIZE];
 static uint32_t last_reset = 0;
+static float param[POT_NUM] ;
 
 // Audio buffers of all kinds
 static float synth_buf[2][DMA_BUF_LEN]; // 2 * 303 mono
@@ -75,14 +76,14 @@ static union { // a dirty trick, instead of true converting
 } out_buf; // i2s L+R output buffer
 
 volatile boolean processing = false;
-
 #ifndef NO_PSRAM
 static float rvb_k1, rvb_k2, rvb_k3;
 #endif
 static float dly_k1, dly_k2, dly_k3;
 
 size_t bytes_written; // i2s
-static uint32_t c1=0, c2=0, c3=0, d1=0, d2=0, d3=0, prescaler; // debug timing
+static uint32_t c1=0, c2=0, c3=0, d1=0, d2=0, d3=0, d4=0, c4=0; // debug timing
+volatile static uint32_t prescaler;
 
 // tasks for Core0 and Core1
 TaskHandle_t SynthTask1;
@@ -113,6 +114,7 @@ static void audio_task1(void *userData) {
             d1=micros()-c1;
             xTaskNotifyGive(SynthTask2); // if you have glitches, you may want to place this string in the end of audio_task1
         }
+         //  readPots();
         taskYIELD();
     }
 }
@@ -124,12 +126,13 @@ static void audio_task2(void *userData) {
         c2 = micros();
         drums_generate();
  //     Synth1.Generate(); 
-        Synth2.Generate();
         d2 = micros() - c2;
+        Synth2.Generate();
+        d3 = micros() - c2 - d2;
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
-          c3 = micros();
+          c4 = micros();
           mixer(); // actually we could send Notify before mixer() is done, but then we'd need tic-tac buffers for generation. Todo maybe
-          d3 = micros() - c3;
+          d4 = micros() - c4;
           xTaskNotifyGive(SynthTask1); 
         }        
         
@@ -165,7 +168,8 @@ void setup(void) {
   */
   
   buildTables();
-  
+
+for (int i=0; i<POT_NUM; i++) pinMode( POT_PINS[i] , INPUT_PULLDOWN); 
 
 #ifdef MIDI_ON
   MIDI.setHandleNoteOn(handleNoteOn);
@@ -218,7 +222,6 @@ void loop() { // default loopTask running on the Core1
   // or   vTaskDelete(NULL);
   
   // processButtons();
-   
   #ifdef MIDI_ON
   MIDI.read();
   #endif
@@ -228,10 +231,41 @@ void loop() { // default loopTask running on the Core1
     last_ms = micros();
     run_tick();
     myRandomAddEntropy((uint16_t)(last_ms & 0x0000FFFF));
+   
+   // if (prescaler % 1024 == 0) DEBF ("synt1=%d drums=%d synt2=%d mixer=%d \r\n" , d1, d2, d3, d4);
+   
+   // DEBF("%0.4f %0.4f %0.4f \r\n", param1, param2, param3);
   }
   #endif
-  
-  //DEBF ("%d %d %d \r\n" , d1, d2, d3);
 
   taskYIELD(); // breath for all the rest of the Core1 
+}
+
+void readPots() {
+  static const float snap = 0.005;
+  static float tmp;
+  static const float NORMALIZE_ADC = 1.0f/4096.0f;
+  for (uint8_t i = 0; i < POT_NUM; i++) {
+    tmp = (float)analogRead(POT_PINS[i]) * NORMALIZE_ADC;  
+    if (fabs(tmp - param[i]) > snap) {
+      param[i] = tmp;
+      paramChange(i, tmp);
+    }
+  }
+}
+
+void paramChange(uint8_t paramNum, float paramVal) {
+  // paramVal === param[paramNum];
+
+  DEBF ("param %d val %0.4f\r\n" , paramNum, paramVal);
+  switch (paramNum) {
+    case 0:
+      break;
+    case 1:
+      break;
+    case 3:
+      break;
+    default:
+    {}
+  }
 }

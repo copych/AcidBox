@@ -34,7 +34,7 @@ class MoogLadder
 
     inline void SetDrive(float drive) { 
       drive_ = drive+0.01f;
-      compens_ = (drive_*0.85f+3.2f)/drive_;
+      compens_ = (drive_* 0.85f + 3.2f) / drive_;
 #ifdef DEBUG_FX
       DEBF("Filter drive: %0.4f\r\n",drive);
 #endif      

@@ -193,16 +193,23 @@ inline void Sampler::Init(){
 }
 
 inline void Sampler::SetNotePan_Midi( uint8_t data1){
+  /*
   samplePlayer[ selectedNote ].pan_midi = data1;
   float value = MIDI_NORM * (float)data1;
   samplePlayer[ selectedNote ].pan =  value;
 #ifdef DEBUG_SAMPLER
   DEBF("Sampler - Note[%d].pan: %0.2f\n",  selectedNote, samplePlayer[ selectedNote ].pan );
 #endif  
+*/
+  pan_midi[ selectedNote+1 ] = data1;
+#ifdef DEBUG_SAMPLER
+  DEBF("Sampler - Note[%d].midi_pan: %0.2f\n",  selectedNote, data1 );
+#endif 
 }
 
 
 inline void Sampler::SetNoteDecay_Midi( uint8_t data1){
+  /*
   samplePlayer[ selectedNote ].decay_midi = data1;
   float value = MIDI_NORM * (float)data1;
  // samplePlayer[ selectedNote ].decay = 1.0f - (0.000005f * pow( 5000.0f, 1.0f - value) );
@@ -210,20 +217,38 @@ inline void Sampler::SetNoteDecay_Midi( uint8_t data1){
 #ifdef DEBUG_SAMPLER
   DEBF("Sampler - Note[%d].decay: %0.2f\n",  selectedNote, samplePlayer[ selectedNote ].decay);
 #endif  
+*/
+
+#ifdef DEBUG_SAMPLER
+  DEBF("Sampler - Note[%d].decay_midi: %0.2f\n",  selectedNote, data1);
+#endif 
+  decay_midi[ selectedNote+1 ] = data1;
 }
 
 
 inline void Sampler::SetNoteOffset_Midi( uint8_t data1){
+  /*
   samplePlayer[ selectedNote ].offset_midi = data1;   
 #ifdef DEBUG_SAMPLER
   DEBF("Sampler - Note[%d].offset: %0.2f\n",  selectedNote, samplePlayer[ selectedNote ].offset_midi);
 #endif  
+*/
+
+#ifdef DEBUG_SAMPLER
+  DEBF("Sampler - Note[%d].offset_midi: %0.2f\n",  selectedNote, data1);
+#endif 
+  offset_midi[ selectedNote+1 ] = data1;
 }
 
-inline void Sampler::SetSoundPitch_Midi( uint8_t value){
-  DEB("Pitch Midi ");
-  samplePlayer[ selectedNote ].pitch_midi = value;
-  SetSoundPitch( MIDI_NORM * value );
+inline void Sampler::SetSoundPitch_Midi( uint8_t data1){
+/*  
+  samplePlayer[ selectedNote ].pitch_midi = data1;
+  SetSoundPitch( MIDI_NORM * data1 );
+*/
+#ifdef DEBUG_SAMPLER
+  DEBF("Sampler - Note[%d].pitch_midi: %0.2f\n",  selectedNote, data1);
+#endif 
+  pitch_midi[ selectedNote+1 ] = data1;
 }
 
 inline void Sampler::SetSoundPitch(float value){

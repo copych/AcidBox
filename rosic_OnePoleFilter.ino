@@ -1,15 +1,14 @@
 #include "rosic_OnePoleFilter.h"
-using namespace rosic;
 
 //-------------------------------------------------------------------------------------------------
 // construction/destruction:
 
 OnePoleFilter::OnePoleFilter()
 {
-  shelvingGain = 1.0;
-  setSampleRate(44100.0);  // sampleRate = 44100 Hz by default
+  shelvingGain = 1.0f;
+  setSampleRate((float)SAMPLE_RATE);  // sampleRate = 44100 Hz by default
   setMode      (0);        // bypass by default
-  setCutoff    (20000.0);  // cutoff = 20000 Hz by default
+  setCutoff    (100.0f);  // cutoff = 100 Hz by default
   reset();                 // reset memorized samples to zero
 }
 
@@ -18,9 +17,9 @@ OnePoleFilter::OnePoleFilter()
 
 void OnePoleFilter::setSampleRate(float newSampleRate)
 {
-  if( newSampleRate > 0.0 )
+  if( newSampleRate > 0.0f )
     sampleRate = newSampleRate;
-  sampleRateRec = 1.0 / sampleRate;
+  sampleRateRec = 1.0f / sampleRate;
 
   calcCoeffs();
   return;
@@ -34,10 +33,10 @@ void OnePoleFilter::setMode(int newMode)
 
 void OnePoleFilter::setCutoff(float newCutoff)
 {
-  if( (newCutoff>0.0) && (newCutoff<=20000.0) )
+  if( (newCutoff>0.0f) && (newCutoff<=20000.0f) )
     cutoff = newCutoff;
   else
-    cutoff = 20000.0;
+    cutoff = 20000.0f;
 
   calcCoeffs();
   return;
@@ -45,18 +44,19 @@ void OnePoleFilter::setCutoff(float newCutoff)
 
 void OnePoleFilter::setShelvingGain(float newGain)
 {
-  if( newGain > 0.0 )
+  if( newGain > 0.0f )
   {
     shelvingGain = newGain;
     calcCoeffs();
   }
-  else
-    DEBUG_BREAK; // this is a linear gain factor and must be >= 0.0
+  else 
+  {
+  }
 }
 
 void OnePoleFilter::setShelvingGainInDecibels(float newGain)
 {
-  setShelvingGain(dB2amp(newGain));
+  setShelvingGain(exp(newGain * 0.11512925464970228420089957273422f));
 }
 
 void OnePoleFilter::setCoefficients(float newB0, float newB1, float newA1)
@@ -82,33 +82,33 @@ void OnePoleFilter::calcCoeffs()
   case LOWPASS: 
     {
       // formula from dspguide:
-      float x = exp( -2.0 * PI * cutoff * sampleRateRec); 
-      b0 = 1-x;
-      b1 = 0.0;
+      float x = exp( -2.0f * PI * cutoff * sampleRateRec); 
+      b0 = 1.0f-x;
+      b1 = 0.0f;
       a1 = x;
     }
     break;
   case HIGHPASS:  
     {
       // formula from dspguide:
-      float x = exp( -2.0 * PI * cutoff * sampleRateRec);
-      b0 =  0.5*(1+x);
-      b1 = -0.5*(1+x);
+      float x = exp( -2.0f * PI * cutoff * sampleRateRec);
+      b0 =  0.5f*(1.0f+x);
+      b1 = -0.5f*(1.0f+x);
       a1 = x;
     }
     break;
   case LOWSHELV:
     {
       // formula from DAFX:
-      float c = 0.5*(shelvingGain-1.0);
+      float c = 0.5f*(shelvingGain-1.0f);
       float t = tan(PI*cutoff*sampleRateRec);
       float a;
-      if( shelvingGain >= 1.0 )
-        a = (t-1.0)/(t+1.0);
+      if( shelvingGain >= 1.0f )
+        a = (t-1.0f)/(t+1.0f);
       else
         a = (t-shelvingGain)/(t+shelvingGain);
 
-      b0 = 1.0 + c + c*a;
+      b0 = 1.0f + c + c*a;
       b1 = c + c*a + a;
       a1 = -a;
     }
@@ -116,15 +116,15 @@ void OnePoleFilter::calcCoeffs()
   case HIGHSHELV:
     {
       // formula from DAFX:
-      float c = 0.5*(shelvingGain-1.0);
+      float c = 0.5f*(shelvingGain-1.0f);
       float t = tan(PI*cutoff*sampleRateRec);
       float a;
-      if( shelvingGain >= 1.0 )
-        a = (t-1.0)/(t+1.0);
+      if( shelvingGain >= 1.0f )
+        a = (t-1.0f)/(t+1.0f);
       else
-        a = (shelvingGain*t-1.0)/(shelvingGain*t+1.0);
+        a = (shelvingGain*t-1.0f)/(shelvingGain*t+1.0f);
 
-      b0 = 1.0 + c - c*a;
+      b0 = 1.0f + c - c*a;
       b1 = a + c*a - c;
       a1 = -a;
     }
@@ -134,25 +134,25 @@ void OnePoleFilter::calcCoeffs()
     {
       // formula from DAFX:
       float t = tan(PI*cutoff*sampleRateRec);
-      float x = (t-1.0) / (t+1.0);
+      float x = (t-1.0f) / (t+1.0f);
 
       b0 = x;
-      b1 = 1.0;
+      b1 = 1.0f;
       a1 = -x;
     }
     break;
 
   default: // bypass
     {
-      b0 = 1.0;
-      b1 = 0.0;
-      a1 = 0.0;
+      b0 = 1.0f;
+      b1 = 0.0f;
+      a1 = 0.0f;
     }break;
   }
 }
 
 void OnePoleFilter::reset()
 {
-  x1 = 0.0;
-  y1 = 0.0;
+  x1 = 0.0f;
+  y1 = 0.0f;
 }

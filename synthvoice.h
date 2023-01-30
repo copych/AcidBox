@@ -20,6 +20,8 @@
 #include "rosic_TeeBeeFilter.h"
 #endif
 
+#include "rosic_OnePoleFilter.h"
+
 #include "wavefolder.h"
 #include "overdrive.h"
 
@@ -28,7 +30,8 @@
 
 typedef struct 
 {
-  uint8_t buf[MIDI_MVA_SZ];
+  uint8_t notes[MIDI_MVA_SZ];
+  bool accents[MIDI_MVA_SZ];
   uint8_t n;
 } mva_data;
 
@@ -37,9 +40,6 @@ public:
   SynthVoice();
   SynthVoice(uint8_t ind) {_index = ind;};
   void Init();
-	void StartNote(uint8_t midiNote, uint8_t velo);
-  void EndNote(uint8_t midiNote, uint8_t velo);
-  
   inline void on_midi_noteON(uint8_t note, uint8_t velocity);
   inline void on_midi_noteOFF(uint8_t note, uint8_t velocity);
   inline void StopSound();
@@ -67,9 +67,17 @@ public:
   float _sendReverb = 0.0f;
   int midiNotes[2] = {-1, -1};
 
-
   mva_data mva1;
 
+#if FILTER_TYPE == 0
+  MoogLadder        Filter;
+#endif
+#if FILTER_TYPE == 1
+  KrajeskiMoog      Filter;
+#endif
+#if FILTER_TYPE == 2
+  TeeBeeFilter      Filter;
+#endif
 
   
 private:
@@ -87,12 +95,17 @@ private:
   float _accentLevel = 0.5f;
   float _accentation = 0.0f;
   float _cutoff = 0.2f;   // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically doubles this range
-  float _reso = 0.4f;
+  float _filter_freq = 400.0f; // cutoff freq, Hz
+  float _filt_avg = 400.0f;
+  float _reso = 0.4f; // normalized
   float _saturator = 0.0; // pre shaper
-  float _gain = 0.0;      // post distortion
+  float _gain = 0.0;      // post distortion, cc94
+  float _drive = 0.0;      // post overdrive, cc95
   enum eEnvState_t {ENV_IDLE, ENV_INIT, ENV_ATTACK, ENV_DECAY, ENV_SUSTAIN, ENV_RELEASE, ENV_WAITING};
   volatile eEnvState_t _eAmpEnvState = ENV_IDLE;
   volatile eEnvState_t _eFilterEnvState = ENV_IDLE;
+  float _envScaler = 1.0f;
+  float _envOffset = 0.0f;
   
   uint32_t _noteStartTime = 0;
   uint8_t _midiNote = 69;
@@ -115,30 +128,25 @@ private:
   float _filterDecayMs = 200.0f;
   float _filterEnvAttackStep = 15.0f;
   float _filterEnvDecayStep = 1.0f;
-  float _offset = 0.0f; // filter discharge inertia
+  float _offset = 0.0f; // filter discharge 
   float _offset_leak = 0.9999f; 
   float _msToSteps = (float)WAVE_SIZE * DIV_SAMPLE_RATE * 1000.0f;
-  
+  float _compens = 1.0f;
   void mva_note_on(mva_data *p, uint8_t note, uint8_t accent);
   void mva_note_off(mva_data *p, uint8_t note);
   void mva_reset(mva_data *p);
   void note_off() ;
   void note_on(uint8_t midiNote, bool slide, bool accent) ;
+  inline void calcEnvModScalerAndOffset();
+  Smoother          ampDeclicker;
+  Smoother          filtDeclicker;
 
-  Smoother ampDeclicker;
-  Smoother filtDeclicker;
-#if FILTER_TYPE == 0
-  MoogLadder Filter;
-#endif
-#if FILTER_TYPE == 1
-  KrajeskiMoog Filter;
-#endif
-#if FILTER_TYPE == 2
-  rosic::TeeBeeFilter Filter;
-#endif
-
-  Wavefolder Wfolder;
-  Overdrive Drive;
+  OnePoleFilter     highpass1;  //taken from open303, subj to check
+  OnePoleFilter     highpass2;
+  OnePoleFilter     allpass; 
+  
+  Wavefolder        Wfolder;
+  Overdrive         Drive;
 };
 
 #endif

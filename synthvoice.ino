@@ -2,11 +2,13 @@
 
 
 void SynthVoice::Init() {
-  _envMod = 0.0f;   
-  _accentLevel = 0.0f; 
-  _cutoff = 0.2f; // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically doubles this range
+  _envMod = 0.5f;   
+  _accentLevel = 0.5f; 
+  _cutoff = 0.2f; // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically floats this range
+  _filter_freq = linToExp(_cutoff, 0.0f, 1.0f, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
   _reso = 0.4f;
-  _gain = 1.0; // values >1 will distort sound
+  _gain = 0.0f; // values >1 will distort sound
+  _drive = 0.0f;
   _eAmpEnvState = ENV_IDLE;
   _eFilterEnvState = ENV_IDLE;
 //  midiNotes[0] = -1;
@@ -14,7 +16,7 @@ void SynthVoice::Init() {
   _midiNote = 69;
   _currentStep = 1.0f;
   _targetStep = 1.0f;
-  _deltaStep = 1.0f;
+  _deltaStep = 0.0f;
   _slideMs = 60.0f;
   _phaze = 0.0f;
   mva1.n = 0 ;
@@ -32,64 +34,65 @@ void SynthVoice::Init() {
   _filterDecayMs = 200.0;
   _filterEnvAttackStep = 15.0;
   _filterEnvDecayStep = 1.0; 
-   
-  Filter.Init((float)SAMPLE_RATE);  
-  if (_index==0) {
-    Wfolder.Init();
-  } else {
-    Drive.Init();
-  }
+    
+  Wfolder.Init();
+  Drive.Init();
+
+  Filter.Init((float)SAMPLE_RATE); 
+  Filter.SetMode(TeeBeeFilter::LP_18); 
+  highpass1.setMode(OnePoleFilter::HIGHPASS);
+  highpass1.setCutoff(44.486f);
+  highpass2.setMode(OnePoleFilter::HIGHPASS);
+  highpass2.setCutoff(24.167f);
+  allpass.setMode(OnePoleFilter::ALLPASS);
+  allpass.setCutoff(14.008f);
 }
 
 inline void SynthVoice::Generate() {
   float samp = 0.0f, filtEnv = 0.0f, ampEnv = 0.0f, final_cut = 0.0f;
-  static float meter1=0.0f, meter=0.0f;
-  static float avgmin=0.0f, avgmax=0.0f, avgmid=0.0f;
-  for (int i = 0; i < DMA_BUF_LEN; ++i) {
-  prescaler++;
-  filtEnv = GetFilterEnv();
-  ampEnv = GetAmpEnv();
-//  filtEnv = filtDeclicker.Process(filtEnv);
-//  ampEnv = ampDeclicker.Process(ampEnv);
+  for (uint16_t i = 0; i < DMA_BUF_LEN; ++i) {
+    if (_index==0) prescaler++;
+    filtEnv = GetFilterEnv();
+    ampEnv = GetAmpEnv();
     if (_eAmpEnvState != ENV_IDLE) {
-      //samp = (((1.0f - _waveMix) * (square_2048[ (uint16_t)(_phaze) ] ) ) + ( _waveMix * exp_2048[ (uint16_t)(_phaze) ] )); // lookup and mix waveforms
       samp = (float)(1.0f - _waveMix) * (float)lookupTable(square_2048,_phaze) + (float)_waveMix * (float)lookupTable(exp_2048,_phaze) ; // lookup and mix waveforms
     } else {
       samp = 0.0f;
     }
-    if (i % 2 == 0) {
-      final_cut = (float)MIN_CUTOFF_FREQ + (float)(MAX_CUTOFF_FREQ - MIN_CUTOFF_FREQ) * (_cutoff * (1.0f - 0.2f * _envMod) + (_envMod * (filtEnv - 0.15f)));
+    if (i % 4 == 0) {
+      final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 0.3f * (float)_accentation + 1.0f );
+     // final_cut = filtDeclicker.Process( final_cut);
       Filter.SetCutoff( final_cut );
     }
-    
- //   if ( prescaler % DMA_BUF_LEN == 0) meter = meter * 0.95f + abs( samp); 
-    samp = Filter.Process(samp); 
- /*  
-    if ( prescaler % DMA_BUF_LEN == 0 && _index == 0) {
-      avgmax = avgmax - (avgmax - avgmid) * 0.001f ;
-      avgmin = avgmin + (avgmid - avgmin) * 0.001f ;
+      
+    samp = highpass1.getSample(samp);        // pre-filter highpass
+    samp = Filter.Process(samp);    
+    samp = allpass.getSample(samp);
+    samp = highpass2.getSample(samp); 
+  
+/*
+    if ( i % DMA_BUF_LEN == 0 && _index == 0) {
+      avgmax = avgmax*0.999 - (avgmax - avgmid) * 0.001f ;
+      avgmin = avgmin*0.999 + (avgmid - avgmin) * 0.001f ;
       if (samp > avgmax) avgmax = samp ;
-      if (samp < avgmin) avgmin = samp ;
-      avgmid = samp * 0.001f + 0.999f * avgmid;
-      DEBF( " %0.5f  %0.5f  %0.5f\r\n", avgmin, avgmid, avgmax );
-    }
-  */
-   // if ( prescaler % DMA_BUF_LEN == 0 && _index == 0 ) DEBF("%0.3f\r\n", samp); 
- //   if ( prescaler % DMA_BUF_LEN == 0 && _index == 0 ) DEBF( "sat %0.5f pre %0.5f post %0.5f\r\n", _saturator, meter, meter1 );
-    samp *= ampEnv ;
-
-    switch (_index) {
-      case 0:
-        samp = Wfolder.Process(samp);
-        break;
-      case 1:
-      default:
-        samp = Drive.Process(samp);
-        break;
+      else if (samp < avgmin) avgmin = samp ;
+  //    avgmid = 0.5f * (avgmax+avgmin) * 0.001f + 0.999f * avgmid;
+   //   DEBF( " %0.3f  %0.3f  %0.3f\r\n", avgmin, avgmid, avgmax );
+      DEBF("%0.3f\r\n", avgmax-avgmin);
+  //  samp -= avgmid;
     }
     
+*/
+
+    samp *= ampEnv;
+    
+    samp = Drive.Process(samp);
+    samp = Wfolder.Process(samp);
+
     samp *=  volume;
-//   if ( prescaler % DMA_BUF_LEN == 0 && _index == 0 ) DEBF( "f(Hz) %0.0f\r\n", final_cut );
+
+
+    
 //   if ( prescaler % DMA_BUF_LEN == 0 && _index == 0 ) DEBF( "off(Hz) %0.3f\r\n", _offset );
     
     if ((_slide || _portamento) && _deltaStep != 0.0f) {     // portamento / slide processing
@@ -135,7 +138,6 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
     case CC_303_RESO:
       _reso = cc_value * MIDI_NORM ;
       Filter.SetResonance(_reso);
-      //Filter.setResonance(_reso);
       break;    
     case CC_303_DECAY: // Env release
       _filterDecayMs = 15.0f + (float)cc_value * MIDI_NORM * 5000.0f ;
@@ -147,6 +149,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
+      _filter_freq = linToExp(_cutoff, 0.0f, 1.0f, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
       break;
     case CC_303_DELAY_SEND:
       _sendDelay = (float)cc_value * MIDI_NORM;
@@ -156,17 +159,19 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_ENVMOD_LVL:
       _envMod = (float)cc_value * MIDI_NORM;
+     // calcEnvModScalerAndOffset();
+      // DEBF("%0.3f %0.3f\r\n", _envScaler, _envOffset);
       break;
     case CC_303_ACCENT_LVL:
       _accentLevel = (float)cc_value * MIDI_NORM;
       break;
     case CC_303_DISTORTION:
       _gain = (float)cc_value * MIDI_NORM ;
-      if (_index == 0 ) {
-        Wfolder.SetDrive(_gain );
-      } else {
-        Drive.SetDrive(_gain ); 
-      }
+      Wfolder.SetDrive(_gain );
+      break;
+    case CC_303_OVERDRIVE:
+      _drive = (float)cc_value * MIDI_NORM ;
+      Drive.SetDrive(_drive ); 
       break;
     case CC_303_SATURATOR:
       _saturator = (float)cc_value * MIDI_NORM;
@@ -181,9 +186,9 @@ float SynthVoice::GetAmpEnv() {
   static float ret_val = 0.0f;
   static float pass_val = 0.0f, release_lvl = 0.0f;
   static float k_acc = 1.0f;
-  k_acc = (1.0f + 0.3f * _accentation);
   switch (_eAmpEnvState) {
     case ENV_INIT:
+      k_acc = (1.0f + 0.3f * _accentation);
       _ampEnvPosition = 0.0f;
       _ampEnvAttackStep = _msToSteps * one_div( _ampAttackMs+0.0001f);
       _ampEnvDecayStep = _msToSteps * one_div(_ampDecayMs+0.0001f);
@@ -249,10 +254,9 @@ float SynthVoice::GetAmpEnv() {
 
 inline float SynthVoice::GetFilterEnv() {
   static volatile float ret_val = 0.0f;
-  static volatile float k_acc = 1.0f;
-  k_acc = (1.0f + 0.3f * _accentation);
   switch(_eFilterEnvState) {
     case ENV_INIT:
+    //   k_acc = (1.0f + 0.45f * _accentation);
       _offset = max(ret_val, _offset);
       _filterEnvPosition = 0.0f;
       _filterEnvAttackStep = _msToSteps * one_div(_filterAttackMs+0.0001f);
@@ -262,15 +266,15 @@ inline float SynthVoice::GetFilterEnv() {
         _filterEnvDecayStep *= 5.0f;
       }
       _eFilterEnvState = ENV_ATTACK;
-      ret_val = (-exp_2048[ 0 ] + 1.0f) * 0.5f * k_acc;
+      ret_val = (-exp_2048[ 0 ] + 1.0f) * 0.5f ;
       break;
     case ENV_ATTACK:
       if (_filterEnvPosition >= (float)WAVE_SIZE) {
         _eFilterEnvState = ENV_DECAY;
         _filterEnvPosition = 0.0f;
-        ret_val = (-exp_2048[ WAVE_SIZE-1 ] + 1.0f) * 0.5f * k_acc;
+        ret_val = (-exp_2048[ WAVE_SIZE-1 ] + 1.0f) * 0.5f ;
       } else {
-        ret_val = (-lookupTable(exp_2048, _filterEnvPosition) + 1.0f) * 0.5f * k_acc ;
+        ret_val = (-lookupTable(exp_2048, _filterEnvPosition) + 1.0f) * 0.5f  ;
       }
       _filterEnvPosition += _filterEnvAttackStep;
       break;
@@ -280,7 +284,7 @@ inline float SynthVoice::GetFilterEnv() {
         _filterEnvPosition = 0.0f;
         ret_val = 0.0f;
       } else {
-        ret_val =  (lookupTable(exp_2048, _filterEnvPosition) + 1.0f) * 0.5f * k_acc ;
+        ret_val =  (lookupTable(exp_2048, _filterEnvPosition) + 1.0f) * 0.5f  ;
       }
       _filterEnvPosition += _filterEnvDecayStep;
       _offset *= _offset_leak;
@@ -296,6 +300,27 @@ inline float SynthVoice::GetFilterEnv() {
   return ret_val ;
 }
 
+// calcEnvModScalerAndOffset() taken from open303 code
+inline void SynthVoice::calcEnvModScalerAndOffset() {
+    // define some constants that arise from the measurements:
+    const float c0   = 313.0f;  // lowest nominal cutoff
+    const float c1   = 2394.0f;  // highest nominal cutoff
+    const float oF   = 0.048292930943553f;       // factor in line equation for offset
+    const float oC   = 0.294391201442418f;       // constant in line equation for offset
+    const float sLoF = 3.773996325111173f;       // factor in line eq. for scaler at low cutoff
+    const float sLoC = 0.736965594166206f;       // constant in line eq. for scaler at low cutoff
+    const float sHiF = 4.194548788411135f;       // factor in line eq. for scaler at high cutoff
+    const float sHiC = 0.864344900642434f;       // constant in line eq. for scaler at high cutoff
+
+    // do the calculation of the scaler and offset:
+    float e   = _envMod;
+  //  float c   = expToLin(_filter_freq, c0,   c1,   0.0, 1.0); 
+    float c   = _cutoff; 
+    float sLo = sLoF*e + sLoC;
+    float sHi = sHiF*e + sHiC;
+    _envScaler  = (1-c)*sLo + c*sHi;
+    _envOffset  =  oF*c + oC;
+}
 
 // The following code initially written by Anton Savov,
 // is taken from http://antonsavov.net/cms/projects/303andmidi.html
@@ -303,9 +328,40 @@ inline float SynthVoice::GetFilterEnv() {
 // "Newest" note-priority rule
 // Modified version, allows multiple Notes with the same pitch
 
+inline void SynthVoice::on_midi_noteON(uint8_t note, uint8_t velocity)
+{
+    mva_note_on(&mva1, note, (velocity >= 80));
+
+    bool slide = (mva1.n > 1);
+    bool accent = (mva1.accents[0]);
+    note = mva1.notes[0] ;
+    note_on(note, slide, accent);
+}
+
+inline void SynthVoice::on_midi_noteOFF(uint8_t note, uint8_t velocity)
+{
+    if (mva1.n == 0) { return; }
+    uint8_t tmp_note = mva1.notes[0];
+    uint8_t tmp_accent = mva1.accents[0];
+    mva_note_off(&mva1, note);
+
+    if (mva1.n > 0)
+    {
+        if (mva1.notes[0] != tmp_note)
+        {
+            bool accent = (mva1.accents[0] );
+            bool slide = 1;
+            note = mva1.notes[0];
+            
+            note_on(note, slide, accent);
+        }
+    }
+    else { note_off(); }
+}
+
+
 void SynthVoice::mva_note_on(mva_data *p, uint8_t note, uint8_t accent)
 {
-    if (accent) { accent = 0x80; }
     uint8_t s = 0;
     uint8_t i = 0;
 
@@ -317,11 +373,13 @@ void SynthVoice::mva_note_on(mva_data *p, uint8_t note, uint8_t accent)
     while (i > 0)
     {
         --s;
-        p->buf[i] = p->buf[s];
+        p->notes[i] = p->notes[s];
+        p->accents[i] = p->accents[s];
         i = s;
     }
     // put the new note first
-    p->buf[0] = note | accent;
+    p->notes[0] = note;
+    p->accents[0] = accent;
     // update the voice counter
     p->n = m;
 }
@@ -336,7 +394,7 @@ void SynthVoice::mva_note_off(mva_data *p, uint8_t note)
     while (i) // count backwards (oldest notes first)
     {
         --i;
-        if (note == (p->buf[i] & 0x7F))
+        if (note == p->notes[i] )
         {
             // found it!
             if (i < (p->n - 1)) // don't shift if this was the last note..
@@ -346,7 +404,8 @@ void SynthVoice::mva_note_off(mva_data *p, uint8_t note)
                 while (i < m)
                 {
                     ++s;
-                    p->buf[i] = p->buf[s];
+                    p->notes[i] = p->notes[s];
+                    p->accents[i] = p->accents[s];
                     i = s;
                 }
             }
@@ -360,37 +419,6 @@ void SynthVoice::mva_note_off(mva_data *p, uint8_t note)
 void SynthVoice::mva_reset(mva_data *p)
 {
     p->n = 0;
-}
-
-inline void SynthVoice::on_midi_noteON(uint8_t note, uint8_t velocity)
-{
-    mva_note_on(&mva1, note, (velocity >= 100));
-
-    bool slide = (mva1.n > 1);
-    bool accent = (mva1.buf[0] >> 7); // top bit
-    note = mva1.buf[0] & 0x7F;
-
-    note_on(note, slide, accent);
-}
-
-inline void SynthVoice::on_midi_noteOFF(uint8_t note, uint8_t velocity)
-{
-    if (mva1.n == 0) { return; }
-    uint8_t tmp = mva1.buf[0];
-    mva_note_off(&mva1, note);
-
-    if (mva1.n > 0)
-    {
-        if (mva1.buf[0] != tmp)
-        {
-            bool accent = (mva1.buf[0] >> 7); // top bit
-            bool slide = 1;
-            note = mva1.buf[0] & 0x7F;
-            
-            note_on(note, slide, accent);
-        }
-    }
-    else { note_off(); }
 }
 
 void  SynthVoice::note_on(uint8_t midiNote, bool slide, bool accent) 
@@ -416,55 +444,3 @@ void  SynthVoice::note_off()
   _eAmpEnvState = ENV_RELEASE;
   _ampEnvPosition = 0;
 }
-
-
-/* An old version of Monophonic Voice Allocator by Copych
-void SynthVoice::StartNote(uint8_t midiNote, uint8_t velo) {
-//  _midiNote = midiNote;
-  if (midiNotes[0] != -1) {
-    midiNotes[1] = midiNotes[0];
-    _slide = true;
-  }
-  midiNotes[0] = midiNote;
-  _targetStep = midi_2048_steps[midiNote];
-  _accent = (velo > 80);
-  if ( _eAmpEnvState != ENV_IDLE && _eAmpEnvState != ENV_RELEASE ) {
-    _slide = true;
-  } else {
-    _slide = false;
-  }
-  if (_slide || _portamento) {
-    _deltaStep = (_targetStep - _currentStep) * (1000.0f * DIV_SAMPLE_RATE / _slideMs );
-  } else {
-    _currentStep = _targetStep;
-    _deltaStep = 0.0f ;
-    _eAmpEnvState = ENV_INIT;
-    _eFilterEnvState = ENV_INIT;
-  }
-}
-
-void SynthVoice::EndNote(uint8_t midiNote, uint8_t velo) {
-  if (midiNotes[1] == -1) {
-    if (midiNotes[0] == midiNote) {
-      _eAmpEnvState = ENV_RELEASE;
-      _ampEnvPosition = 0;
-      midiNotes[0] = -1;
-    }
-  } else {
-    if (midiNotes[0] == midiNotes[1] ) {
-      if (midiNotes[0] == midiNote) {
-        _eAmpEnvState = ENV_RELEASE;
-        _ampEnvPosition = 0;
-        midiNotes[1] = -1;
-      }
-    } else {
-      if (midiNotes[0] == midiNote) {
-        _eAmpEnvState = ENV_RELEASE;
-        _ampEnvPosition = 0;
-        _filterEnvPosition = 0;
-        midiNotes[1] = -1;
-      }
-    }
-  }
-}
-*/
