@@ -1,5 +1,5 @@
 # AcidBox
-ESP32 headless acid combo of 2 x 303 + 1 x 808 like synths. Filter cutoff, reso, saturation, overdrive within each 303, hipass/lopass filter and bitcrusher in drums, send to reverb and delay and master compression.
+ESP32 headless acid combo of 303 + 303 + 808 like synths. Filter cutoff, reso, env mod, accent, wavefolder, overdrive within each 303, hipass/lopass filter and bitcrusher in drums, send to reverb, delay and master compression.
 All MIDI driven. 44100, 16bit stereo I2S output to the external DAC or 8bit to the built-in DAC. No indication. Uses both cores of ESP32. Cheap ~$10.
 Consult with midi_config.h to find out and to set up MIDI continous control messages.
 
