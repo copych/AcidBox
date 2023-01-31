@@ -84,8 +84,8 @@ inline void TeeBeeFilter::SetCutoff(float newCutoff, bool updateCoefficients)
   {
     if ( newCutoff < 200.0f ) // an absolute floor for the cutoff frequency - tweakable
       cutoff = 200.0f;
-    else if ( newCutoff > 20000.0f )
-      cutoff = 20000.0f;
+    else if ( newCutoff > 10550.0f )
+      cutoff = 10550.0f;
     else
       cutoff = newCutoff;
 
@@ -129,7 +129,6 @@ inline void TeeBeeFilter::calculateCoefficientsExact()
 
   // use a weighted sum between the resonance-tuned and no-resonance coefficient:
   a1 = r * a1_fullRes + (1.0f - r) * a1_noRes;
-
   // calculate the b0-coefficient from the condition that each stage should be a leaky
   // integrator:
   b0 = 1.0 + a1;
@@ -208,8 +207,6 @@ inline void TeeBeeFilter::calculateCoefficientsApprox4()
 inline float TeeBeeFilter::Process(float in)
 {
   static float y0, ret_val;
-  static size_t prescaler = 0;
-  // prescaler ++;
   if ( mode == TB_303 )
   {
     y0 =  shape(in * drive) - feedbackHighpass.getSample(k * y4);
@@ -226,8 +223,9 @@ inline float TeeBeeFilter::Process(float in)
   //float y0 = inputFilter.getSample(0.125*driveFactor*in) - feedbackHighpass.getSample(k*y4);
   // y0 = 0.125*driveFactor*in - feedbackHighpass.getSample(k*y4);  
   // y0 = fclamp(  (0.08f * in - feedbackHighpass.getSample(k * y4)), -1e8, 1e8);
-  y0 = (0.08f * in - feedbackHighpass.getSample(k * y4));
-  // if ( prescaler % DMA_BUF_LEN == 0 ) DEBF("%0.3f\r\n", y0);
+  y0 = fclamp(0.08f * in - feedbackHighpass.getSample(k * y4), -10e4, 10e4);
+
+  // DEBF("%0.3f\r\n", y0);
   /*
     // cascade of four 1st order sections with nonlinearities:
     y1 = shape(b0*y0 - a1*y1);
@@ -250,9 +248,13 @@ inline float TeeBeeFilter::Process(float in)
   y4 = fclamp(y3 + a1 * (y3 - y4), -1e8, 1e8); // \todo: performance test both versions of the ladder
 */
   y1 = y0 + a1 * (y0 - y1);
+  if (fabs(y1)>10e5) {DEBF("y1 is nan %0.3f \r\n", cutoff); y1 = 1e4;}
   y2 = y1 + a1 * (y1 - y2);
+  if (fabs(y2)>10e5) {DEBF("y2 is nan %0.3f \r\n", cutoff); y2 = 1e4;}
   y3 = y2 + a1 * (y2 - y3);
-  y4 = fclamp(y3 + a1 * (y3 - y4), -1e7, 1e7); // \todo: performance test both versions of the ladder
+  if (fabs(y3)>10e5) {DEBF("y3 is nan %0.3f \r\n", cutoff); y3 = 1e4;}
+  y4 = y3 + a1 * (y3 - y4); // \todo: performance test both versions of the ladder
+  if (fabs(y4)>10e5) {DEBF("y4 is nan %0.3f \r\n", cutoff); y4 = 1e4;}
   
   ret_val = (20.0f * (c0 * y0 + c1 * y1 + c2 * y2 + c3 * y3 + c4 * y4 )) ;
   // bias = 0.0005f * ret_val + 0.9995f * bias ;
@@ -292,7 +294,7 @@ inline float TeeBeeFilter::shape(float x)
 
 void TeeBeeFilter::Init() {
   feedbackHighpass.reset();
-  SetDrive(0.0f);
+  SetDrive(0.11f);
   y1 = 0.0f;
   y2 = 0.0f;
   y3 = 0.0f;

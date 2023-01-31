@@ -101,10 +101,10 @@ struct sSynthCCs {
 sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
  //cc                 cpl             def   min max   reset
   {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
-  {CC_303_CUTOFF,     CC_303_RESO,    20,   5,  120,   true},
+  {CC_303_CUTOFF,     CC_303_RESO,    20,   5,  120,  true},
   {CC_303_PAN,        0,              20,   0,  127,  true},
   {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
-  {CC_303_WAVEFORM,   0,              127,  64, 127,  true},
+  {CC_303_WAVEFORM,   0,              0,    0,  64,   true},
 #ifndef NO_PSRAM
   {CC_303_REVERB_SEND,0,              5,    2,  127,  true},
 #endif
@@ -121,7 +121,7 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
   {CC_303_CUTOFF,     CC_303_RESO,    20,   0,  120,  false},
   {CC_303_PAN,        0,              107,  0,  127,  true},
   {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
-  {CC_303_WAVEFORM,   0,              0,    0,  64,   true},
+  {CC_303_WAVEFORM,   0,              127,  64, 127,  true},
 #ifndef NO_PSRAM
   {CC_303_REVERB_SEND,0,              5,    2,  127,  true},
 #endif
@@ -135,14 +135,14 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
 sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
  //cc                   cpl def   min max   reset
   {CC_808_CUTOFF,       0,  64,   64,  127, true},
-  {CC_808_CUTOFF,       0,  64,   0,  64,   true},
-  {CC_808_RESO,         0,  0,    0,  127,  true},
+  {CC_808_SD_TONE,      0,  64,   64,  127, true},
+  {CC_808_RESO,         0,  0,    0,   127, true},
 #ifndef NO_PSRAM
-  {CC_808_REVERB_SEND,  0,  5,    30,  127,  true},  // reverb is not available with no psram
-  {CC_808_DELAY_SEND,   0,  0,    64, 127,  true}, // delay for drums needs more delay time (read 'RAM') than we can afford
+  {CC_808_REVERB_SEND,  0,  5,    30,  127, true},  // reverb is not available with no psram
+  {CC_808_DELAY_SEND,   0,  0,    64,  127, true}, // delay for drums needs more delay time (read 'RAM') than we can afford
 #endif
-  {CC_808_BD_DECAY,     0,  64,   50, 90,   true},
-  {CC_808_SD_TONE,      0,  64,    40,  70,  true}
+  {CC_808_BD_DECAY,     0,  64,   50,  90,  true},
+  {CC_808_SD_TONE,      0,  64,   40,  70,  true}
 };
 
 struct sMidiRamp {
