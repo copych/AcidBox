@@ -13,7 +13,7 @@
 #define MIDI_ON               // use this option if you want to operate by MIDI
 //#define MIDI_VIA_SERIAL       // use this option together with MIDI_ON for Hairless MIDI style, this will block Serial debugging as well
 #define JUKEBOX               // real-time auto-compose acid tunes
-//#define JUKEBOX_PLAY_ON_START // should it play on power on, or should it wait for "boot" button to be pressed
+#define JUKEBOX_PLAY_ON_START // should it play on power on, or should it wait for "boot" button to be pressed
 
 #define MAX_CUTOFF_FREQ 4000.0f
 #define MIN_CUTOFF_FREQ 250.0f

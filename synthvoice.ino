@@ -48,6 +48,8 @@ void SynthVoice::Init() {
   allpass.setCutoff(14.008f);
 }
 
+
+
 inline void SynthVoice::Generate() {
   float samp = 0.0f, filtEnv = 0.0f, ampEnv = 0.0f, final_cut = 0.0f;
   for (uint16_t i = 0; i < DMA_BUF_LEN; ++i) {
@@ -57,14 +59,14 @@ inline void SynthVoice::Generate() {
     if (_eAmpEnvState != ENV_IDLE) {
       samp = (float)(1.0f - _waveMix) * (float)lookupTable(square_2048,_phaze) + (float)_waveMix * (float)lookupTable(exp_2048,_phaze) ; // lookup and mix waveforms
     } else {
-      samp = 0.0f;
+      samp = 0.0f;    
     }
-    if (i % 4 == 0) {
+//  if (i % 4 == 0) {
       final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 0.3f * (float)_accentation + 1.0f );
-     // final_cut = filtDeclicker.Process( final_cut);
+      final_cut = filtDeclicker.Process( final_cut);
       Filter.SetCutoff( final_cut );
-    }
-      
+//    }
+    
     samp = highpass1.getSample(samp);        // pre-filter highpass
     samp = Filter.Process(samp);    
     samp = allpass.getSample(samp);
@@ -83,7 +85,7 @@ inline void SynthVoice::Generate() {
     }
     
 */
-
+    ampEnv = ampDeclicker.Process(ampEnv);
     samp *= ampEnv;
     
     samp = Drive.Process(samp);
@@ -433,6 +435,7 @@ void  SynthVoice::note_on(uint8_t midiNote, bool slide, bool accent)
     _deltaStep = 0.0f ;
     _eAmpEnvState = ENV_INIT;
     _eFilterEnvState = ENV_INIT;
+    
   }
   if (mva1.n == 1) {
     if (_accent) _accentation = _accentLevel; else _accentation = 0.0f;

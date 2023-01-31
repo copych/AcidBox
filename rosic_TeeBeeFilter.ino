@@ -248,13 +248,9 @@ inline float TeeBeeFilter::Process(float in)
   y4 = fclamp(y3 + a1 * (y3 - y4), -1e8, 1e8); // \todo: performance test both versions of the ladder
 */
   y1 = y0 + a1 * (y0 - y1);
-  if (fabs(y1)>10e5) {DEBF("y1 is nan %0.3f \r\n", cutoff); y1 = 1e4;}
   y2 = y1 + a1 * (y1 - y2);
-  if (fabs(y2)>10e5) {DEBF("y2 is nan %0.3f \r\n", cutoff); y2 = 1e4;}
   y3 = y2 + a1 * (y2 - y3);
-  if (fabs(y3)>10e5) {DEBF("y3 is nan %0.3f \r\n", cutoff); y3 = 1e4;}
-  y4 = y3 + a1 * (y3 - y4); // \todo: performance test both versions of the ladder
-  if (fabs(y4)>10e5) {DEBF("y4 is nan %0.3f \r\n", cutoff); y4 = 1e4;}
+  y4 = y3 + a1 * (y3 - y4); 
   
   ret_val = (20.0f * (c0 * y0 + c1 * y1 + c2 * y2 + c3 * y3 + c4 * y4 )) ;
   // bias = 0.0005f * ret_val + 0.9995f * bias ;
