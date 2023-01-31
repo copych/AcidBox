@@ -1,5 +1,5 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v0.9"
+#define VERSION         "v1.0"
 
 #define DEBUG_ON            // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT    // serial monitor plotter will draw the output waveform

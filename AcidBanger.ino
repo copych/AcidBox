@@ -102,7 +102,7 @@ sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
  //cc                 cpl             def   min max   reset
   {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
   {CC_303_CUTOFF,     CC_303_RESO,    20,   5,  120,  true},
-  {CC_303_PAN,        0,              20,   0,  127,  true},
+  {CC_303_PAN,        0,              47,   0,  127,  true},
   {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
   {CC_303_WAVEFORM,   0,              0,    0,  64,   true},
 #ifndef NO_PSRAM
@@ -110,7 +110,7 @@ sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
 #endif
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
   {CC_303_DISTORTION, 0,              0,    2,  127,  true},
-  {CC_303_ACCENT_LVL, 0,              0,    25, 100,  false},
+  {CC_303_ACCENT_LVL, 0,              64,   25, 100,  false},
   {CC_303_DECAY,      0,              20,   15, 120,  true},
   {CC_303_ATTACK,     0,              1,    3,  60,   true}
 };
@@ -119,7 +119,7 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
  //cc                 cpl             def   min max   reset
   {CC_303_RESO,       CC_303_CUTOFF,  64,   60, 127,  true},
   {CC_303_CUTOFF,     CC_303_RESO,    20,   0,  120,  false},
-  {CC_303_PAN,        0,              107,  0,  127,  true},
+  {CC_303_PAN,        0,              80,  0,  127,  true},
   {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
   {CC_303_WAVEFORM,   0,              127,  64, 127,  true},
 #ifndef NO_PSRAM
@@ -127,7 +127,7 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
 #endif
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
   {CC_303_OVERDRIVE,  0,              0,    2,  127,  true},
-  {CC_303_ACCENT_LVL, 0,              0,    25, 100,  false},
+  {CC_303_ACCENT_LVL, 0,              64,   25, 100,  false},
   {CC_303_DECAY,      0,              20,   15, 120,  true},
   {CC_303_ATTACK,     0,              1,    3,  60,   true}
 };
