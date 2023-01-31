@@ -12,8 +12,8 @@ class Sampler {
     Sampler(uint8_t countPrg, uint8_t progNow) { countPrograms = countPrg; program_tmp = progNow; progNumber = progNow; };
     inline void Init();
     void ScanContents(fs::FS &fs, const char *dirname, uint8_t levels);
-    inline void SelectNote( uint8_t note ){  
-      selectedNote = note % sampleInfoCount;  
+    inline void SelectNote( uint8_t note ){
+      if(sampleInfoCount>0) selectedNote = note % sampleInfoCount; else  selectedNote = note;
 #ifdef DEBUG_SAMPLER
 DEBF("Select note: %d\r\n", note);
 #endif

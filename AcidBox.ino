@@ -179,13 +179,13 @@ for (int i=0; i<POT_NUM; i++) pinMode( POT_PINS[i] , INPUT_PULLDOWN);
   MIDI.begin(MIDI_CHANNEL_OMNI);
 #endif
 
+  Synth1.Init();
+  Synth2.Init();
+  Drums.Init();
 #ifndef NO_PSRAM
   Reverb.Init();  
 #endif
   Delay.Init();
-  Drums.Init();
-  Synth1.Init();
-  Synth2.Init();
   Comp.Init(SAMPLE_RATE);
 #ifdef JUKEBOX
   init_midi();
