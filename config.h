@@ -7,7 +7,7 @@
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
 
-//#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: 8BIT STEREO
+#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: 8BIT STEREO
 //#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB AND DELAY'D BE SACRIFICED, SMALL DRUM KIT SAMPLES USED 
 
 #define MIDI_ON               // use this option if you want to operate by MIDI
@@ -19,7 +19,7 @@
 #define MIN_CUTOFF_FREQ 250.0f
 
 #ifdef USE_INTERNAL_DAC
-#define SAMPLE_RATE     22050 // price for increasing this value is less delay time
+#define SAMPLE_RATE     44100 // price for increasing this value is less delay time
 #else
 #define SAMPLE_RATE     44100
 #endif

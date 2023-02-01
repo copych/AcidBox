@@ -154,6 +154,7 @@ class TeeBeeFilter
     float resonanceSkewed;     // mapped resonance parameter to make it behave more musical
     float sampleRate;          // the sample rate in Hz
     float twoPiOverSampleRate; // 2*PI/sampleRate
+    float highLimit;           // highest cutoff freq allowing stable behaviour
     float compens;             // drive gain correction
     float bias;                 // reso bias compensation
     int    mode;                // the selected filter-mode

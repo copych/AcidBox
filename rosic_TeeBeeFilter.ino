@@ -36,6 +36,7 @@ void TeeBeeFilter::SetSampleRate(float newSampleRate)
   if( newSampleRate > 0.0 )
     sampleRate = newSampleRate;
   twoPiOverSampleRate = 2.0*PI/sampleRate;
+  highLimit = sampleRate / 4.18f;
   feedbackHighpass.setSampleRate(newSampleRate);
   calculateCoefficientsExact();
 }
@@ -84,8 +85,8 @@ inline void TeeBeeFilter::SetCutoff(float newCutoff, bool updateCoefficients)
   {
     if ( newCutoff < 200.0f ) // an absolute floor for the cutoff frequency - tweakable
       cutoff = 200.0f;
-    else if ( newCutoff > 10550.0f )
-      cutoff = 10550.0f;
+    else if ( newCutoff > highLimit ) // seems to be stable with the current settings, higher values may lead to nan, +inf or -inf during processing
+      cutoff = highLimit;
     else
       cutoff = newCutoff;
 
