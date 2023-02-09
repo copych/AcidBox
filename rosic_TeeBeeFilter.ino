@@ -291,11 +291,13 @@ inline float TeeBeeFilter::shape(float x)
 
 void TeeBeeFilter::Init() {
   feedbackHighpass.reset();
-  SetDrive(0.11f);
   y1 = 0.0f;
   y2 = 0.0f;
   y3 = 0.0f;
   y4 = 0.0f;
+  SetDrive(0.11f);
+  SetResonance(0.5f, false);
+  SetCutoff(1000.0f, true);
 }
 
 
@@ -303,9 +305,11 @@ void TeeBeeFilter::Init(float sr)
 {
   feedbackHighpass.reset();
   SetSampleRate(sr);
-  SetDrive(0.11f);
   y1 = 0.0f;
   y2 = 0.0f;
   y3 = 0.0f;
   y4 = 0.0f;
+  SetDrive(0.11f);
+  SetResonance(0.5f, false);
+  SetCutoff(1000.0f, true);
 }

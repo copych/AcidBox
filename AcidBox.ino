@@ -1,19 +1,19 @@
 /*
-* 
-* AcidBox
-* ESP32 headless acid combo of 2 x 303 + 1 x 808 like synths. MIDI driven. I2S output. No indication. Uses both cores of ESP32.
-* 
-* To build the thing
-* You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external DAC, like PCM5102. In ArduinoIDE Tools menu select:
-* 
+
+  AcidBox
+  ESP32 headless acid combo of 303 + 303 + 808 like synths. MIDI driven. I2S output. No indication. Uses both cores of ESP32.
+
+  To build the thing
+  You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external DAC, like PCM5102. In ArduinoIDE Tools menu select:
+
 * * Board: ESP32 Dev Module
 * * Partition scheme: No OTA (1MB APP/ 3MB SPIFFS)
 * * PSRAM: enabled
-*
-* Also you will need to upload samples from /data folder to the ESP32 flash. To do so follow the instructions:
-* https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
-* And then use Tools -> ESP32 Sketch Data Upload
-*
+
+  Also you will need to upload samples from /data folder to the ESP32 flash. To do so follow the instructions:
+  https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
+  And then use Tools -> ESP32 Sketch Data Upload
+
 */
 
 #include "config.h"
@@ -21,48 +21,51 @@
 #include "driver/i2s.h"
 #include "fx_delay.h"
 #ifndef NO_PSRAM
-  #include "fx_reverb.h"
+#include "fx_reverb.h"
 #endif
 #include "compressor.h"
 #include "synthvoice.h"
 #include "sampler.h"
 #include <Wire.h>
 
-#ifdef MIDI_ON
-  #include <MIDI.h>
-  #ifdef MIDI_VIA_SERIAL
-    // default settings for Hairless midi is 115200 8-N-1
-    struct CustomBaudRateSettings : public MIDI_NAMESPACE::DefaultSerialSettings {
-      static const long BaudRate = 115200;
-    };
-    MIDI_NAMESPACE::SerialMIDI<HardwareSerial, CustomBaudRateSettings> serialMIDI(Serial);
-    MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, CustomBaudRateSettings>> MIDI((MIDI_NAMESPACE::SerialMIDI<HardwareSerial, CustomBaudRateSettings>&)serialMIDI);
-  #else
-    // MIDI port on UART2,   pins 16 (RX) and 17 (TX) prohibited, as they are used for PSRAM
-    
-  struct Serial2MIDISettings : public midi::DefaultSettings{
-    static const long BaudRate = 31250;
-    static const int8_t RxPin  = MIDIRX_PIN;
-    static const int8_t TxPin  = MIDITX_PIN; 
-  };
-  
-  HardwareSerial MIDISerial(2);
-  MIDI_CREATE_CUSTOM_INSTANCE( HardwareSerial, MIDISerial, MIDI, Serial2MIDISettings );
-  
-  #endif
+#if defined MIDI_VIA_SERIAL2 || defined MIDI_VIA_SERIAL
+#include <MIDI.h>
+#endif
+
+#ifdef MIDI_VIA_SERIAL
+// default settings for Hairless midi is 115200 8-N-1
+struct CustomBaudRateSettings : public MIDI_NAMESPACE::DefaultSerialSettings {
+  static const long BaudRate = 115200;
+};
+MIDI_NAMESPACE::SerialMIDI<HardwareSerial, CustomBaudRateSettings> serialMIDI(Serial);
+MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, CustomBaudRateSettings>> MIDI((MIDI_NAMESPACE::SerialMIDI<HardwareSerial, CustomBaudRateSettings>&)serialMIDI);
+#endif
+
+#ifdef MIDI_VIA_SERIAL2
+// MIDI port on UART2,   pins 16 (RX) and 17 (TX) prohibited, as they are used for PSRAM
+struct Serial2MIDISettings : public midi::DefaultSettings {
+  static const long BaudRate = 31250;
+  static const int8_t RxPin  = MIDIRX_PIN;
+  static const int8_t TxPin  = MIDITX_PIN;
+};
+MIDI_NAMESPACE::SerialMIDI<HardwareSerial> Serial2MIDI2(Serial2);
+MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2MIDISettings>> MIDI2((MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2MIDISettings>&)Serial2MIDI2);
 #endif
 
 const i2s_port_t i2s_num = I2S_NUM_0; // i2s port number
-  
+
 // lookuptables
 static float midi_pitches[128];
 static float midi_phase_steps[128];
-static float midi_2048_steps[128];
-static float exp_2048[WAVE_SIZE];
-static float square_2048[WAVE_SIZE];
-static float tanh_2048[WAVE_SIZE];
+static float midi_tbl_steps[128];
+static float exp_square_tbl[WAVE_SIZE];
+//static float square_tbl[WAVE_SIZE];
+//static float saw_tbl[WAVE_SIZE];
+static float exp_tbl[WAVE_SIZE];
+static float tanh_tbl[WAVE_SIZE];
 static uint32_t last_reset = 0;
 static float param[POT_NUM] ;
+//static float (*tables[])[WAVE_SIZE] = {&exp_square_tbl, &square_tbl, &saw_tbl, &exp_tbl};
 
 // Audio buffers of all kinds
 static float synth_buf[2][DMA_BUF_LEN]; // 2 * 303 mono
@@ -77,12 +80,12 @@ static union { // a dirty trick, instead of true converting
 
 volatile boolean processing = false;
 #ifndef NO_PSRAM
-static float rvb_k1, rvb_k2, rvb_k3;
+volatile float rvb_k1, rvb_k2, rvb_k3;
 #endif
-static float dly_k1, dly_k2, dly_k3;
+volatile float dly_k1, dly_k2, dly_k3;
 
 size_t bytes_written; // i2s
-static uint32_t c1=0, c2=0, c3=0, d1=0, d2=0, d3=0, d4=0, c4=0; // debug timing
+volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT; // debug timing: if we use less vars, compiler optimizes them
 volatile static uint32_t prescaler;
 
 // tasks for Core0 and Core1
@@ -97,63 +100,29 @@ SynthVoice Synth2(1); // use synth_buf[1]
 Sampler Drums(DRUMKITCNT , DEFAULT_DRUMKIT); // first arg = total number of sample sets, second = starting drumset [0 .. total-1]
 
 // Global effects
-  FxDelay Delay;
+FxDelay Delay;
 #ifndef NO_PSRAM
-  FxReverb Reverb;
+FxReverb Reverb;
 #endif
 Compressor Comp;
 
-// Core0 task
-static void audio_task1(void *userData) {
-    while(1) {
-        // this part of the code never intersects with mixer buffers
-        // this part of the code is operating with shared resources, so we should make it safe
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)){
-            c1=micros();
-            Synth1.Generate(); 
-            d1=micros()-c1;
-            xTaskNotifyGive(SynthTask2); // if you have glitches, you may want to place this string in the end of audio_task1
-        }
-         //  readPots();
-        taskYIELD();
-    }
-}
 
-// task for Core1, which tipically runs user's code on ESP32
-static void audio_task2(void *userData) {
-    while(1) {
-        // we can run it together with synth(), but not with mixer()
-        c2 = micros();
-        drums_generate();
- //     Synth1.Generate(); 
-        d2 = micros() - c2;
-        Synth2.Generate();
-        d3 = micros() - c2 - d2;
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
-          c4 = micros();
-          mixer(); // actually we could send Notify before mixer() is done, but then we'd need tic-tac buffers for generation. Todo maybe
-          d4 = micros() - c4;
-          xTaskNotifyGive(SynthTask1); 
-        }        
-        
-        i2s_output();
-        
-        taskYIELD();
-    }
-}
+
+/* 
+ *  Quite an ordinary SETUP() *******************************************************************************************************
+*/
 
 void setup(void) {
 
   btStop();
-  
-#ifdef MIDI_ON
-  #ifdef MIDI_VIA_SERIAL 
-    Serial.begin(115200); 
-  #else
-    pinMode( MIDIRX_PIN , INPUT_PULLDOWN); 
-    MIDISerial.begin( 31250, SERIAL_8N1, MIDIRX_PIN, MIDITX_PIN ); // midi port
-  #endif
-#else
+
+#ifdef MIDI_VIA_SERIAL
+  Serial.begin(115200, SERIAL_8N1);
+#endif
+#ifdef MIDI_VIA_SERIAL2
+  pinMode( MIDIRX_PIN , INPUT_PULLDOWN);
+  pinMode( MIDITX_PIN , OUTPUT);
+  Serial2.begin( 31250, SERIAL_8N1, MIDIRX_PIN, MIDITX_PIN ); // midi port
 #endif
 
 #ifdef DEBUG_ON
@@ -162,28 +131,36 @@ void setup(void) {
 #endif
 #endif
   /*
-  for (uint8_t i = 0; i < GPIO_BUTTONS; i++) {
+    for (uint8_t i = 0; i < GPIO_BUTTONS; i++) {
     pinMode(buttonGPIOs[i], INPUT_PULLDOWN);
-  }
+    }
   */
-  
+
   buildTables();
 
-for (int i=0; i<POT_NUM; i++) pinMode( POT_PINS[i] , INPUT_PULLDOWN); 
+  for (int i = 0; i < POT_NUM; i++) pinMode( POT_PINS[i] , INPUT_PULLDOWN);
 
-#ifdef MIDI_ON
+
+#ifdef MIDI_VIA_SERIAL
   MIDI.setHandleNoteOn(handleNoteOn);
   MIDI.setHandleNoteOff(handleNoteOff);
   MIDI.setHandleControlChange(handleCC);
   MIDI.setHandleProgramChange(handleProgramChange);
   MIDI.begin(MIDI_CHANNEL_OMNI);
 #endif
+#ifdef MIDI_VIA_SERIAL2
+  MIDI2.setHandleNoteOn(handleNoteOn);
+  MIDI2.setHandleNoteOff(handleNoteOff);
+  MIDI2.setHandleControlChange(handleCC);
+  MIDI2.setHandleProgramChange(handleProgramChange);
+  MIDI2.begin(MIDI_CHANNEL_OMNI);
+#endif
 
   Synth1.Init();
   Synth2.Init();
   Drums.Init();
 #ifndef NO_PSRAM
-  Reverb.Init();  
+  Reverb.Init();
 #endif
   Delay.Init();
   Comp.Init(SAMPLE_RATE);
@@ -191,24 +168,24 @@ for (int i=0; i<POT_NUM; i++) pinMode( POT_PINS[i] , INPUT_PULLDOWN);
   init_midi();
 #endif
 
- // silence while we haven't loaded anything reasonable
-  for (int i=0; i < DMA_BUF_LEN; i++) { 
+  // silence while we haven't loaded anything reasonable
+  for (int i = 0; i < DMA_BUF_LEN; i++) {
     drums_buf_l[i] = 0.0f ;
-    drums_buf_r[i] = 0.0f ; 
-    synth_buf[0][i] = 0.0f ; 
-    synth_buf[1][i] = 0.0f ; 
-    out_buf._signed[i*2] = 0 ;
-    out_buf._signed[i*2+1] = 0 ;
+    drums_buf_r[i] = 0.0f ;
+    synth_buf[0][i] = 0.0f ;
+    synth_buf[1][i] = 0.0f ;
+    out_buf._signed[i * 2] = 0 ;
+    out_buf._signed[i * 2 + 1] = 0 ;
     mix_buf_l[i] = 0.0f;
     mix_buf_r[i] = 0.0f;
   }
-  
-  i2sInit(); 
+
+  i2sInit();
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
-  
+
   xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, 1, &SynthTask1, 0 );
   xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, 1, &SynthTask2, 1 );
-  
+
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
   xTaskNotifyGive(SynthTask2);
@@ -217,36 +194,92 @@ for (int i=0; i<POT_NUM; i++) pinMode( POT_PINS[i] , INPUT_PULLDOWN);
 
 static uint32_t last_ms = micros();
 
+/* 
+ *  Finally, the LOOP () ***********************************************************************************************************
+*/
+
 void loop() { // default loopTask running on the Core1
   // you can still place some of your code here
   // or   vTaskDelete(NULL);
-  
+
   // processButtons();
-  #ifdef MIDI_ON
+
+#ifdef MIDI_VIA_SERIAL
   MIDI.read();
-  #endif
- 
-  #ifdef JUKEBOX
-  if (micros()-last_ms>1000) {
+#endif
+
+  taskYIELD(); // breath for all the rest of the Core1
+
+#ifdef MIDI_VIA_SERIAL2
+  MIDI2.read();
+#endif
+
+#ifdef JUKEBOX
+  if (micros() - last_ms > 1000) {
     last_ms = micros();
     run_tick();
     myRandomAddEntropy((uint16_t)(last_ms & 0x0000FFFF));
-   
-   // if (prescaler % 1024 == 0) DEBF ("synt1=%d drums=%d synt2=%d mixer=%d \r\n" , d1, d2, d3, d4);
-   
-   // DEBF("%0.4f %0.4f %0.4f \r\n", param1, param2, param3);
+    // DEBF("%0.4f %0.4f %0.4f \r\n", param1, param2, param3);
   }
-  #endif
-
-  taskYIELD(); // breath for all the rest of the Core1 
+#endif
 }
+
+/* 
+ * Core Tasks ************************************************************************************************************************
+*/
+
+// Core0 task
+static void audio_task1(void *userData) {
+  while (1) {
+    // we can run it together with synth(), but not with mixer()
+    drt = micros();
+    drums_generate();
+    drT = micros() - drt;
+    s2t = micros();
+    Synth2.Generate();
+    s2T = micros() - s2t;
+    if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
+      fxt = micros();
+      mixer(); // actually we could send Notify before mixer() is done, but then we'd need tic-tac buffers for generation. Todo maybe
+      fxT = micros() - fxt;
+      xTaskNotifyGive(SynthTask2);
+    }
+
+    i2s_output();
+
+    taskYIELD();
+  }
+}
+
+// task for Core1, which tipically runs user's code on ESP32
+static void audio_task2(void *userData) {
+  while (1) {
+    // this part of the code never intersects with mixer buffers
+    // this part of the code is operating with shared resources, so we should make it safe
+    if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
+      s1t = micros();
+      Synth1.Generate();
+      s1T = micros() - s1t;
+      xTaskNotifyGive(SynthTask1); // if you have glitches, you may want to place this string in the end of audio_task1
+    }
+    // readPots();
+    taskYIELD();
+    // hopefully, other Core1 tasks (for example, loop()) run here
+  }
+}
+
+
+
+/* 
+ *  Some service routines *****************************************************************************************************************************
+*/
 
 void readPots() {
   static const float snap = 0.005;
   static float tmp;
-  static const float NORMALIZE_ADC = 1.0f/4096.0f;
+  static const float NORMALIZE_ADC = 1.0f / 4096.0f;
   for (uint8_t i = 0; i < POT_NUM; i++) {
-    tmp = (float)analogRead(POT_PINS[i]) * NORMALIZE_ADC;  
+    tmp = (float)analogRead(POT_PINS[i]) * NORMALIZE_ADC;
     if (fabs(tmp - param[i]) > snap) {
       param[i] = tmp;
       paramChange(i, tmp);
@@ -266,6 +299,6 @@ void paramChange(uint8_t paramNum, float paramVal) {
     case 3:
       break;
     default:
-    {}
+      {}
   }
 }

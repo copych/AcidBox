@@ -89,15 +89,10 @@ inline float lookupTable(float (&table)[WAVE_SIZE], float index ) { // lookup va
   static float f;
   i = (int32_t)index;
   f = index - i;
-  v1 = table[i];
-  if (i<WAVE_SIZE-1) {
-    v2 = table[i+1];
-  } else {
-    v2 = table[i];
-  }
+  v1 = (table)[i];
+  v2 = (table)[i+1];
   res = (float)f * (float)(v2-v1) + v1;
   return res;
-  
 }
 
 inline float fclamp(float in, float min, float max){
@@ -114,8 +109,8 @@ inline float fast_tanh(float x){
     if (x>=4.95f) {
       return sign; // tanh(x) ~= 1, when |x| > 4
     }
-    if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders; tanh(x) ~= x, when |x| < 0.4    
-    return  sign * lookupTable(tanh_2048, (x*TANH_LOOKUP_COEF)); // lookup table 2048 / 5 = 409.6
+  //  if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders; tanh(x) ~= x, when |x| < 0.4 
+    return  sign * lookupTable(tanh_tbl, (x*TANH_LOOKUP_COEF)); // lookup table contains tanh(x), 0 <= x <= 5
  //  float poly = (2.12-2.88*x+4.0*x*x);
  //  return sign * x * (poly * one_div(poly * x + 1.0f)); // very good approximation found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
                                                     // but it uses float division which is not that fast on esp32

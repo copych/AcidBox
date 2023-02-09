@@ -3,7 +3,7 @@
 
 #define FILTER_TYPE 2       // 0 = Moogladder by Victor Lazzarini
                             // 1 = Tim Stilson's model by Aaron Krajeski
-							              // 2 = open303 filter
+							              // 2 = Open303 filter
 /* 
  *  You shouldn't need to change something below this line
 */
@@ -86,7 +86,8 @@ private:
   bool _slide = false;
   bool _portamento = false; // slide, but managed by CC 65 
   float _tempo = 100.0f;
-  float _waveMix = 1.0f ; // square = 0.0f and saw = 1.0f
+  float _waveMix = 1.0f ; // exp-square = 0.0f and exp-saw = 1.0f
+  int8_t _waveBase = 0; // calculate pointers to the two tables to blend
   float _sampleRate = (float)SAMPLE_RATE;
   uint16_t bufSize = DMA_BUF_LEN;
   float _detuneCents = 0.0f;
@@ -110,12 +111,16 @@ private:
   uint32_t _noteStartTime = 0;
   uint8_t _midiNote = 69;
   float  _currentStep = 1.0f;
+  float  _currentPeriod = 1.0f; // should be int (trying to come exactly to 0 phase)
+  float  _avgStep = 1.0f;
+  float  _avgPeriod = 1.0f; // measured in samples
   float  _targetStep = 0.0f;
+  float  _targetPeriod = 0.0f;
   float  _deltaStep = 0.0f;
   float  _slideMs = 60.0f;
   float  _phaze = 0.0f;
   
-  // MEG and FEG params
+  // parameters of envelopes
   float _ampEnvPosition = 0.0f;
   float _filterEnvPosition = 0.0f;
   float _ampAttackMs = 3.0f;

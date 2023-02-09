@@ -45,11 +45,12 @@
 //
 // ===============================
 // 2023 edit by Copych
-// added auto CC ramps
+// added auto CC ramps for reso, cutoff etc.
 // added drum parts categorizing
-// added auto breaks/fills
+// added auto breaks/fills 
+// added crash cymbal
 // removed/modified buttons processing
-// 
+//
 
 #define KICK_NOTE               0 //001
 #define SNARE_NOTE              1 //002
@@ -70,7 +71,7 @@
 #define MEM4_BUTTON             23
 #define MEM5_BUTTON             23
 
-#define send_midi_start() {} 
+#define send_midi_start() {}
 #define send_midi_stop()  {}
 #define send_midi_tick() {}
 
@@ -80,13 +81,13 @@
 
 #define NUM_RAMPS 6           // simultaneous knob rotatings
 #ifndef NO_PSRAM
-  #define NUM_SYNTH_CCS 11    // how many synth CC params do we have to play
-  #define NUM_DRUM_CCS  7     // how many drum CC params do we have to play
-  #define VOL_SYNTH     80
+#define NUM_SYNTH_CCS 11    // how many synth CC params do we have to play
+#define NUM_DRUM_CCS  7     // how many drum CC params do we have to play
+#define VOL_SYNTH     80
 #else
-  #define NUM_SYNTH_CCS 10    // how many synth CC params do we have to play
-  #define NUM_DRUM_CCS  5     // how many drum CC params do we have to play
-  #define VOL_SYNTH     60
+#define NUM_SYNTH_CCS 10    // how many synth CC params do we have to play
+#define NUM_DRUM_CCS  5     // how many drum CC params do we have to play
+#define VOL_SYNTH     60
 #endif
 
 struct sSynthCCs {
@@ -95,18 +96,18 @@ struct sSynthCCs {
   uint8_t cc_default_value;
   uint8_t cc_min_value;
   uint8_t cc_max_value;
-  bool reset_after_use;  
+  bool reset_after_use;
 };
 
 sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
- //cc                 cpl             def   min max   reset
+  //cc                 cpl             def   min max   reset
   {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
   {CC_303_CUTOFF,     CC_303_RESO,    20,   5,  120,  true},
   {CC_303_PAN,        0,              47,   0,  127,  true},
   {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
   {CC_303_WAVEFORM,   0,              0,    0,  64,   true},
 #ifndef NO_PSRAM
-  {CC_303_REVERB_SEND,0,              5,    2,  127,  true},
+  {CC_303_REVERB_SEND, 0,              5,    2,  127,  true},
 #endif
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
   {CC_303_DISTORTION, 0,              0,    2,  127,  true},
@@ -116,14 +117,14 @@ sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
 };
 
 sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
- //cc                 cpl             def   min max   reset
+  //cc                 cpl             def   min max   reset
   {CC_303_RESO,       CC_303_CUTOFF,  64,   60, 127,  true},
   {CC_303_CUTOFF,     CC_303_RESO,    20,   0,  120,  false},
   {CC_303_PAN,        0,              80,  0,  127,  true},
   {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
   {CC_303_WAVEFORM,   0,              127,  64, 127,  true},
 #ifndef NO_PSRAM
-  {CC_303_REVERB_SEND,0,              5,    2,  127,  true},
+  {CC_303_REVERB_SEND, 0,              5,    2,  127,  true},
 #endif
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
   {CC_303_OVERDRIVE,  0,              0,    2,  127,  true},
@@ -133,16 +134,16 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
 };
 
 sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
- //cc                   cpl def   min max   reset
+  //cc                   cpl def   min max   reset
   {CC_808_CUTOFF,       0,  64,   64,  127, true},
-  {CC_808_SD_TONE,      0,  64,   64,  127, true},
   {CC_808_RESO,         0,  0,    0,   127, true},
+  {CC_808_SD_TONE,      0,  64,   64,  127, true},
 #ifndef NO_PSRAM
   {CC_808_REVERB_SEND,  0,  5,    30,  127, true},  // reverb is not available with no psram
   {CC_808_DELAY_SEND,   0,  0,    64,  127, true}, // delay for drums needs more delay time (read 'RAM') than we can afford
 #endif
-  {CC_808_BD_DECAY,     0,  64,   50,  90,  true},
-  {CC_808_SD_TONE,      0,  64,   40,  70,  true}
+  {CC_808_BD_DECAY,     0,  127,   50,  127,  true},
+  {CC_808_BD_TONE,      0,  64,   40,  64,  true}
 };
 
 struct sMidiRamp {
@@ -158,7 +159,7 @@ struct sMidiRamp {
 } midiRamps[NUM_RAMPS];
 
 
-typedef enum drum_kinds{
+typedef enum drum_kinds {
   DrumBreak,
   DrumStraight,
   DrumHang,
@@ -247,7 +248,7 @@ struct Instrument {
 
 static Instrument instruments[NumInstruments];
 
-static uint32_t bar_current = 0; // it counts bars 
+static uint32_t bar_current = 0; // it counts bars
 
 
 struct sBreak {
@@ -307,11 +308,11 @@ static void send_midi_noteoff(byte chan, byte note) {
   handleNoteOff( chan, note, 0) ;
 }
 static void init_midi() {
-//  Serial.begin(115200);
-//  MIDI.begin(MIDI_CHANNEL_OMNI);
+  //  Serial.begin(115200);
+  //  MIDI.begin(MIDI_CHANNEL_OMNI);
   pinMode(LED_BUILTIN, OUTPUT);
   for (byte i = 0; i < ButLast; i++) {
-    init_button(&buttons[i], button_pins[i], i+1 );
+    init_button(&buttons[i], button_pins[i], i + 1 );
   }
   init_instruments();
   init_patterns();
@@ -320,24 +321,24 @@ static void init_midi() {
 #endif
 }
 static void send_midi_control(byte chan, byte cc_number, byte cc_value) {
-  //MIDI.sendControlChange (  cc_number,  cc_value,  chan);   
+  //MIDI.sendControlChange (  cc_number,  cc_value,  chan);
   handleCC( chan,  cc_number,  cc_value);
 }
 
 /*
- * Pseudo-random generator with restorable state
- */
+   Pseudo-random generator with restorable state
+*/
 
 static inline uint16_t lfsr16_next(uint16_t x)
 {
-	uint16_t y = x >> 1;
-	if (x & 1)
-		y ^= 0xb400;
-	return y;
+  uint16_t y = x >> 1;
+  if (x & 1)
+    y ^= 0xb400;
+  return y;
 }
 
 //static uint16_t myRandomState = 0x1234;
-static uint16_t myRandomState = (uint16_t)(random(0,0xffff));
+static uint16_t myRandomState = (uint16_t)(random(0, 0xffff));
 
 static uint16_t myRandomAddEntropy(uint16_t data) {
   myRandomState = lfsr16_next((myRandomState << 1) ^ data);
@@ -354,8 +355,8 @@ static inline uint16_t myRandom(uint16_t max) {
 }
 
 /*
- * Buttons
- */
+   Buttons
+*/
 
 static void read_button(struct Button *button)
 {
@@ -375,8 +376,8 @@ static void init_button(struct Button *button, byte pin, uint8_t num)
 }
 
 /*
- * Instruments
- */
+   Instruments
+*/
 
 static void instr_noteoff(byte instr) {
   Instrument *ins = &instruments[instr];
@@ -429,8 +430,8 @@ static void instr_noteon(byte instr, byte value, byte do_glide, byte do_accent) 
 }
 
 /*
- * Sequencer
- */
+   Sequencer
+*/
 
 void sequencer_step(byte step) {
   do_midi_ramps();
@@ -450,16 +451,16 @@ void sequencer_step(byte step) {
       instr_noteoff(i);
   }
   if (Break.after == bar_current && step == 0) {
-    instr_noteon(NumInstruments-1, 127, 0, 0);
-//    instr_noteon_raw(NumInstruments-1, CRASH_NOTE, 127, 0);
-#ifdef DEBUG_JUKEBOX    
+    instr_noteon(NumInstruments - 1, 127, 0, 0);
+    //    instr_noteon_raw(NumInstruments-1, CRASH_NOTE, 127, 0);
+#ifdef DEBUG_JUKEBOX
     DEBUG("CRASH!!!!!!!!!!!!!!!!!!!!!");
 #endif
     check_midi_ramps(true);
   }
-  if (step % 4 == 0 || step == 1) { 
+  if (step % 4 == 0 || step == 1) {
     digitalWrite(LED_BUILTIN, HIGH);
-#ifdef DEBUG_JUKEBOX  
+#ifdef DEBUG_JUKEBOX
     DEBUG(step);
 #endif
   }  else {
@@ -468,11 +469,11 @@ void sequencer_step(byte step) {
 }
 
 /*
- * Endless Acid Banger pattern generator
- * 
- * Adapted from https://www.vitling.xyz/toys/acid-banger/
- * created by Vitling (David Whiting) i.am@thewit.ch
- */
+   Endless Acid Banger pattern generator
+
+   Adapted from https://www.vitling.xyz/toys/acid-banger/
+   created by Vitling (David Whiting) i.am@thewit.ch
+*/
 
 #define NOTE_LIST(x...) (int8_t[]) { x, -1 }
 //#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -483,8 +484,10 @@ static const int8_t *const offset_choices[] = {
   NOTE_LIST(0, 1, 7, 10, 12, 13),
   NOTE_LIST(0),
   NOTE_LIST(0, 0, 0, 12),
+  NOTE_LIST(0, 0, 12, 12, 18, 24, 24),
+  NOTE_LIST(0, 0, 7, 14, 24, 24),
   NOTE_LIST(0, 0, 12, 14, 15, 19),
-  NOTE_LIST(0, 0, 0, 0, 12, 13, 16, 19, 22, 24, 25),
+  NOTE_LIST(0, 0, 0, 12, 12, 13, 16, 19, 22, 24, 25),
   NOTE_LIST(0, 0, 0, 7, 12, 15, 17, 20, 24),
 };
 
@@ -513,8 +516,8 @@ static byte flip(byte percent_chance) {
 }
 
 static void generate_melody(uint8_t *note_set, byte note_set_len,
-  uint8_t *pattern, byte pattern_len,
-  uint16_t *accent, uint16_t *glide) {
+                            uint8_t *pattern, byte pattern_len,
+                            uint16_t *accent, uint16_t *glide) {
 
   uint8_t density = 255;
 
@@ -547,7 +550,7 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
   byte hat_mode =   HatsNone;
   byte snare_mode = SnareNone;
   byte perc_mode =  PercNone;
-  
+
   byte rndVal ;
   switch (drum_kind) {
     case DrumBreak:
@@ -559,17 +562,17 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
       } else {
         kick_mode = KickNone;
       }
-      
+
       rndVal = myRandom(100);
       if (rndVal < 40) {
         snare_mode = SnareFill;
       } else if (rndVal < 80) {
         snare_mode = SnareBreak;
       } else {
-        snare_mode = SnareBackbeat;  
+        snare_mode = SnareBackbeat;
       }
-      
-      hat_mode = myRandom(HatsNone);      
+
+      hat_mode = myRandom(HatsNone);
       perc_mode = myRandom(PercNone);
       break;
     case DrumStraight:
@@ -579,17 +582,17 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
       } else {
         kick_mode = KickFourFloor;
       }
- 
+
       rndVal = myRandom(100);
       if (rndVal < 60) {
         snare_mode = SnareStraight;
       } else {
         snare_mode = SnareBackbeat;
       }
-      
+
       if (flip(70)) hat_mode = HatsPop;
-      else hat_mode = myRandom(HatsNone);      
-      
+      else hat_mode = myRandom(HatsNone);
+
       perc_mode = myRandom(PercNone);
       break;
     case DrumHang:
@@ -599,19 +602,19 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
       } else {
         kick_mode = KickNone;
       }
-      
+
       rndVal = myRandom(100);
       if (rndVal < 60) {
         snare_mode = SnareStraight;
       } else {
         snare_mode = SnareBackbeat;
       }
-      
-      hat_mode = myRandom(HatsNone);      
+
+      hat_mode = myRandom(HatsNone);
       perc_mode = myRandom(PercNone);
       break;
     case DrumNone:
-    // nothing
+      // nothing
       break;
     case DrumAny:
     default:
@@ -620,7 +623,7 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
       snare_mode = myRandom(SnareNone);
       perc_mode = myRandom(PercNone);
   }
-  
+
 
   if (kick_mode == KickFourFloor) {
     for (byte i = 0; i < PatternLength; i++) {
@@ -652,7 +655,7 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
     }
   } else if (snare_mode == SnareFill) {
     for (byte i = 0; i < PatternLength; i++) {
-        snare[i] = 120;
+      snare[i] = 120;
     }
   } else if (snare_mode == SnareStraight) {
     for (byte i = 0; i < PatternLength; i++) {
@@ -767,8 +770,8 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
 }
 
 /*
- * Generator-to-pattern binding
- */
+   Generator-to-pattern binding
+*/
 
 void mem_generate_melody(byte mem, byte voice) {
   Memory *m = &memories[mem];
@@ -824,7 +827,7 @@ void mem_generate_all(byte mem) {
 void print_pattern(struct Pattern *p, byte is_drum) {
 #ifdef DEBUG_JUKEBOX
   for (byte i = 0; i < PatternLength; i++)
-  DEBF("%3d ", p->notes[i]);
+    DEBF("%3d ", p->notes[i]);
 
   if (!is_drum) {
     for (byte i = 0; i < PatternLength; i++)
@@ -853,8 +856,8 @@ void init_patterns() {
 }
 
 /*
- * MIDI clock
- */
+   MIDI clock
+*/
 
 #define MIDI_TICKS_PER_16TH 6
 
@@ -867,10 +870,10 @@ static void decide_on_break() {
     // plan a break ?
     if ( bars_played == 28 ) {
       // 100% 1-bar break
-        Break.status = sPlaying;
-        Break.start = bar_current  ;
-        Break.length = 4;
-        Break.after = Break.start + Break.length;
+      Break.status = sPlaying;
+      Break.start = bar_current  ;
+      Break.length = 4;
+      Break.after = Break.start + Break.length;
     } else if ( bars_played == 15 ) {
       // 50% 1-bar break
       if (flip(50)) {
@@ -1007,9 +1010,9 @@ static void check_midi_ramps(boolean force_restart) {
         if (midiRamps[i].need_reset) {
           send_midi_control(midiRamps[i].chan, midiRamps[i].cc_number, midiRamps[i].def_val);
         }
-        uint8_t chanSeed = random(0,100); // probability
+        uint8_t chanSeed = random(0, 100); // probability
         uint8_t ccSeed;
-        if (chanSeed<45) {
+        if (chanSeed < 45) {
           do {
             ccSeed = random(0, NUM_SYNTH_CCS);
           } while (ramp_cc_repeated(synth1_ramps[ccSeed].cc_number, SYNTH1_MIDI_CHAN));
@@ -1020,9 +1023,11 @@ static void check_midi_ramps(boolean force_restart) {
           midiRamps[i].def_val = synth1_ramps[ccSeed].cc_default_value;
           midiRamps[i].need_reset = synth1_ramps[ccSeed].reset_after_use;
           midiRamps[i].value = synth1_ramps[ccSeed].cc_default_value;
-          midiRamps[i].stepPer16th = (float)(random(-100,100))*0.05f ;
-          if (abs(midiRamps[i].stepPer16th) < 0.5 ) {midiRamps[i].stepPer16th = 0.5;}
-          midiRamps[i].leftBars = random(1,3)*2;
+          midiRamps[i].stepPer16th = (float)(random(-100, 100)) * 0.05f ;
+          if (abs(midiRamps[i].stepPer16th) < 0.5 ) {
+            midiRamps[i].stepPer16th = 0.5;
+          }
+          midiRamps[i].leftBars = random(1, 3) * 2;
         } else if (chanSeed < 86)  {
           do {
             ccSeed = random(0, NUM_SYNTH_CCS);
@@ -1034,9 +1039,11 @@ static void check_midi_ramps(boolean force_restart) {
           midiRamps[i].def_val = synth2_ramps[ccSeed].cc_default_value;
           midiRamps[i].need_reset = synth2_ramps[ccSeed].reset_after_use;
           midiRamps[i].value = synth2_ramps[ccSeed].cc_default_value;
-          midiRamps[i].stepPer16th = (float)(random(-100,100))*0.05f ;
-          if (abs(midiRamps[i].stepPer16th) < 0.5 ) {midiRamps[i].stepPer16th = 0.5;}
-          midiRamps[i].leftBars = random(1,3)*2; 
+          midiRamps[i].stepPer16th = (float)(random(-100, 100)) * 0.05f ;
+          if (abs(midiRamps[i].stepPer16th) < 0.5 ) {
+            midiRamps[i].stepPer16th = 0.5;
+          }
+          midiRamps[i].leftBars = random(1, 3) * 2;
         } else {
           do {
             ccSeed = random(0, NUM_DRUM_CCS);
@@ -1048,9 +1055,11 @@ static void check_midi_ramps(boolean force_restart) {
           midiRamps[i].def_val = drum_ramps[ccSeed].cc_default_value;
           midiRamps[i].need_reset = drum_ramps[ccSeed].reset_after_use;
           midiRamps[i].value = drum_ramps[ccSeed].cc_default_value;
-          midiRamps[i].stepPer16th = (float)(random(-100,100))*0.1f ;
-          if (abs(midiRamps[i].stepPer16th) < 0.5 ) {midiRamps[i].stepPer16th = 0.5;}
-          midiRamps[i].leftBars = random(1,3) ;
+          midiRamps[i].stepPer16th = (float)(random(-100, 100)) * 0.1f ;
+          if (abs(midiRamps[i].stepPer16th) < 0.5 ) {
+            midiRamps[i].stepPer16th = 0.5;
+          }
+          midiRamps[i].leftBars = random(1, 3) ;
         }
       }
     }
@@ -1058,13 +1067,13 @@ static void check_midi_ramps(boolean force_restart) {
     if (bar_current == Break.start) {
       for (int i = 0; i < NUM_RAMPS; i++) {
         /*
-        if (midiRamps[i].need_reset) {
+          if (midiRamps[i].need_reset) {
           send_midi_control(midiRamps[i].chan, midiRamps[i].cc_number, midiRamps[i].def_val);
-        } 
+          }
         */
         midiRamps[i].leftBars = Break.length;
         midiRamps[i].value = midiRamps[i].min_val;
-        midiRamps[i].stepPer16th = ((float)(midiRamps[i].max_val-midiRamps[i].min_val)/(float)(Break.length*PatternLength));
+        midiRamps[i].stepPer16th = ((float)(midiRamps[i].max_val - midiRamps[i].min_val) / (float)(Break.length * PatternLength));
       }
     }
   } // if Break.status
@@ -1079,7 +1088,7 @@ static void do_midi_tick() {
     if (midi_step >= PatternLength) {
       bar_current++;
       midi_step = 0;
-      decide_on_break();      
+      decide_on_break();
       check_midi_ramps(false); // every bar
     }
     sequencer_step(midi_step);
@@ -1093,8 +1102,8 @@ static void do_midi_stop() {
 }
 
 /*
- * Instrument definition
- */
+   Instrument definition
+*/
 
 static const byte drum_notes[6] = { KICK_NOTE, SNARE_NOTE, CLOSED_HAT_NOTE, OPEN_HAT_NOTE, PERCUSSION_NOTE, CRASH_NOTE };
 static const byte synth_midi_channels[2] = { SYNTH1_MIDI_CHAN, SYNTH2_MIDI_CHAN };
@@ -1123,18 +1132,18 @@ static void init_instruments() {
 }
 
 /*
- * Main program
- */
+   Main program
+*/
 
 /*
-void setup() {
+  void setup() {
   init_midi();
   for (byte i = 0; i < ButLast; i++) {
     init_button(&buttons[i], button_pins[i]);
   }
   init_instruments();
   init_patterns();
-}
+  }
 */
 
 void start_midi_clock() {
@@ -1214,6 +1223,9 @@ void run_tick() {
     }
     run_ui();
     button_divider = 0;
+    
+    // DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
+    DEBF ("Core0=%dus Core1=%dus DMA_BUF=%dus\r\n" , s2T + drT + fxT, s1T, DMA_BUF_TIME);
   }
 
   /* If MIDI is playing, then check for tick */
@@ -1228,18 +1240,18 @@ void run_tick() {
 }
 
 /*
-static unsigned long last_ms = 0;
+  static unsigned long last_ms = 0;
 
-void loop() {
-  // wait until next ms 
+  void loop() {
+  // wait until next ms
   do {
     now = millis();
   } while (now == last_ms);
   last_ms = now;
-  // advance one tick 
+  // advance one tick
   run_tick();
   myRandomAddEntropy(analogRead(0));
-}
+  }
 */
 
 #endif
