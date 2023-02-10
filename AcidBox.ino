@@ -271,11 +271,11 @@ static void audio_task2(void *userData) {
 
 
 /* 
- *  Some service routines *****************************************************************************************************************************
+ *  Some debug service routines *****************************************************************************************************************************
 */
 
 void readPots() {
-  static const float snap = 0.005;
+  static const float snap = 0.008f;
   static float tmp;
   static const float NORMALIZE_ADC = 1.0f / 4096.0f;
   for (uint8_t i = 0; i < POT_NUM; i++) {

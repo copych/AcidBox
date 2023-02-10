@@ -36,5 +36,6 @@ class Overdrive
     float drive_;
     float pre_gain_;
     float post_gain_;
+    float compens_;
 }; 
 #endif

@@ -6,6 +6,7 @@
 //#define DEBUG_SAMPLER
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
+//#define DEBUG_TIMING
 
 //#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: NOISY 8BIT STEREO
 //#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB TO BE SACRIFICED, SMALL DRUM KIT SAMPLES USED 

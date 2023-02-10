@@ -7,11 +7,13 @@ void FxFilterCrusher::Process( float* left, float* right ) {
   Filter_Process(right, &mainFilterR_LP);
   Filter_Process(left, &mainFilterL_HP);
   Filter_Process(right, &mainFilterR_HP);
+/*
+  cutoff_lp_slow = (float)cutoff_lp_slow * 0.99f + 0.01f * ((float)lowpassC - (float)cutoff_lp_slow);
+  cutoff_hp_slow = (float)cutoff_hp_slow * 0.99f + 0.01f * ((float)highpassC - (float)cutoff_hp_slow);
+*/
 
-  cutoff_lp_slow = (float)cutoff_lp_slow * 0.9f + 0.1f * ((float)lowpassC - (float)cutoff_lp_slow);
-  cutoff_hp_slow = (float)cutoff_hp_slow * 0.9f + 0.1f * ((float)highpassC - (float)cutoff_hp_slow);
-
-
+  cutoff_lp_slow =  lowpassC ;
+  cutoff_hp_slow =  highpassC  ;
   /* we can not calculate in each cycle */
   if ( effect_prescaler % 8 == 0 ) {
     Filter_CalculateTP(cutoff_lp_slow, filtReso, &filterGlobalC_LP);
@@ -53,7 +55,7 @@ inline void FxFilterCrusher::Filter_CalculateTP(float c, float reso, struct filt
   cosOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega + (float)((1ULL << 30) - 1)))];
   sinOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega))];
 
-  alpha = sinOmega * one_div(2.0 * Q);
+  alpha = sinOmega * one_div(2.0f * Q);
   b[0] = (1 - cosOmega) * 0.5f;
   b[1] = 1 - cosOmega;
   b[2] = b[0];
@@ -100,7 +102,7 @@ inline void FxFilterCrusher::Filter_CalculateHP(float c, float reso, struct filt
   cosOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega + (float)((1ULL << 30) - 1)))];
   sinOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega))];
 
-  alpha = sinOmega * one_div(2.0 * Q);
+  alpha = sinOmega * one_div(2.0f * Q);
   b[0] = (1 + cosOmega) * 0.5f;
   b[1] = -(1 + cosOmega);
   b[2] = b[0];

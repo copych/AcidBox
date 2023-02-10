@@ -134,15 +134,15 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
 };
 
 sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
-  //cc                   cpl def   min max   reset
+  //cc                  cpl def   min max   reset
   {CC_808_CUTOFF,       0,  64,   64,  127, true},
-  {CC_808_RESO,         0,  0,    0,   127, true},
+  {CC_808_RESO,         0,  64,   0,   127, true},
   {CC_808_SD_TONE,      0,  64,   64,  127, true},
 #ifndef NO_PSRAM
   {CC_808_REVERB_SEND,  0,  5,    30,  127, true},  // reverb is not available with no psram
   {CC_808_DELAY_SEND,   0,  0,    64,  127, true}, // delay for drums needs more delay time (read 'RAM') than we can afford
 #endif
-  {CC_808_BD_DECAY,     0,  127,   50,  127,  true},
+  {CC_808_BD_DECAY,     0,  127,  50,  127, true},
   {CC_808_BD_TONE,      0,  64,   40,  64,  true}
 };
 
@@ -1224,8 +1224,10 @@ void run_tick() {
     run_ui();
     button_divider = 0;
     
+#ifdef DEBUG_TIMING
     // DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
     DEBF ("Core0=%dus Core1=%dus DMA_BUF=%dus\r\n" , s2T + drT + fxT, s1T, DMA_BUF_TIME);
+#endif
   }
 
   /* If MIDI is playing, then check for tick */
