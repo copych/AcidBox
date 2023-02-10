@@ -8,12 +8,6 @@ If you compile with #define JUKEBOX option in config.h, this becomes a stand-alo
 A modified version of http://tips.ibawizard.net/acid-banger/, initially taken from https://github.com/vitling/acid-banger included, there's no AI, but randomizing pattern algorithms.
 
 # Sound samples
-[demo.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox.mp3?raw=true) first time AcidBanger run
-
-[demo2.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox2.mp3?raw=true) a bit of improvements
-
-[demo3.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox3.mp3?raw=true) this time reverb and delay engaged (all onboard, all managed by AcidBanger), I have restarted it several times to show the variety of patterns generated.
-
 [demo4.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox4.mp3?raw=true) fully automated breaks and fills.
 
 # To build the thing
@@ -48,6 +42,102 @@ In ArduinoIDE (I used v.1.8.20) select:
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
 
+# MIDI Control
+For the time being the following list of MIDI continious controllers is available:
+
+#define CC_303_PORTATIME    5
+
+#define CC_303_VOLUME       7
+
+#define CC_303_PORTAMENTO   65
+
+#define CC_303_PAN          10
+
+#define CC_303_WAVEFORM     70  // Blend between square and saw
+
+#define CC_303_RESO         71
+
+#define CC_303_CUTOFF       74
+
+#define CC_303_ATTACK       73
+
+#define CC_303_DECAY        72
+
+#define CC_303_ENVMOD_LVL   75
+
+#define CC_303_ACCENT_LVL   76
+
+#define CC_303_REVERB_SEND  91
+
+#define CC_303_DELAY_SEND   92
+
+#define CC_303_DISTORTION   94
+
+#define CC_303_OVERDRIVE    95
+
+#define CC_303_SATURATOR    128
+
+
+
+// 808 Drums MIDI CC
+
+#define CC_808_VOLUME       7
+
+#define CC_808_PAN          10
+
+#define CC_808_RESO         71
+
+#define CC_808_CUTOFF       74
+
+#define CC_808_REVERB_SEND  91
+
+#define CC_808_DELAY_SEND   92
+
+#define CC_808_DISTORTION   94  // BitCrusher
+
+#define CC_808_BD_TONE      21  // Specific per drum control
+
+#define CC_808_BD_DECAY     23
+
+#define CC_808_BD_LEVEL     24
+
+#define CC_808_SD_TONE      25
+
+#define CC_808_SD_SNAP      26
+
+#define CC_808_SD_LEVEL     29
+
+#define CC_808_CH_TUNE      61
+
+#define CC_808_CH_LEVEL     63
+
+#define CC_808_OH_TUNE      80
+
+#define CC_808_OH_DECAY     81
+
+#define CC_808_OH_LEVEL     82
+
+
+
+// Global 
+
+#define CC_ANY_COMPRESSOR   93
+
+#define CC_ANY_DELAY_TIME   84
+
+#define CC_ANY_DELAY_FB     85
+
+#define CC_ANY_DELAY_LVL    86
+
+#define CC_ANY_REVERB_TIME  87
+
+#define CC_ANY_REVERB_LVL   88
+
+#define CC_ANY_RESET_CCS    121
+
+#define CC_ANY_NOTES_OFF    123
+
+#define CC_ANY_SOUND_OFF    120
 
 # Functional diagram 
 <img src="https://github.com/copych/AcidBox/blob/main/media/2022-12-14_00-03-18.png" width=100%>
