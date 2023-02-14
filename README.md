@@ -9,6 +9,7 @@ A modified version of http://tips.ibawizard.net/acid-banger/, initially taken fr
 
 # Sound samples
 [demo4.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox4.mp3?raw=true) fully automated breaks and fills.
+[demo5.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox5.mp3?raw=true) 7 minutes of random fully automated acid.
 
 # To build the thing
 Ideally, you need an ESP32 with PSRAM (ESP32 WROVER module). Also an external DAC, like PCM5102 is highly preferrable. 
