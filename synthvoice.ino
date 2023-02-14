@@ -122,6 +122,13 @@ inline void SynthVoice::Generate() {
   //DEBF("synt%d = %0.5f\r\n", _index , samp);
 }
 
+inline void SynthVoice::SetCutoff(float lvl)  {
+  _cutoff = lvl;
+  _filter_freq = linToExp(_cutoff, 0.0f, 1.0f, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ); 
+#ifdef DEBUG_SYNTH
+  DEBF("Synth %d cutoff=%0.3f\r\n" , _index, _cutoff);
+#endif
+};
 
 inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
   switch (cc_number) {
@@ -148,7 +155,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_RESO:
       _reso = cc_value * MIDI_NORM ;
-      Filter.SetResonance(_reso);
+      SetReso(_reso);
       break;
     case CC_303_DECAY: // Env release
       _filterDecayMs = 15.0f + (float)cc_value * MIDI_NORM * 5000.0f ;
@@ -160,7 +167,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
-      _filter_freq = linToExp(_cutoff, 0.0f, 1.0f, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
+      SetCutoff(_cutoff);
       break;
     case CC_303_DELAY_SEND:
       _sendDelay = (float)cc_value * MIDI_NORM;
@@ -176,11 +183,11 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_DISTORTION:
       _gain = (float)cc_value * MIDI_NORM ;
-      Wfolder.SetDrive(_gain );
+      SetDistortionLevel(_gain);
       break;
     case CC_303_OVERDRIVE:
       _drive = (float)cc_value * MIDI_NORM ;
-      Drive.SetDrive(_drive );
+      SetOverdriveLevel(_drive);
       break;
     case CC_303_SATURATOR:
       _saturator = (float)cc_value * MIDI_NORM;

@@ -1,5 +1,31 @@
 #include "fx_filtercrusher.h"
 
+
+void FxFilterCrusher::SetCutoff( float value ) {
+  highpassC = value >= 0.5 ? (value - 0.5f) * 2.0f : 0.0f;
+  lowpassC = value <= 0.5 ? (value) * 2.0f : 1.0f;
+#ifdef DEBUG_FX
+  DEBF("Filter TP: %0.2f, HP: %02f\n", lowpassC, highpassC);
+#endif
+};
+
+void FxFilterCrusher::SetResonance( float value ) {
+  filtReso =  0.5f + 10 * value * value * value; /* min q is 0.5 here */
+  div_2_reso = one_div(2.0f * filtReso);
+#ifdef DEBUG_FX
+  DEBF("main filter reso: %0.3f\n", filtReso);
+#endif
+};
+
+
+void FxFilterCrusher::SetBitCrusher( float value ) {
+  bitCrusher = pow(2, -32.0f * value);
+  div_bitCrusher = 1.0f * one_div(bitCrusher);
+#ifdef DEBUG_FX
+  DEBF("main filter bitCrusher: %0.3f\n", bitCrusher);
+#endif
+};
+
 void FxFilterCrusher::Process( float* left, float* right ) {
   effect_prescaler++;
 
@@ -15,26 +41,25 @@ void FxFilterCrusher::Process( float* left, float* right ) {
   cutoff_lp_slow =  lowpassC ;
   cutoff_hp_slow =  highpassC  ;
   /* we can not calculate in each cycle */
-  if ( effect_prescaler % 8 == 0 ) {
-    Filter_CalculateTP(cutoff_lp_slow, filtReso, &filterGlobalC_LP);
-    Filter_CalculateHP(cutoff_hp_slow, filtReso, &filterGlobalC_HP);
+  if ( effect_prescaler % 16 == 0 ) {
+    Filter_CalculateTP(cutoff_lp_slow, div_2_reso, &filterGlobalC_LP);
+    Filter_CalculateHP(cutoff_hp_slow, div_2_reso, &filterGlobalC_HP);
   }
 
   if ( bitCrusher < 1.0f ) {
     int32_t ul = *left * (float)bitCrusher * (float)(1 << 29);
-    *left = ((float)ul) * one_div((float)bitCrusher * (float)(1 << 29));
+    *left = ((float)ul * div_bitCrusher * (float)(1 << 29));
 
     int32_t ur = *right * (float)bitCrusher * (float)(1 << 29);
-    *right = ((float)ur) * one_div((float)bitCrusher * (float)(1 << 29));
+    *right = ((float)ur * div_bitCrusher * (float)(1 << 29));
   }
 };
 
 
-inline void FxFilterCrusher::Filter_CalculateTP(float c, float reso, struct filterCoeffT *const  filterC ) {
+inline void FxFilterCrusher::Filter_CalculateTP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC ) {
   float *aNorm = filterC->aNorm;
   float *bNorm = filterC->bNorm;
 
-  float Q = reso;
   float  cosOmega, omega, sinOmega, alpha, a[3], b[3];
 
   // change curve of cutoff a bit
@@ -55,7 +80,7 @@ inline void FxFilterCrusher::Filter_CalculateTP(float c, float reso, struct filt
   cosOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega + (float)((1ULL << 30) - 1)))];
   sinOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega))];
 
-  alpha = sinOmega * one_div(2.0f * Q);
+  alpha = sinOmega * one_div_2_reso;
   b[0] = (1 - cosOmega) * 0.5f;
   b[1] = 1 - cosOmega;
   b[2] = b[0];
@@ -74,11 +99,10 @@ inline void FxFilterCrusher::Filter_CalculateTP(float c, float reso, struct filt
   bNorm[2] = b[2] * factor;
 };
 
-inline void FxFilterCrusher::Filter_CalculateHP(float c, float reso, struct filterCoeffT *const  filterC ) {
+inline void FxFilterCrusher::Filter_CalculateHP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC ) {
   float *aNorm = filterC->aNorm;
   float *bNorm = filterC->bNorm;
 
-  float Q = reso;
   float  cosOmega, omega, sinOmega, alpha, a[3], b[3];
 
 
@@ -102,7 +126,7 @@ inline void FxFilterCrusher::Filter_CalculateHP(float c, float reso, struct filt
   cosOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega + (float)((1ULL << 30) - 1)))];
   sinOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega))];
 
-  alpha = sinOmega * one_div(2.0f * Q);
+  alpha = sinOmega * one_div_2_reso;
   b[0] = (1 + cosOmega) * 0.5f;
   b[1] = -(1 + cosOmega);
   b[2] = b[0];

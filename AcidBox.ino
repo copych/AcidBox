@@ -85,7 +85,7 @@ volatile float rvb_k1, rvb_k2, rvb_k3;
 volatile float dly_k1, dly_k2, dly_k3;
 
 size_t bytes_written; // i2s
-volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT; // debug timing: if we use less vars, compiler optimizes them
+volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT, art, arT; // debug timing: if we use less vars, compiler optimizes them
 volatile static uint32_t prescaler;
 
 // tasks for Core0 and Core1
@@ -106,10 +106,33 @@ FxReverb Reverb;
 #endif
 Compressor Comp;
 
+hw_timer_t * timer1 = NULL;            // Timer variables
+hw_timer_t * timer2 = NULL;            // Timer variables
+portMUX_TYPE timer1Mux = portMUX_INITIALIZER_UNLOCKED; 
+portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED; 
+volatile boolean timer1_fired = false;   // Update battery icon flag
+volatile boolean timer2_fired = false;   // Update battery icon flag
+
+
+/*
+ * Timer interrupt handler **********************************************************************************************************************************
+*/
+
+void IRAM_ATTR onTimer1() {
+   portENTER_CRITICAL_ISR(&timer1Mux);
+   timer1_fired = true;
+   portEXIT_CRITICAL_ISR(&timer1Mux);
+}
+
+void IRAM_ATTR onTimer2() {
+   portENTER_CRITICAL_ISR(&timer2Mux);
+   timer2_fired = true;
+   portEXIT_CRITICAL_ISR(&timer2Mux);
+}
 
 
 /* 
- *  Quite an ordinary SETUP() *******************************************************************************************************
+ *  Quite an ordinary SETUP() *******************************************************************************************************************************
 */
 
 void setup(void) {
@@ -183,13 +206,26 @@ void setup(void) {
   i2sInit();
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
 
-  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, 1, &SynthTask1, 0 );
-  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, 1, &SynthTask2, 1 );
+  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask1, 0 );
+  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask2, 1 );
+ // xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, 1, &SynthTask1, 0 );
+ // xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, 1, &SynthTask2, 1 );
 
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
   xTaskNotifyGive(SynthTask2);
   processing = true;
+
+  // timer interrupt
+  timer1 = timerBegin(0, 80, true);               // Setup timer for midi
+  timerAttachInterrupt(timer1, &onTimer1, true);  // Attach callback
+  timerAlarmWrite(timer1, 4000, true);            // 4000us, autoreload
+  timerAlarmEnable(timer1);
+  
+  timer2 = timerBegin(1, 80, true);               // Setup general purpose timer
+  timerAttachInterrupt(timer2, &onTimer2, true);  // Attach callback
+  timerAlarmWrite(timer2, 200000, true);          // 200ms, autoreload
+  timerAlarmEnable(timer2); 
 }
 
 static uint32_t last_ms = micros();
@@ -208,20 +244,12 @@ void loop() { // default loopTask running on the Core1
   MIDI.read();
 #endif
 
-  taskYIELD(); // breath for all the rest of the Core1
+  taskYIELD(); // this can wait
 
 #ifdef MIDI_VIA_SERIAL2
   MIDI2.read();
 #endif
 
-#ifdef JUKEBOX
-  if (micros() - last_ms > 1000) {
-    last_ms = micros();
-    run_tick();
-    myRandomAddEntropy((uint16_t)(last_ms & 0x0000FFFF));
-    // DEBF("%0.4f %0.4f %0.4f \r\n", param1, param2, param3);
-  }
-#endif
 }
 
 /* 
@@ -260,43 +288,77 @@ static void audio_task2(void *userData) {
       s1t = micros();
       Synth1.Generate();
       s1T = micros() - s1t;
-      xTaskNotifyGive(SynthTask1); // if you have glitches, you may want to place this string in the end of audio_task1
+      xTaskNotifyGive(SynthTask1); // if you have glitches, you may want to place this string in the end of audio_task2
     }
-    // readPots();
+
+#ifdef JUKEBOX
+    if (timer1_fired) {
+      timer1_fired = false;
+      jukebox_tick();
+    }    
+#endif
+
+    if (timer2_fired) {
+      timer2_fired = false;
+      art = micros();
+      //readPots();
+      arT = micros() - art;
+#ifdef DEBUG_TIMING
+    // DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
+    DEBF ("Core0=%dus Core1=%dus DMA_BUF=%dus AnalogRead=%dus\r\n" , s2T + drT + fxT, s1T, DMA_BUF_TIME, arT);
+#endif
+    }    
+    
     taskYIELD();
     // hopefully, other Core1 tasks (for example, loop()) run here
   }
 }
 
-
-
 /* 
- *  Some debug service routines *****************************************************************************************************************************
+ *  Some debug and service routines *****************************************************************************************************************************
 */
+
+
+#ifdef JUKEBOX
+void jukebox_tick() {
+  run_tick();
+  myRandomAddEntropy((uint16_t)(micros() & 0x0000FFFF));
+  // DEBF("%0.4f %0.4f %0.4f \r\n", param1, param2, param3);
+}
+
+#endif
+
 
 void readPots() {
   static const float snap = 0.008f;
+  static uint8_t i = 0;
   static float tmp;
   static const float NORMALIZE_ADC = 1.0f / 4096.0f;
-  for (uint8_t i = 0; i < POT_NUM; i++) {
-    tmp = (float)analogRead(POT_PINS[i]) * NORMALIZE_ADC;
-    if (fabs(tmp - param[i]) > snap) {
-      param[i] = tmp;
-      paramChange(i, tmp);
-    }
+//read one pot per call
+  tmp = (float)analogRead(POT_PINS[i]) * NORMALIZE_ADC;
+  if (fabs(tmp - param[i]) > snap) {
+    param[i] = tmp;
+    paramChange(i, tmp);
   }
+
+  i++;
+  if (i >= POT_NUM) i=0;
 }
 
 void paramChange(uint8_t paramNum, float paramVal) {
   // paramVal === param[paramNum];
 
-  DEBF ("param %d val %0.4f\r\n" , paramNum, paramVal);
+ // DEBF ("param %d val %0.4f\r\n" , paramNum, paramVal);
   switch (paramNum) {
     case 0:
+      //set_bpm( 40.0f + (paramVal * 160.0f));
+      Synth1.SetCutoff(paramVal);
       break;
     case 1:
+      Synth1.SetReso(paramVal);
       break;
-    case 3:
+    case 2:
+      Synth1.SetOverdriveLevel(paramVal);
       break;
     default:
       {}

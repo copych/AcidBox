@@ -42,27 +42,11 @@ class FxFilterCrusher {
 
     void Process( float* left, float* right );
 
-    void SetCutoff( float value ) {
-      highpassC = value >= 0.5 ? (value - 0.5f) * 2.0f : 0.0f;
-      lowpassC = value <= 0.5 ? (value) * 2.0f : 1.0f;
-#ifdef DEBUG_FX
-      DEBF("Filter TP: %0.2f, HP: %02f\n", lowpassC, highpassC);
-#endif
-    };
+    void SetCutoff( float value ) ;
 
-    void SetResonance( float value ) {
-      filtReso =  0.5f + 10 * value * value * value; /* min q is 0.5 here */
-#ifdef DEBUG_FX
-      DEBF("main filter reso: %0.3f\n", filtReso);
-#endif
-    };
+    void SetResonance( float value ) ;
 
-    void SetBitCrusher( float value ) {
-      bitCrusher = pow(2, -32.0f * value);
-#ifdef DEBUG_FX
-      DEBF("main filter bitCrusher: %0.3f\n", bitCrusher);
-#endif
-    };
+    void SetBitCrusher( float value ) ;
 
   private:
 
@@ -85,18 +69,21 @@ class FxFilterCrusher {
     float lowpassC = 1.0f;
     float filtReso = 1.0f;
 
+    float div_2_reso = 0.5f;
+
     float cutoff_hp_slow = 0.0f;
     float cutoff_lp_slow = 1.0f;
 
     uint8_t effect_prescaler = 0;
 
     float bitCrusher = 1.0f;
+    float div_bitCrusher = 1.0f;
 
     // calculate coefficients of the 2nd order IIR filter
 
-    inline void Filter_CalculateTP(float c, float reso, struct filterCoeffT *const  filterC );
+    inline void Filter_CalculateTP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC );
 
-    inline void Filter_CalculateHP(float c, float reso, struct filterCoeffT *const  filterC );
+    inline void Filter_CalculateHP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC );
 
     inline void Filter_Process( float *const signal, struct filterProcT *const filterP ) {
       const float out = filterP->filterCoeff->bNorm[0] * (*signal) + filterP->w[0];

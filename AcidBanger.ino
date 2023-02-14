@@ -81,13 +81,13 @@
 
 #define NUM_RAMPS 6           // simultaneous knob rotatings
 #ifndef NO_PSRAM
-#define NUM_SYNTH_CCS 11    // how many synth CC params do we have to play
-#define NUM_DRUM_CCS  7     // how many drum CC params do we have to play
-#define VOL_SYNTH     80
+  #define NUM_SYNTH_CCS 11    // how many synth CC params do we have to play
+  #define NUM_DRUM_CCS  7     // how many drum CC params do we have to play
+  #define VOL_SYNTH     80
 #else
-#define NUM_SYNTH_CCS 10    // how many synth CC params do we have to play
-#define NUM_DRUM_CCS  5     // how many drum CC params do we have to play
-#define VOL_SYNTH     60
+  #define NUM_SYNTH_CCS 10    // how many synth CC params do we have to play
+  #define NUM_DRUM_CCS  5     // how many drum CC params do we have to play
+  #define VOL_SYNTH     60
 #endif
 
 struct sSynthCCs {
@@ -101,8 +101,6 @@ struct sSynthCCs {
 
 sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
   //cc                 cpl             def   min max   reset
-  {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
-  {CC_303_CUTOFF,     CC_303_RESO,    20,   5,  120,  true},
   {CC_303_PAN,        0,              47,   0,  127,  true},
   {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
   {CC_303_WAVEFORM,   0,              0,    0,  64,   true},
@@ -110,10 +108,15 @@ sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
   {CC_303_REVERB_SEND, 0,              5,    2,  127,  true},
 #endif
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
-  {CC_303_DISTORTION, 0,              0,    2,  127,  true},
   {CC_303_ACCENT_LVL, 0,              64,   25, 100,  false},
   {CC_303_DECAY,      0,              20,   15, 120,  true},
-  {CC_303_ATTACK,     0,              1,    3,  60,   true}
+  {CC_303_ATTACK,     0,              1,    3,  60,   true},
+  {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
+  {CC_303_CUTOFF,     CC_303_RESO,    20,   5,  120,  true},
+  {CC_303_DISTORTION, 0,              0,    2,  127,  true},
+//  {CC_303_DECAY,      0,              20,   15, 120,  true},
+//  {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
+//  {CC_303_ACCENT_LVL, 0,              64,   25, 100,  false},
 };
 
 sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
@@ -859,10 +862,16 @@ void init_patterns() {
    MIDI clock
 */
 
-#define MIDI_TICKS_PER_16TH 6
+#define MIDI_TICKS_PER_16TH 1
 
-static unsigned long midi_tick_ms = 1000ul * 15 / bpm / MIDI_TICKS_PER_16TH;
 static byte midi_playing, midi_tick, midi_step;
+const float tick_coef = 1000ul * 15 / MIDI_TICKS_PER_16TH;
+static unsigned long midi_tick_ms = tick_coef / bpm;
+
+inline void set_bpm(float newBpm) {
+  bpm = newBpm;
+  midi_tick_ms = tick_coef / newBpm;
+}
 
 static void decide_on_break() {
   uint32_t bars_played = bar_current - Break.after ;
@@ -936,10 +945,10 @@ static void decide_on_break() {
     if (Break.after == bar_current) {
       Break.status = sIdle;
       mem_generate_drums(cur_memory, DrumStraight);
-      if (flip(15)) mem_generate_drums(cur_memory, DrumHang);
-      if (flip(50)) mem_generate_melody_and_seed(cur_memory, 0);
-      if (flip(40)) mem_generate_melody_and_seed(cur_memory, 1);
-      if (flip(10)) mem_generate_note_set(cur_memory);
+      if (flip(30)) mem_generate_drums(cur_memory, DrumHang);
+      if (flip(80)) mem_generate_melody_and_seed(cur_memory, 0);
+      if (flip(60)) mem_generate_melody_and_seed(cur_memory, 1);
+      if (flip(15)) mem_generate_note_set(cur_memory);
     }
   }// Break.status ?? sIdle ?
 #ifdef DEBUG_JUKEBOX
@@ -1224,10 +1233,6 @@ void run_tick() {
     run_ui();
     button_divider = 0;
     
-#ifdef DEBUG_TIMING
-    // DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
-    DEBF ("Core0=%dus Core1=%dus DMA_BUF=%dus\r\n" , s2T + drT + fxT, s1T, DMA_BUF_TIME);
-#endif
   }
 
   /* If MIDI is playing, then check for tick */

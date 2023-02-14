@@ -1,9 +1,10 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v.1.0.2"
+#define VERSION         "v.1.0.3"
 
-#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
+//#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
+//#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
 //#define DEBUG_TIMING
@@ -13,12 +14,14 @@
 
 //#define MIDI_VIA_SERIAL         // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
 #define MIDI_VIA_SERIAL2        // use this option if you want to operate by MIDI @31250baud, UART2 (Serial2), 
-#define MIDIRX_PIN      4       // this pin will be used for input when MIDI_VIA_SERIAL2 defined (note that default pin 17 won't work with PSRAM)
+#define MIDIRX_PIN      4       // this pin is used for input when MIDI_VIA_SERIAL2 defined (note that default pin 17 won't work with PSRAM)
 #define MIDITX_PIN      0       // this pin will be used for output (not implemented yet) when MIDI_VIA_SERIAL2 defined
 
 
 #define JUKEBOX                 // real-time endless auto-compose acid tunes
-//#define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
+#define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
+
+float bpm = 135.0;
 
 #define MAX_CUTOFF_FREQ 4000.0f
 #define MIN_CUTOFF_FREQ 250.0f
@@ -40,7 +43,6 @@ const float TANH_LOOKUP_COEF = (float)WAVE_SIZE / TANH_LOOKUP_MAX;
 #define DMA_NUM_BUF     2           // I see no reasom to set more than 2 DMA buffers, but...
 
 const uint32_t DMA_BUF_TIME = (uint32_t)(1000000.0f / (float)SAMPLE_RATE * (float)DMA_BUF_LEN); // microseconds per buffer
-float bpm = 130.0;
 
 #define I2S_BCLK_PIN    5
 #define I2S_WCLK_PIN    19
