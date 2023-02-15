@@ -7,6 +7,9 @@ Consult with midi_config.h to find out and to set up MIDI continous control mess
 If you compile with #define JUKEBOX option in config.h, this becomes a stand-alone ACID-JUKE-BOX. You just listen.
 A modified version of http://tips.ibawizard.net/acid-banger/, initially taken from https://github.com/vitling/acid-banger included, there's no AI, but randomizing pattern algorithms.
 
+# Video
+[YouTube video](https://www.youtube.com/watch?v=IgeEjZ0DJMY)
+
 # MP3 Sound samples
 [demo4.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox4.mp3?raw=true) fully automated breaks and fills.
 
