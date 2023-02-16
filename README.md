@@ -80,8 +80,6 @@ For the time being the following list of MIDI continious controllers is availabl
 
 #define CC_303_OVERDRIVE    95
 
-#define CC_303_SATURATOR    128
-
 
 
 // 808 Drums MIDI CC
