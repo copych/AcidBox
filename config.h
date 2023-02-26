@@ -1,10 +1,10 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v.1.0.3"
+#define VERSION         "v.1.0.8"
 
-#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
+//#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
-#define DEBUG_SYNTH
+//#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
 //#define DEBUG_TIMING
@@ -19,9 +19,9 @@
 
 
 #define JUKEBOX                 // real-time endless auto-compose acid tunes
-//#define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
+#define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
 
-float bpm = 130.0;
+float bpm = 130.0f;
 
 #define MAX_CUTOFF_FREQ 4000.0f
 #define MIN_CUTOFF_FREQ 250.0f
