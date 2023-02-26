@@ -45,8 +45,8 @@ public:
   inline void StopSound();
   inline void SetSlideOn()                {_slide=true;};
   inline void SetSlideOff()               {_slide=false;};
-  inline void SetVolume(float val)      {volume = val;};
-  inline void SetPan(float pan)         {pan = pan;};
+  inline void SetVolume(float val)      {_volume = val;};
+  inline void SetPan(float pan)         {_pan = pan;};
   inline void SetDelaySend(float lvl)   {_sendDelay = lvl;};
   inline void SetReverbSend(float lvl)  {_sendReverb = lvl;};
   inline void SetDistortionLevel(float lvl) {_gain = lvl; Wfolder.SetDrive(_gain ); };
@@ -61,9 +61,9 @@ public:
   inline void allNotesOff()               {mva1.n=0; _ampEnvPosition = 0.0; _filterEnvPosition = 0.0; _eAmpEnvState = ENV_IDLE; _eFilterEnvState = ENV_IDLE;};
   inline float GetAmpEnv();                // call once per sample
   inline float GetFilterEnv();             // call once per sample
+  inline float GetPan()                 {return _pan;}
+  inline float GetVolume()              {return _volume;}
   inline void Generate() ;
-  float pan = 0.5f;
-  float volume = 1.0f;
   float _sendDelay = 0.0f;
   float _sendReverb = 0.0f;
   int midiNotes[2] = {-1, -1};
@@ -109,6 +109,9 @@ private:
   float _envScaler = 1.0f;
   float _envOffset = 0.0f;
   
+  float _pan = 0.5f;
+  float _volume = 1.0f;
+  
   uint32_t _noteStartTime = 0;
   uint8_t _midiNote = 69;
   float  _currentStep = 1.0f;
@@ -126,10 +129,11 @@ private:
   float _filterEnvPosition = 0.0f;
   float _ampAttackMs = 3.0f;
   float _ampDecayMs = 300.0f;
-  float _ampReleaseMs = 3.0f;
+  float _ampReleaseMs = 30.0f;
   float _ampEnvAttackStep = 15.0f;
   float _ampEnvDecayStep = 1.0f;
   float _ampEnvReleaseStep = 15.0f;
+  float _ampAccentReleaseMs = 50.0f;
   float _filterAttackMs = 5.0f;
   float _filterDecayMs = 200.0f;
   float _filterEnvAttackStep = 15.0f;

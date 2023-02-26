@@ -2,7 +2,7 @@ static void drums_generate() {
   // float fl_sample = 0.0f;
   // float fr_sample = 0.0f;
     for (int i=0; i < DMA_BUF_LEN; i++){
-      Drums.Process( &drums_buf_l[i], &drums_buf_r[i] );
+      Drums.Process( &drums_buf_l[i], &drums_buf_r[i] );      
     } 
 }
 
@@ -22,10 +22,10 @@ static void mixer() { // sum buffers
     rvb_k3 = Drums._sendReverb;
 #endif
     for (int i=0; i < DMA_BUF_LEN; i++) { 
-      synth1_out_l = Synth1.pan*synth_buf[0][i];
-      synth1_out_r = (1.0f-Synth1.pan)*synth_buf[0][i];
-      synth2_out_l = Synth2.pan*synth_buf[1][i];
-      synth2_out_r = (1.0f-Synth2.pan)*synth_buf[1][i];
+      synth1_out_l = Synth1.GetPan()*synth_buf[0][i];
+      synth1_out_r = (1.0f-Synth1.GetPan())*synth_buf[0][i];
+      synth2_out_l = Synth2.GetPan()*synth_buf[1][i];
+      synth2_out_r = (1.0f-Synth2.GetPan())*synth_buf[1][i];
       drums_out_l = drums_buf_l[i];
       drums_out_r = drums_buf_r[i];
       dly_l = dly_k1 * synth1_out_l + dly_k2 * synth2_out_l + dly_k3 * drums_out_l; // delay bus

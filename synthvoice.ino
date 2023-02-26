@@ -20,13 +20,14 @@ void SynthVoice::Init() {
   _slideMs = 60.0f;
   _phaze = 0.0f;
   mva1.n = 0 ;
+  _pan = 0.5;
 
   // parameters of envelopes
   _ampEnvPosition = 0.0;
   _filterEnvPosition = 0.0;
   _ampAttackMs = 3.0;
   _ampDecayMs = 300.0;
-  _ampReleaseMs = 3.0;
+  _ampReleaseMs = 30.0;
   _ampEnvAttackStep = 15.0;
   _ampEnvDecayStep = 1.0;
   _ampEnvReleaseStep = 15.0;
@@ -63,7 +64,7 @@ inline void SynthVoice::Generate() {
       samp = 0.0f;
     }
     //  if (i % 4 == 0) {
-    final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 0.3f * (float)_accentation + 1.0f );
+    final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 1.1f * (float)_accentation + 1.0f );
     final_cut = filtDeclicker.Process( final_cut);
     Filter.SetCutoff( final_cut );
     //    }
@@ -92,7 +93,7 @@ inline void SynthVoice::Generate() {
     samp = Drive.Process(samp);
     samp = Wfolder.Process(samp);
 
-    samp *=  volume;
+    samp *=  _volume;
 
 
 
@@ -137,10 +138,10 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       _slideMs = (float)cc_value;
       break;
     case CC_303_VOLUME:
-      volume = (float)cc_value * MIDI_NORM;
+      _volume = (float)cc_value * MIDI_NORM;
       break;
     case CC_303_PAN:
-      pan = (float)cc_value * MIDI_NORM;
+      _pan = (float)cc_value * MIDI_NORM;
       break;
     case CC_303_PORTAMENTO:
       _portamento = (cc_value >= 64);
@@ -197,7 +198,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
 }
 
 float SynthVoice::GetAmpEnv() {
-  const static float sust_level = 0.35f;
+  const static float sust_level = 0.2f;
   const static float k_sust = 1.0f - sust_level;
   static float ret_val = 0.0f;
   static float pass_val = 0.0f, release_lvl = 0.0f;
@@ -211,7 +212,7 @@ float SynthVoice::GetAmpEnv() {
       _ampEnvReleaseStep = _msToSteps * one_div(_ampReleaseMs + 0.0001f);
       if (_accent) {
         _ampEnvDecayStep *= 3.0f;
-        _ampEnvReleaseStep = _msToSteps * one_div(50.0f + 0.0001f);
+        _ampEnvReleaseStep = _msToSteps * one_div(_ampAccentReleaseMs + 0.0001f);
       }
       _eAmpEnvState = ENV_ATTACK;
       ret_val = (-exp_tbl[ 0 ] + 1.0f) * 0.5f;

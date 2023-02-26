@@ -113,7 +113,6 @@ portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED;
 volatile boolean timer1_fired = false;   // Update battery icon flag
 volatile boolean timer2_fired = false;   // Update battery icon flag
 
-
 /*
  * Timer interrupt handler **********************************************************************************************************************************
 */
@@ -206,10 +205,10 @@ void setup(void) {
   i2sInit();
   i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
 
-  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask1, 0 );
-  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask2, 1 );
- // xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, 1, &SynthTask1, 0 );
- // xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, 1, &SynthTask2, 1 );
+  //xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask1, 0 );
+  //xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask2, 1 );
+ xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, 2, &SynthTask1, 0 );
+ xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, 2, &SynthTask2, 1 );
 
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
@@ -217,15 +216,16 @@ void setup(void) {
   processing = true;
 
   // timer interrupt
+  /*
   timer1 = timerBegin(0, 80, true);               // Setup timer for midi
   timerAttachInterrupt(timer1, &onTimer1, true);  // Attach callback
   timerAlarmWrite(timer1, 4000, true);            // 4000us, autoreload
   timerAlarmEnable(timer1);
-  
+*/
   timer2 = timerBegin(1, 80, true);               // Setup general purpose timer
   timerAttachInterrupt(timer2, &onTimer2, true);  // Attach callback
   timerAlarmWrite(timer2, 200000, true);          // 200ms, autoreload
-  timerAlarmEnable(timer2); 
+  timerAlarmEnable(timer2);
 }
 
 static uint32_t last_ms = micros();
@@ -237,19 +237,12 @@ static uint32_t last_ms = micros();
 void loop() { // default loopTask running on the Core1
   // you can still place some of your code here
   // or   vTaskDelete(NULL);
-
+  
   // processButtons();
 
-#ifdef MIDI_VIA_SERIAL
-  MIDI.read();
-#endif
-
+  loop_250Hz();
+    
   taskYIELD(); // this can wait
-
-#ifdef MIDI_VIA_SERIAL2
-  MIDI2.read();
-#endif
-
 }
 
 /* 
@@ -258,14 +251,16 @@ void loop() { // default loopTask running on the Core1
 
 // Core0 task
 static void audio_task1(void *userData) {
-  while (1) {
+  while (true) {
     // we can run it together with synth(), but not with mixer()
     drt = micros();
     drums_generate();
     drT = micros() - drt;
+    taskYIELD();
     s2t = micros();
     Synth2.Generate();
     s2T = micros() - s2t;
+    taskYIELD();
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
       fxt = micros();
       mixer(); // actually we could send Notify before mixer() is done, but then we'd need tic-tac buffers for generation. Todo maybe
@@ -281,7 +276,8 @@ static void audio_task1(void *userData) {
 
 // task for Core1, which tipically runs user's code on ESP32
 static void audio_task2(void *userData) {
-  while (1) {
+  while (true) {
+    taskYIELD();
     // this part of the code never intersects with mixer buffers
     // this part of the code is operating with shared resources, so we should make it safe
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
@@ -290,14 +286,8 @@ static void audio_task2(void *userData) {
       s1T = micros() - s1t;
       xTaskNotifyGive(SynthTask1); // if you have glitches, you may want to place this string in the end of audio_task2
     }
-
-#ifdef JUKEBOX
-    if (timer1_fired) {
-      timer1_fired = false;
-      jukebox_tick();
-    }    
-#endif
-
+    
+    taskYIELD();
     if (timer2_fired) {
       timer2_fired = false;
       art = micros();
@@ -319,14 +309,6 @@ static void audio_task2(void *userData) {
 */
 
 
-#ifdef JUKEBOX
-void jukebox_tick() {
-  run_tick();
-  myRandomAddEntropy((uint16_t)(micros() & 0x0000FFFF));
-  // DEBF("%0.4f %0.4f %0.4f \r\n", param1, param2, param3);
-}
-
-#endif
 
 
 void readPots() {
@@ -363,4 +345,32 @@ void paramChange(uint8_t paramNum, float paramVal) {
     default:
       {}
   }
+}
+
+
+#ifdef JUKEBOX
+void jukebox_tick() {
+  run_tick();
+  myRandomAddEntropy((uint16_t)(micros() & 0x0000FFFF));
+}
+#endif
+
+
+void loop_250Hz() {
+  timer1_fired = false;
+  
+#ifdef MIDI_VIA_SERIAL
+  MIDI.read();
+#endif
+
+#ifdef MIDI_VIA_SERIAL2
+  MIDI2.read();
+#endif
+  
+#ifdef JUKEBOX
+  jukebox_tick();
+#endif
+
+
+
 }

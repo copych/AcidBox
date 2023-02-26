@@ -11,14 +11,14 @@ TeeBeeFilter::TeeBeeFilter()
   resonanceRaw        =     0.0f;
   resonanceSkewed     =     0.0f;
   g                   =     1.0f;
-  sampleRate          = 44100.0f;
+  sampleRate          = SAMPLE_RATE;
   twoPiOverSampleRate = 2.0*PI/sampleRate;
 
   feedbackHighpass.setMode(OnePoleFilter::HIGHPASS);
   feedbackHighpass.setCutoff(100.0f);
 
-  SetMode(LP_18);
-  //SetMode(TB_303);
+ // SetMode(LP_18);
+  SetMode(TB_303);
   calculateCoefficientsExact();
   Init();
 }
@@ -210,7 +210,9 @@ inline float TeeBeeFilter::Process(float in)
   static float y0, ret_val;
   if ( mode == TB_303 )
   {
-    y0 =  shape(in * drive) - feedbackHighpass.getSample(k * y4);
+ //   y0 =  shape(in * drive) - feedbackHighpass.getSample(k * y4);
+    
+  y0 = fclamp(0.08f * in - feedbackHighpass.getSample(k * y4), -10e4, 10e4);
     //y0  = in - k*shape(y4);
     //y0  = in-k*y4;
     y1 += 2.0f * b0 * (y0 - y1 + y2);

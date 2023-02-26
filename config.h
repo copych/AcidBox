@@ -21,7 +21,7 @@
 #define JUKEBOX                 // real-time endless auto-compose acid tunes
 #define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
 
-float bpm = 135.0;
+float bpm = 130.0;
 
 #define MAX_CUTOFF_FREQ 4000.0f
 #define MIN_CUTOFF_FREQ 250.0f
@@ -35,7 +35,7 @@ float bpm = 135.0;
 const float DIV_SAMPLE_RATE = 1.0f / (float)SAMPLE_RATE;
 const float DIV_2SAMPLE_RATE = 0.5f / (float)SAMPLE_RATE;
 
-#define WAVE_SIZE       2048        // samples used for lookup tables (it works pretty well down to 32 samples due to linear approximation, so listen and free some memory at your choice)
+#define WAVE_SIZE       1024        // samples used for lookup tables (it works pretty well down to 32 samples due to linear approximation, so listen and free some memory at your choice)
 const float DIV_WAVE_SIZE = 1.0f / (float)WAVE_SIZE;
 #define TANH_LOOKUP_MAX 5.0f        // maximum X argument value for tanh(X) lookup table, tanh(X)~=1 if X>4 
 const float TANH_LOOKUP_COEF = (float)WAVE_SIZE / TANH_LOOKUP_MAX;
