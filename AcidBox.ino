@@ -58,14 +58,15 @@ const i2s_port_t i2s_num = I2S_NUM_0; // i2s port number
 static float midi_pitches[128];
 static float midi_phase_steps[128];
 static float midi_tbl_steps[128];
-static float exp_square_tbl[WAVE_SIZE];
-//static float square_tbl[WAVE_SIZE];
-//static float saw_tbl[WAVE_SIZE];
-static float exp_tbl[WAVE_SIZE];
-static float tanh_tbl[WAVE_SIZE];
+static float exp_square_tbl[TABLE_SIZE];
+//static float square_tbl[TABLE_SIZE];
+//static float saw_tbl[TABLE_SIZE];
+static float exp_tbl[TABLE_SIZE];
+static float knob_tbl[TABLE_SIZE]; // exp-like curve
+static float tanh_tbl[TABLE_SIZE];
 static uint32_t last_reset = 0;
 static float param[POT_NUM] ;
-//static float (*tables[])[WAVE_SIZE] = {&exp_square_tbl, &square_tbl, &saw_tbl, &exp_tbl};
+//static float (*tables[])[TABLE_SIZE] = {&exp_square_tbl, &square_tbl, &saw_tbl, &exp_tbl};
 
 // Audio buffers of all kinds
 static float synth_buf[2][DMA_BUF_LEN]; // 2 * 303 mono
@@ -284,6 +285,7 @@ static void audio_task2(void *userData) {
       s1t = micros();
       Synth1.Generate();
       s1T = micros() - s1t;
+    taskYIELD();
       xTaskNotifyGive(SynthTask1); // if you have glitches, you may want to place this string in the end of audio_task2
     }
     

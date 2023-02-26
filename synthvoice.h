@@ -140,7 +140,7 @@ private:
   float _filterEnvDecayStep = 1.0f;
   float _offset = 0.0f; // filter discharge 
   float _offset_leak = 0.9999f; 
-  float _msToSteps = (float)WAVE_SIZE * DIV_SAMPLE_RATE * 1000.0f;
+  float _msToSteps = (float)TABLE_SIZE * DIV_SAMPLE_RATE * 1000.0f;
   float _compens = 1.0f;
   void mva_note_on(mva_data *p, uint8_t note, uint8_t accent);
   void mva_note_off(mva_data *p, uint8_t note);

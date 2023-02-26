@@ -83,7 +83,7 @@ inline void i2s_output () {
 }
 
 
-inline float lookupTable(float (&table)[WAVE_SIZE], float index ) { // lookup value in a table by float index, using linear interpolation
+inline float lookupTable(float (&table)[TABLE_SIZE], float index ) { // lookup value in a table by float index, using linear interpolation
   static float v1, v2, res;
   static int32_t i;
   static float f;
@@ -163,4 +163,8 @@ inline float expToLin(float in, float inMin, float inMax, float outMin, float ou
 {
   float tmp = logf(in * one_div(inMin)) * one_div( logf(inMax * one_div(inMin)));
   return outMin + tmp * (outMax-outMin);
+}
+
+inline float knobMap(float in, float outMin, float outMax) {
+  return outMin + lookupTable(knob_tbl, (int)(in * TABLE_SIZE)) * (outMax - outMin);
 }

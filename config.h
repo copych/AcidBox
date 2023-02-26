@@ -1,10 +1,10 @@
 #define PROG_NAME       "ESP32 AcidBox"
 #define VERSION         "v.1.0.3"
 
-//#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
+#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
-//#define DEBUG_SYNTH
+#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
 //#define DEBUG_TIMING
@@ -19,7 +19,7 @@
 
 
 #define JUKEBOX                 // real-time endless auto-compose acid tunes
-#define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
+//#define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
 
 float bpm = 130.0;
 
@@ -35,10 +35,10 @@ float bpm = 130.0;
 const float DIV_SAMPLE_RATE = 1.0f / (float)SAMPLE_RATE;
 const float DIV_2SAMPLE_RATE = 0.5f / (float)SAMPLE_RATE;
 
-#define WAVE_SIZE       1024        // samples used for lookup tables (it works pretty well down to 32 samples due to linear approximation, so listen and free some memory at your choice)
-const float DIV_WAVE_SIZE = 1.0f / (float)WAVE_SIZE;
+#define TABLE_SIZE       1024        // samples used for lookup tables (it works pretty well down to 32 samples due to linear approximation, so listen and free some memory at your choice)
+const float DIV_TABLE_SIZE = 1.0f / (float)TABLE_SIZE;
 #define TANH_LOOKUP_MAX 5.0f        // maximum X argument value for tanh(X) lookup table, tanh(X)~=1 if X>4 
-const float TANH_LOOKUP_COEF = (float)WAVE_SIZE / TANH_LOOKUP_MAX;
+const float TANH_LOOKUP_COEF = (float)TABLE_SIZE / TANH_LOOKUP_MAX;
 #define DMA_BUF_LEN     32          // there should be no problems with low values, down to 32 samples, 64 seems to be OK with some extra
 #define DMA_NUM_BUF     2           // I see no reasom to set more than 2 DMA buffers, but...
 

@@ -64,7 +64,7 @@ inline void SynthVoice::Generate() {
       samp = 0.0f;
     }
     //  if (i % 4 == 0) {
-    final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 1.1f * (float)_accentation + 1.0f );
+    final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 1.3f * (float)_accentation + 1.0f );
     final_cut = filtDeclicker.Process( final_cut);
     Filter.SetCutoff( final_cut );
     //    }
@@ -110,8 +110,8 @@ inline void SynthVoice::Generate() {
 
     // Increment and wrap phase
     _phaze += _currentStep;
-    if ( _phaze >= WAVE_SIZE) {
-      // _phaze -= WAVE_SIZE ;
+    if ( _phaze >= TABLE_SIZE) {
+      // _phaze -= TABLE_SIZE ;
       _phaze = 0.0f;
     }
 
@@ -125,13 +125,14 @@ inline void SynthVoice::Generate() {
 
 inline void SynthVoice::SetCutoff(float lvl)  {
   _cutoff = lvl;
-  _filter_freq = linToExp(_cutoff, 0.0f, 1.0f, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ); 
+  _filter_freq = knobMap( lvl, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
 #ifdef DEBUG_SYNTH
-  DEBF("Synth %d cutoff=%0.3f\r\n" , _index, _cutoff);
+  DEBF("Synth %d cutoff=%0.3f freq=%0.3f\r\n" , _index, _cutoff, _filter_freq);
 #endif
 };
 
 inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
+  float tmp = 0.0f;
   switch (cc_number) {
 
     case CC_303_PORTATIME:
@@ -159,12 +160,14 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       SetReso(_reso);
       break;
     case CC_303_DECAY: // Env release
-      _filterDecayMs = 15.0f + (float)cc_value * MIDI_NORM * 5000.0f ;
-      _ampDecayMs = 15.0f + (float)cc_value * MIDI_NORM * 7500.0f;
+      tmp = (float)cc_value * MIDI_NORM;
+      _filterDecayMs = knobMap(tmp, 15.0f, 5000.0f);
+      _ampDecayMs = knobMap(tmp, 15.0f, 7500.0f);
       break;
     case CC_303_ATTACK: // Env attack
-      _filterAttackMs = 3.0f + (float)cc_value * MIDI_NORM * 500.0f ;
-      _ampAttackMs =  3.0f + (float)cc_value * MIDI_NORM * 700.0f;
+      tmp = (float)cc_value * MIDI_NORM;
+      _filterAttackMs = knobMap(tmp, 3.0f, 500.0f);
+      _ampAttackMs =  knobMap(tmp, 3.0f, 700.0f);
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
@@ -219,10 +222,10 @@ float SynthVoice::GetAmpEnv() {
       break;
     case ENV_ATTACK:
       _ampEnvPosition += _ampEnvAttackStep;
-      if (_ampEnvPosition >= WAVE_SIZE) {
+      if (_ampEnvPosition >= TABLE_SIZE) {
         _eAmpEnvState = ENV_DECAY;
         _ampEnvPosition = 0;
-        ret_val = (-exp_tbl[ WAVE_SIZE - 1 ] + 1.0f) * 0.5f * k_acc;
+        ret_val = (-exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f * k_acc;
       } else {
         ret_val = (-lookupTable(exp_tbl, _ampEnvPosition ) + 1.0f) * 0.5f * k_acc;
         if (pass_val > ret_val) ret_val = pass_val;
@@ -231,7 +234,7 @@ float SynthVoice::GetAmpEnv() {
       break;
     case ENV_DECAY:
       _ampEnvPosition += _ampEnvDecayStep;
-      if (_ampEnvPosition >= WAVE_SIZE) {
+      if (_ampEnvPosition >= TABLE_SIZE) {
         _eAmpEnvState = ENV_SUSTAIN;
         _ampEnvPosition = 0;
         ret_val = sust_level;
@@ -246,7 +249,7 @@ float SynthVoice::GetAmpEnv() {
       _ampEnvPosition = 0;
       break;
     case ENV_RELEASE:
-      if (_ampEnvPosition >= WAVE_SIZE) {
+      if (_ampEnvPosition >= TABLE_SIZE) {
         _eAmpEnvState = ENV_IDLE;
         _ampEnvPosition = 0;
         ret_val = 0.0f;
@@ -286,17 +289,17 @@ inline float SynthVoice::GetFilterEnv() {
       ret_val = (-exp_tbl[ 0 ] + 1.0f) * 0.5f ;
       break;
     case ENV_ATTACK:
-      if (_filterEnvPosition >= (float)WAVE_SIZE) {
+      if (_filterEnvPosition >= (float)TABLE_SIZE) {
         _eFilterEnvState = ENV_DECAY;
         _filterEnvPosition = 0.0f;
-        ret_val = (-exp_tbl[ WAVE_SIZE - 1 ] + 1.0f) * 0.5f ;
+        ret_val = (-exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f ;
       } else {
         ret_val = (-lookupTable(exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
       }
       _filterEnvPosition += _filterEnvAttackStep;
       break;
     case ENV_DECAY:
-      if (_filterEnvPosition >= (float)WAVE_SIZE) {
+      if (_filterEnvPosition >= (float)TABLE_SIZE) {
         _eFilterEnvState = ENV_IDLE; // Attack-Decay-0 envelope (?)
         _filterEnvPosition = 0.0f;
         ret_val = 0.0f;
@@ -316,7 +319,7 @@ inline float SynthVoice::GetFilterEnv() {
   ret_val += _offset;
   return ret_val ;
 }
-
+/*
 // calcEnvModScalerAndOffset() taken from open303 code
 inline void SynthVoice::calcEnvModScalerAndOffset() {
   // define some constants that arise from the measurements:
@@ -338,6 +341,7 @@ inline void SynthVoice::calcEnvModScalerAndOffset() {
   _envScaler  = (1 - c) * sLo + c * sHi;
   _envOffset  =  oF * c + oC;
 }
+*/
 
 // The following code initially written by Anton Savov,
 // is taken from http://antonsavov.net/cms/projects/303andmidi.html
