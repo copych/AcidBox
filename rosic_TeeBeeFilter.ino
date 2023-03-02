@@ -117,7 +117,8 @@ inline void TeeBeeFilter::calculateCoefficientsExact()
   // calculate intermediate variables:
   float wc = twoPiOverSampleRate * cutoff;
   float s, c;
-  sinCos(wc, &s, &c);             // c = cos(wc); s = sin(wc);
+  //sinCos(wc, &s, &c);             // c = cos(wc); s = sin(wc);
+  fast_sincos(wc, &s, &c);             // c = cos(wc); s = sin(wc);
   float t  = tan(0.25f * (wc - PI));
   float r  = resonanceSkewed;
 

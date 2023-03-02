@@ -9,11 +9,11 @@
 class Sampler {
   public:
     Sampler(){}
-    Sampler(uint8_t countPrg, uint8_t progNow) { countPrograms = countPrg; program_tmp = progNow; progNumber = progNow; };
-    inline void Init();
+    Sampler(uint8_t progNow) { program_tmp = progNow; progNumber = progNow; };
+    void Init();
     void ScanContents(fs::FS &fs, const char *dirname, uint8_t levels);
     inline void SelectNote( uint8_t note ){
-      if(sampleInfoCount>0) selectedNote = note % sampleInfoCount; else  selectedNote = note;
+      if(sampleInfoCount>0) selectedNote = note % repeat; else  selectedNote = note;
 #ifdef DEBUG_SAMPLER
 DEBF("Select note: %d\r\n", note);
 #endif
@@ -24,13 +24,13 @@ DEBF("Select note: %d\r\n", note);
     inline void SetNoteVolume_Midi( uint8_t data1);
     inline void SetSoundPitch_Midi( uint8_t data1);
     inline void SetSoundPitch(float value);   
-    inline void SetDelaySend(uint8_t lvl)  {_sendDelay = (float)lvl;};
+    inline void SetDelaySend(uint8_t lvl)   {_sendDelay = (float)lvl;};
     inline void SetReverbSend(uint8_t lvl)  {_sendReverb = (float)lvl;};
-    uint16_t GetSoundSamplerate(){      return samplePlayer[ selectedNote ].sampleRate;    };
-    uint8_t GetSoundDecay_Midi(){      return samplePlayer[ selectedNote ].decay_midi;    };
-    uint16_t GetSoundPan_Midi(){      return samplePlayer[ selectedNote ].pan_midi;    };
-    uint8_t GetSoundPitch_Midi(){      return samplePlayer[ selectedNote ].pitch_midi;    };
-    uint8_t GetSoundVolume_Midi(){      return samplePlayer[ selectedNote ].volume_midi;    };
+    uint16_t GetSoundSamplerate() { return samplePlayer[ selectedNote ].sampleRate; };
+    uint8_t GetSoundDecay_Midi()  { return samplePlayer[ selectedNote ].decay_midi; };
+    uint16_t GetSoundPan_Midi()   { return samplePlayer[ selectedNote ].pan_midi; };
+    uint8_t GetSoundPitch_Midi()  { return samplePlayer[ selectedNote ].pitch_midi; };
+    uint8_t GetSoundVolume_Midi() { return samplePlayer[ selectedNote ].volume_midi; };
     // Offset   for the Sample-Playback to cut the sample from the left
     inline void NoteOn( uint8_t note, uint8_t vol );
     inline void NoteOff( uint8_t note );
@@ -40,6 +40,7 @@ DEBF("Select note: %d\r\n", note);
     void SetVolume( float value ) { _volume = value; };
     inline void Process( float *left, float *right );
     inline void ParseCC(uint8_t cc_number, uint8_t cc_value);
+    inline void PitchBend(int number);
     float _sendReverb = 0.0f;
     float _sendDelay = 0.0f;
     
@@ -57,7 +58,7 @@ DEBF("Select note: %d\r\n", note);
     uint8_t  program_midi = 0; 
     uint8_t  program_tmp = DEFAULT_DRUMKIT; 
     uint8_t  progNumber = DEFAULT_DRUMKIT; 
-    uint8_t  countPrograms = 7;
+    uint8_t  repeat = 12; // repeat instruments every ....
     float _volume = 1.0f;
     float sampler_playback = 1.0f;
     volatile uint8_t selectedNote = 0;

@@ -58,12 +58,13 @@ public:
   inline void SetTempo(float tempo)     {_tempo = tempo;};
   inline void SetIndex(uint8_t ind)       {_index = ind;};
   inline void ParseCC(uint8_t cc_number, uint8_t cc_value);
+  inline void PitchBend(int number) ;
   inline void allNotesOff()               {mva1.n=0; _ampEnvPosition = 0.0; _filterEnvPosition = 0.0; _eAmpEnvState = ENV_IDLE; _eFilterEnvState = ENV_IDLE;};
   inline float GetAmpEnv();                // call once per sample
   inline float GetFilterEnv();             // call once per sample
   inline float GetPan()                 {return _pan;}
   inline float GetVolume()              {return _volume;}
-  inline void Generate() ;
+  inline float getSample() ;
   float _sendDelay = 0.0f;
   float _sendReverb = 0.0f;
   int midiNotes[2] = {-1, -1};

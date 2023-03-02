@@ -1,20 +1,44 @@
+inline void MidiInit() {
+  
+#ifdef MIDI_VIA_SERIAL
+  Serial.begin(115200, SERIAL_8N1);
+#endif
+#ifdef MIDI_VIA_SERIAL2
+  pinMode( MIDIRX_PIN , INPUT_PULLDOWN);
+  pinMode( MIDITX_PIN , OUTPUT);
+  Serial2.begin( 31250, SERIAL_8N1, MIDIRX_PIN, MIDITX_PIN ); // midi port
+#endif
+
+#ifdef MIDI_VIA_SERIAL
+  MIDI.setHandleNoteOn(handleNoteOn);
+  MIDI.setHandleNoteOff(handleNoteOff);
+  MIDI.setHandleControlChange(handleCC);
+  MIDI.setHandlePitchBend(handlePitchBend);
+  MIDI.setHandleProgramChange(handleProgramChange);
+  MIDI.begin(MIDI_CHANNEL_OMNI);
+#endif
+#ifdef MIDI_VIA_SERIAL2
+  MIDI2.setHandleNoteOn(handleNoteOn);
+  MIDI2.setHandleNoteOff(handleNoteOff);
+  MIDI2.setHandleControlChange(handleCC);
+  MIDI2.setHandlePitchBend(handlePitchBend);
+  MIDI2.setHandleProgramChange(handleProgramChange);
+  MIDI2.begin(MIDI_CHANNEL_OMNI);
+#endif
+
+}
+
 
 inline void handleNoteOn(uint8_t inChannel, uint8_t inNote, uint8_t inVelocity) {
-
-//  if (inChannel == SYNTH1_MIDI_CHAN ) {Synth1.StartNote(inNote, inVelocity);}
-//  if (inChannel == SYNTH2_MIDI_CHAN ) {Synth2.StartNote(inNote, inVelocity);}
-  if (inChannel == SYNTH1_MIDI_CHAN ) {Synth1.on_midi_noteON(inNote, inVelocity);}
-  if (inChannel == SYNTH2_MIDI_CHAN ) {Synth2.on_midi_noteON(inNote, inVelocity);}
-  if (inChannel == DRUM_MIDI_CHAN ) {Drums.NoteOn(inNote, inVelocity);}
+  if (inChannel == DRUM_MIDI_CHAN )         {Drums.NoteOn(inNote, inVelocity);}
+  else if (inChannel == SYNTH1_MIDI_CHAN )  {Synth1.on_midi_noteON(inNote, inVelocity);}
+  else if (inChannel == SYNTH2_MIDI_CHAN )  {Synth2.on_midi_noteON(inNote, inVelocity);}
 }
 
 inline void handleNoteOff(uint8_t inChannel, uint8_t inNote, uint8_t inVelocity) {
-
-//  if (inChannel == SYNTH1_MIDI_CHAN ) {Synth1.EndNote(inNote, inVelocity);}
-//  if (inChannel == SYNTH2_MIDI_CHAN ) {Synth2.EndNote(inNote, inVelocity);}
-  if (inChannel == SYNTH1_MIDI_CHAN ) {Synth1.on_midi_noteOFF(inNote, inVelocity);}
-  if (inChannel == SYNTH2_MIDI_CHAN ) {Synth2.on_midi_noteOFF(inNote, inVelocity);}
-  if (inChannel == DRUM_MIDI_CHAN ) {Drums.NoteOff(inNote);}
+  if (inChannel == DRUM_MIDI_CHAN )         {Drums.NoteOff(inNote);}
+  else if (inChannel == SYNTH1_MIDI_CHAN )  {Synth1.on_midi_noteOFF(inNote, inVelocity);}
+  else if (inChannel == SYNTH2_MIDI_CHAN )  {Synth2.on_midi_noteOFF(inNote, inVelocity);}
 
 }
 
@@ -51,14 +75,18 @@ inline void handleCC(uint8_t inChannel, uint8_t cc_number, uint8_t cc_value) {
       break;
 #endif
     default:
-      if (inChannel == SYNTH1_MIDI_CHAN ) {Synth1.ParseCC(cc_number, cc_value);}
-      if (inChannel == SYNTH2_MIDI_CHAN ) {Synth2.ParseCC(cc_number, cc_value);}
-      if (inChannel == DRUM_MIDI_CHAN ) {Drums.ParseCC(cc_number, cc_value);}
+      if (inChannel == DRUM_MIDI_CHAN )         {Drums.ParseCC(cc_number, cc_value);}
+      else if (inChannel == SYNTH1_MIDI_CHAN )  {Synth1.ParseCC(cc_number, cc_value);}
+      else if (inChannel == SYNTH2_MIDI_CHAN )  {Synth2.ParseCC(cc_number, cc_value);}
   }
 }
 
-void handleProgramChange(uint8_t channel, uint8_t number) {
-  if (channel == 10) {
-    Drums.SetProgram(number);
-  }
+void handleProgramChange(uint8_t inChannel, uint8_t number) {
+  if (inChannel == DRUM_MIDI_CHAN) {     Drums.SetProgram(number);  }
+}
+
+inline void handlePitchBend(uint8_t inChannel, int number) {
+  if (inChannel == DRUM_MIDI_CHAN )         {Drums.PitchBend(number);}
+  else if (inChannel == SYNTH1_MIDI_CHAN )  {Synth1.PitchBend(number);}
+  else if (inChannel == SYNTH2_MIDI_CHAN )  {Synth2.PitchBend(number);}
 }

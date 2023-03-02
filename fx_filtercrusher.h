@@ -9,12 +9,12 @@
 
    Author: Marcel Licence
 */
-
+/*
 #define WAVEFORM_BIT  10UL
 #define WAVEFORM_CNT  (1<<WAVEFORM_BIT)
-#define WAVEFORM_Q4   (1<<(WAVEFORM_BIT-2))
 #define WAVEFORM_MSK  ((1<<WAVEFORM_BIT)-1)
 #define WAVEFORM_I(i) ((i) >> (32 - WAVEFORM_BIT)) & WAVEFORM_MSK
+*/
 
 class FxFilterCrusher {
   public:
@@ -24,11 +24,11 @@ class FxFilterCrusher {
       Init();
     }
     void Init( void ) {
-      for ( int i = 0; i < WAVEFORM_CNT; i++ ) {
-        float val = (float)sin(i * 2.0 * PI / WAVEFORM_CNT);
+  /*    for ( int i = 0; i < WAVEFORM_CNT; i++ ) {
+        float val = (float)sin(i * 2.0f * PI / WAVEFORM_CNT);
         sine[i] = val;
       }
-
+*/
       mainFilterL_LP.filterCoeff = &filterGlobalC_LP;
       mainFilterR_LP.filterCoeff = &filterGlobalC_LP;
       mainFilterL_HP.filterCoeff = &filterGlobalC_HP;
@@ -57,13 +57,13 @@ class FxFilterCrusher {
 
     struct filterProcT {
       struct filterCoeffT *filterCoeff;
-      float w[3];
+      float w[2];
     };
 
     struct filterCoeffT filterGlobalC_LP, filterGlobalC_HP;
     struct filterProcT mainFilterL_LP, mainFilterR_LP, mainFilterL_HP, mainFilterR_HP;
 
-    float sine[WAVEFORM_CNT];
+ //   float sine[WAVEFORM_CNT];
 
     float highpassC = 0.0f;
     float lowpassC = 1.0f;

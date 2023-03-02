@@ -5,7 +5,7 @@ void FxFilterCrusher::SetCutoff( float value ) {
   highpassC = value >= 0.5 ? (value - 0.5f) * 2.0f : 0.0f;
   lowpassC = value <= 0.5 ? (value) * 2.0f : 1.0f;
 #ifdef DEBUG_FX
-  DEBF("Filter TP: %0.2f, HP: %02f\n", lowpassC, highpassC);
+  DEBF("Filter TP: %0.6f, HP: %06f\n", lowpassC, highpassC);
 #endif
 };
 
@@ -76,10 +76,13 @@ inline void FxFilterCrusher::Filter_CalculateTP(float c, float one_div_2_reso, s
   }
 
   // omega = fast_tanh(4.0f * c - 2.0f) * 0.5f + 0.5f; // it's smooth and sounds badly
+  
   // use lookup here to get quicker results
+  /*
   cosOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega + (float)((1ULL << 30) - 1)))];
   sinOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega))];
-
+*/
+  fast_sincos(omega , &sinOmega, &cosOmega);
   alpha = sinOmega * one_div_2_reso;
   b[0] = (1 - cosOmega) * 0.5f;
   b[1] = 1 - cosOmega;
@@ -102,9 +105,7 @@ inline void FxFilterCrusher::Filter_CalculateTP(float c, float one_div_2_reso, s
 inline void FxFilterCrusher::Filter_CalculateHP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC ) {
   float *aNorm = filterC->aNorm;
   float *bNorm = filterC->bNorm;
-
   float  cosOmega, omega, sinOmega, alpha, a[3], b[3];
-
 
   // change curve of cutoff a bit
   // maybe also log or exp function could be used
@@ -119,13 +120,14 @@ inline void FxFilterCrusher::Filter_CalculateHP(float c, float one_div_2_reso, s
     omega = c;
   }
 
-
   //omega = fast_tanh(4.0f * c - 2.0f) * 0.5f + 0.5f;
   // use lookup here to get quicker results
-
+/*
   cosOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega + (float)((1ULL << 30) - 1)))];
   sinOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega))];
+*/
 
+  fast_sincos(omega , &sinOmega, &cosOmega);
   alpha = sinOmega * one_div_2_reso;
   b[0] = (1 + cosOmega) * 0.5f;
   b[1] = -(1 + cosOmega);

@@ -37,8 +37,12 @@
 struct CustomBaudRateSettings : public MIDI_NAMESPACE::DefaultSerialSettings {
   static const long BaudRate = 115200;
 };
+struct SerialMIDISettings : public midi::DefaultSettings {
+  static const long BaudRate = 115200;
+  static const bool Use1ByteParsing = false;
+};
 MIDI_NAMESPACE::SerialMIDI<HardwareSerial, CustomBaudRateSettings> serialMIDI(Serial);
-MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, CustomBaudRateSettings>> MIDI((MIDI_NAMESPACE::SerialMIDI<HardwareSerial, CustomBaudRateSettings>&)serialMIDI);
+MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, SerialMIDISettings>> MIDI((MIDI_NAMESPACE::SerialMIDI<HardwareSerial, SerialMIDISettings>&)serialMIDI);
 #endif
 
 #ifdef MIDI_VIA_SERIAL2
@@ -47,6 +51,7 @@ struct Serial2MIDISettings : public midi::DefaultSettings {
   static const long BaudRate = 31250;
   static const int8_t RxPin  = MIDIRX_PIN;
   static const int8_t TxPin  = MIDITX_PIN;
+  static const bool Use1ByteParsing = false;
 };
 MIDI_NAMESPACE::SerialMIDI<HardwareSerial> Serial2MIDI2(Serial2);
 MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2MIDISettings>> MIDI2((MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2MIDISettings>&)Serial2MIDI2);
@@ -58,26 +63,30 @@ const i2s_port_t i2s_num = I2S_NUM_0; // i2s port number
 static float midi_pitches[128];
 static float midi_phase_steps[128];
 static float midi_tbl_steps[128];
-static float exp_square_tbl[TABLE_SIZE];
-//static float square_tbl[TABLE_SIZE];
-//static float saw_tbl[TABLE_SIZE];
-static float exp_tbl[TABLE_SIZE];
-static float knob_tbl[TABLE_SIZE]; // exp-like curve
-static float tanh_tbl[TABLE_SIZE];
+static float exp_square_tbl[TABLE_SIZE+1];
+//static float square_tbl[TABLE_SIZE+1];
+//static float saw_tbl[TABLE_SIZE+1];
+static float exp_tbl[TABLE_SIZE+1];
+static float knob_tbl[TABLE_SIZE+1]; // exp-like curve
+static float tanh_tbl[TABLE_SIZE+1];
+static float sin_tbl[TABLE_SIZE+1];
 static uint32_t last_reset = 0;
-static float param[POT_NUM] ;
-//static float (*tables[])[TABLE_SIZE] = {&exp_square_tbl, &square_tbl, &saw_tbl, &exp_tbl};
+static float param[POT_NUM];
+//static float (*tables[])[TABLE_SIZE+1] = {&exp_square_tbl, &square_tbl, &saw_tbl, &exp_tbl};
 
 // Audio buffers of all kinds
-static float synth_buf[2][DMA_BUF_LEN]; // 2 * 303 mono
-static float drums_buf_l[DMA_BUF_LEN];  // 808 stereo L
-static float drums_buf_r[DMA_BUF_LEN];  // 808 stereo R
-static float mix_buf_l[DMA_BUF_LEN];    // mix L channel
-static float mix_buf_r[DMA_BUF_LEN];    // mix R channel
-static union { // a dirty trick, instead of true converting
+volatile uint8_t current_gen_buf = 0; // set of buffers for generation
+volatile uint8_t current_out_buf = 1 - 0; // set of buffers for output
+static float synth1_buf[2][DMA_BUF_LEN];    // synth1 mono
+static float synth2_buf[2][DMA_BUF_LEN];    // synth2 mono
+static float drums_buf_l[2][DMA_BUF_LEN];   // drums L
+static float drums_buf_r[2][DMA_BUF_LEN];   // drums R
+static float mix_buf_l[2][DMA_BUF_LEN];     // mix L channel
+static float mix_buf_r[2][DMA_BUF_LEN];     // mix R channel
+static union {                              // a dirty trick, instead of true converting
   int16_t _signed[DMA_BUF_LEN * 2];
   uint16_t _unsigned[DMA_BUF_LEN * 2];
-} out_buf; // i2s L+R output buffer
+} out_buf[2];                               // i2s L+R output buffer
 
 volatile boolean processing = false;
 #ifndef NO_PSRAM
@@ -85,7 +94,7 @@ volatile float rvb_k1, rvb_k2, rvb_k3;
 #endif
 volatile float dly_k1, dly_k2, dly_k3;
 
-size_t bytes_written; // i2s
+size_t bytes_written;                       // i2s
 volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT, art, arT; // debug timing: if we use less vars, compiler optimizes them
 volatile static uint32_t prescaler;
 
@@ -94,11 +103,11 @@ TaskHandle_t SynthTask1;
 TaskHandle_t SynthTask2;
 
 // 303-like synths
-SynthVoice Synth1(0); // use synth_buf[0]
-SynthVoice Synth2(1); // use synth_buf[1]
+SynthVoice Synth1(0); // instance 0 to recognize from the inside
+SynthVoice Synth2(1); // instance 1 to recognize from the inside
 
 // 808-like drums
-Sampler Drums(DRUMKITCNT , DEFAULT_DRUMKIT); // first arg = total number of sample sets, second = starting drumset [0 .. total-1]
+Sampler Drums( DEFAULT_DRUMKIT ); // argument: starting drumset [0 .. total-1]
 
 // Global effects
 FxDelay Delay;
@@ -137,16 +146,9 @@ void IRAM_ATTR onTimer2() {
 
 void setup(void) {
 
-  btStop();
+  btStop(); // we don't want bluetooth to consume our precious cpu time 
 
-#ifdef MIDI_VIA_SERIAL
-  Serial.begin(115200, SERIAL_8N1);
-#endif
-#ifdef MIDI_VIA_SERIAL2
-  pinMode( MIDIRX_PIN , INPUT_PULLDOWN);
-  pinMode( MIDITX_PIN , OUTPUT);
-  Serial2.begin( 31250, SERIAL_8N1, MIDIRX_PIN, MIDITX_PIN ); // midi port
-#endif
+  MidiInit(); // init midi input and handling of midi events
 
 #ifdef DEBUG_ON
 #ifndef MIDI_VIA_SERIAL
@@ -163,22 +165,6 @@ void setup(void) {
 
   for (int i = 0; i < POT_NUM; i++) pinMode( POT_PINS[i] , INPUT_PULLDOWN);
 
-
-#ifdef MIDI_VIA_SERIAL
-  MIDI.setHandleNoteOn(handleNoteOn);
-  MIDI.setHandleNoteOff(handleNoteOff);
-  MIDI.setHandleControlChange(handleCC);
-  MIDI.setHandleProgramChange(handleProgramChange);
-  MIDI.begin(MIDI_CHANNEL_OMNI);
-#endif
-#ifdef MIDI_VIA_SERIAL2
-  MIDI2.setHandleNoteOn(handleNoteOn);
-  MIDI2.setHandleNoteOff(handleNoteOff);
-  MIDI2.setHandleControlChange(handleCC);
-  MIDI2.setHandleProgramChange(handleProgramChange);
-  MIDI2.begin(MIDI_CHANNEL_OMNI);
-#endif
-
   Synth1.Init();
   Synth2.Init();
   Drums.Init();
@@ -188,23 +174,23 @@ void setup(void) {
   Delay.Init();
   Comp.Init(SAMPLE_RATE);
 #ifdef JUKEBOX
-  init_midi();
+  init_midi(); // AcidBanger function
 #endif
 
   // silence while we haven't loaded anything reasonable
   for (int i = 0; i < DMA_BUF_LEN; i++) {
-    drums_buf_l[i] = 0.0f ;
-    drums_buf_r[i] = 0.0f ;
-    synth_buf[0][i] = 0.0f ;
-    synth_buf[1][i] = 0.0f ;
-    out_buf._signed[i * 2] = 0 ;
-    out_buf._signed[i * 2 + 1] = 0 ;
-    mix_buf_l[i] = 0.0f;
-    mix_buf_r[i] = 0.0f;
+    drums_buf_l[current_gen_buf][i] = 0.0f ;
+    drums_buf_r[current_gen_buf][i] = 0.0f ;
+    synth1_buf[current_gen_buf][i] = 0.0f ;
+    synth2_buf[current_gen_buf][i] = 0.0f ;
+    out_buf[current_out_buf]._signed[i * 2] = 0 ;
+    out_buf[current_out_buf]._signed[i * 2 + 1] = 0 ;
+    mix_buf_l[current_out_buf][i] = 0.0f;
+    mix_buf_r[current_out_buf][i] = 0.0f;
   }
 
   i2sInit();
-  i2s_write(i2s_num, out_buf._signed, sizeof(out_buf._signed), &bytes_written, portMAX_DELAY);
+  i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
 
   //xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask1, 0 );
   //xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask2, 1 );
@@ -213,7 +199,7 @@ void setup(void) {
 
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
-  xTaskNotifyGive(SynthTask2);
+//  xTaskNotifyGive(SynthTask2);
   processing = true;
 
   // timer interrupt
@@ -241,7 +227,7 @@ void loop() { // default loopTask running on the Core1
   
   // processButtons();
 
-  loop_250Hz();
+  regular_checks();
     
   taskYIELD(); // this can wait
 }
@@ -253,21 +239,29 @@ void loop() { // default loopTask running on the Core1
 // Core0 task
 static void audio_task1(void *userData) {
   while (true) {
-    // we can run it together with synth(), but not with mixer()
-    drt = micros();
-    drums_generate();
-    drT = micros() - drt;
-    taskYIELD();
-    s2t = micros();
-    Synth2.Generate();
-    s2T = micros() - s2t;
-    taskYIELD();
+    taskYIELD(); 
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
-      fxt = micros();
-      mixer(); // actually we could send Notify before mixer() is done, but then we'd need tic-tac buffers for generation. Todo maybe
-      fxT = micros() - fxt;
-      xTaskNotifyGive(SynthTask2);
+      
+      taskYIELD(); 
+      
+      current_gen_buf = current_out_buf;      // swap buffers
+      current_out_buf = 1 - current_gen_buf;
+      
+      xTaskNotifyGive(SynthTask2);            // if we are here, then we've already received a notification from task2
+      
+      s1t = micros();
+      synth1_generate();
+      s1T = micros() - s1t;
+      
+      taskYIELD(); 
+        
+      s2t = micros();
+      synth2_generate();
+      s2T = micros() - s2t;      
+      
     }
+    
+    taskYIELD();
 
     i2s_output();
 
@@ -279,29 +273,38 @@ static void audio_task1(void *userData) {
 static void audio_task2(void *userData) {
   while (true) {
     taskYIELD();
-    // this part of the code never intersects with mixer buffers
-    // this part of the code is operating with shared resources, so we should make it safe
+    
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
-      s1t = micros();
-      Synth1.Generate();
-      s1T = micros() - s1t;
     taskYIELD();
-      xTaskNotifyGive(SynthTask1); // if you have glitches, you may want to place this string in the end of audio_task2
+      
+      fxt = micros();
+      mixer(); 
+      fxT = micros() - fxt;
+ 
+    taskYIELD();
+    
+      drt = micros();
+      drums_generate();
+      drT = micros() - drt;
+      
+      xTaskNotifyGive(SynthTask1); 
     }
     
     taskYIELD();
+    
+    art = micros();
+    
     if (timer2_fired) {
       timer2_fired = false;
-      art = micros();
       //readPots();
-      arT = micros() - art;
 #ifdef DEBUG_TIMING
-    // DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
-    DEBF ("Core0=%dus Core1=%dus DMA_BUF=%dus AnalogRead=%dus\r\n" , s2T + drT + fxT, s1T, DMA_BUF_TIME, arT);
+      // DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
+      DEBF ("Core0=%dus Core1=%dus DMA_BUF=%dus AllTheRestCore1=%dus\r\n" , s1T + s2T , fxT + drT + arT, DMA_BUF_TIME, arT);
 #endif
     }    
     
     taskYIELD();
+    arT = micros() - art;
     // hopefully, other Core1 tasks (for example, loop()) run here
   }
 }
@@ -358,7 +361,7 @@ void jukebox_tick() {
 #endif
 
 
-void loop_250Hz() {
+void regular_checks() {
   timer1_fired = false;
   
 #ifdef MIDI_VIA_SERIAL
@@ -372,7 +375,6 @@ void loop_250Hz() {
 #ifdef JUKEBOX
   jukebox_tick();
 #endif
-
 
 
 }

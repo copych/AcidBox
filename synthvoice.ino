@@ -50,11 +50,8 @@ void SynthVoice::Init() {
 }
 
 
-
-inline void SynthVoice::Generate() {
+inline float SynthVoice::getSample() {
   float samp = 0.0f, filtEnv = 0.0f, ampEnv = 0.0f, final_cut = 0.0f;
-  for (uint16_t i = 0; i < DMA_BUF_LEN; ++i) {
-    prescaler += (1 - _index);
     filtEnv = GetFilterEnv();
     ampEnv = GetAmpEnv();
     if (_eAmpEnvState != ENV_IDLE) {
@@ -117,11 +114,10 @@ inline void SynthVoice::Generate() {
 
     //synth_buf[_index][i] = fast_tanh(samp); // mono
     //synth_buf[_index][i] = ampDeclicker.Process(samp);
-    synth_buf[_index][i] = samp;
-
-  }
-  //DEBF("synt%d = %0.5f\r\n", _index , samp);
+    return  samp;
+  
 }
+
 
 inline void SynthVoice::SetCutoff(float lvl)  {
   _cutoff = lvl;
@@ -129,7 +125,12 @@ inline void SynthVoice::SetCutoff(float lvl)  {
 #ifdef DEBUG_SYNTH
   DEBF("Synth %d cutoff=%0.3f freq=%0.3f\r\n" , _index, _cutoff, _filter_freq);
 #endif
-};
+}
+
+inline void SynthVoice::PitchBend(int number) {
+  //
+  DEBUG(number);
+}
 
 inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
   float tmp = 0.0f;
@@ -149,6 +150,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_WAVEFORM:
       /*
+       // actually we can gradually switch between several waveforms, basing on the CC value, blending neighbour two waveforms
         _waveBase = (uint8_t)(((float)cc_value * 2.99999f * MIDI_NORM)) ; // 0, 1, 2 range
         DEBF("base %d\r\n", _waveBase );
         _waveMix = ((float)cc_value - (float)(_waveBase*42.33333f)) * MIDI_NORM * 3.0f;
@@ -319,29 +321,7 @@ inline float SynthVoice::GetFilterEnv() {
   ret_val += _offset;
   return ret_val ;
 }
-/*
-// calcEnvModScalerAndOffset() taken from open303 code
-inline void SynthVoice::calcEnvModScalerAndOffset() {
-  // define some constants that arise from the measurements:
-  const float c0   = 313.0f;  // lowest nominal cutoff
-  const float c1   = 2394.0f;  // highest nominal cutoff
-  const float oF   = 0.048292930943553f;       // factor in line equation for offset
-  const float oC   = 0.294391201442418f;       // constant in line equation for offset
-  const float sLoF = 3.773996325111173f;       // factor in line eq. for scaler at low cutoff
-  const float sLoC = 0.736965594166206f;       // constant in line eq. for scaler at low cutoff
-  const float sHiF = 4.194548788411135f;       // factor in line eq. for scaler at high cutoff
-  const float sHiC = 0.864344900642434f;       // constant in line eq. for scaler at high cutoff
 
-  // do the calculation of the scaler and offset:
-  float e   = _envMod;
-  //  float c   = expToLin(_filter_freq, c0,   c1,   0.0, 1.0);
-  float c   = _cutoff;
-  float sLo = sLoF * e + sLoC;
-  float sHi = sHiF * e + sHiC;
-  _envScaler  = (1 - c) * sLo + c * sHi;
-  _envOffset  =  oF * c + oC;
-}
-*/
 
 // The following code initially written by Anton Savov,
 // is taken from http://antonsavov.net/cms/projects/303andmidi.html
