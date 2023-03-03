@@ -44,6 +44,8 @@ void i2sInit() {
 
   i2s_set_pin(i2s_num, &i2s_pin_config);
   i2s_zero_dma_buffer(i2s_num);
+
+  DEBF("I2S is started: BCK %d, WCK %d, DAT %d\r\n", I2S_BCLK_PIN, I2S_WCLK_PIN, I2S_DOUT_PIN);
 }
 #endif
 

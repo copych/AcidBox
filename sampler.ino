@@ -75,7 +75,7 @@ void Sampler::Init() {
   Effects.Init();
   Effects.SetBitCrusher( 0.0f );
 
-  uint32_t toRead = 512, buffPointer = 0;
+  size_t toRead = 512, buffPointer = 0;
 
   if ( !LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)) {
     DEBUG("LittleFS Mount Failed");
@@ -93,10 +93,12 @@ void Sampler::Init() {
   
 #ifndef NO_PSRAM
   // allocate buffer in PSRAM to be able to load all samples 
+  heap_caps_print_heap_info(MALLOC_CAP_8BIT);
   if (psramFound()) {
     if ( RamCache == NULL ) {
       psramInit();
       RamCache = (uint8_t*)ps_malloc(PSRAM_SAMPLER_CACHE);
+     // RamCache = (uint8_t*)malloc(PSRAM_SAMPLER_CACHE);
     }
     if (RamCache == NULL) {
       DEBUG ("FAILED TO ALLOCATE PSRAM CACHE BUFFER!");
@@ -117,7 +119,7 @@ void Sampler::Init() {
   if (RamCache == NULL) {
     DEBUG ("FAILED TO ALLOCATE RAM CACHE BUFFER!");
   } else {
-    DEBUG ("HEAP BUFFER of %d bytes ALLOCATED! MINIMAL CONFIG ENGAGED!", RAM_SAMPLER_CACHE);
+    DEBF ("HEAP BUFFER of %d bytes ALLOCATED! MINIMAL CONFIG ENGAGED!\r\n", RAM_SAMPLER_CACHE);
   }
 
 #endif
@@ -129,41 +131,46 @@ void Sampler::Init() {
     DEBF( "s[%d]: %s\n", i, samplePlayer[i].filename );
 #endif
 
-    File f = LittleFS.open( ( samplePlayer[i].filename) );
+    File f = LittleFS.open( (String)(samplePlayer[i].filename) );
 
     if ( f ) {
+      size_t len = f.size();
       union wavHeader wav;
-      int j = 0;
-      while ( f.available() && ( j < sizeof(wav.wavHdr)) ) {
-        wav.wavHdr[j] = f.read();
-        j++;
+      if ( len ) {
+        toRead = sizeof(wav.wavHdr);
+        f.read(&(wav.wavHdr[0]),toRead);
+        len -= toRead;
       }
 
-      j = 0;
       // load sample data to the RAM/PSRAM buffer, we only do this step on startup
       samplePlayer[i].sampleStart = buffPointer;
-      while ( f.available() ) {
-        toRead = 512;
+      while( len ){
+        if(len > (1UL<<15)){
+          toRead = (1UL<<15);
+        } else {
+          toRead = len;
+        }
         f.read(&(RamCache[buffPointer]), toRead);
         buffPointer += toRead;
+        len -= toRead;
       }
-
-      samplePlayer[i].file = f; /* store file pointer for future use */
-      samplePlayer[i].sampleRate = wav.sampleRate;
+      
+      samplePlayer[i].file =            f; /* store file pointer for future use */
+      samplePlayer[i].sampleRate =      wav.sampleRate;
 #ifdef DEBUG_SAMPLER
-      DEBF("fileSize: %d\n",      wav.fileSize);
-      DEBF("lengthOfData: %d\n",  wav.lengthOfData);
-      DEBF("numberOfChannels: %d\n", wav.numberOfChannels);
-      DEBF("sampleRate: %d\n",    wav.sampleRate);
-      DEBF("byteRate: %d\n",      wav.byteRate);
-      DEBF("bytesPerSample: %d\n", wav.bytesPerSample);
-      DEBF("bitsPerSample: %d\n", wav.bitsPerSample);
-      DEBF("dataSize: %d\n",      wav.dataSize); 
-      DEBF("dataStartInBuffer: %d\n",    samplePlayer[i].sampleStart);
-      DEBF("dataInBlock: %d\n",   (buffPointer - samplePlayer[i].sampleStart));
+      DEBF("fileSize: %d\n",            wav.fileSize);
+      DEBF("lengthOfData: %d\n",        wav.lengthOfData);
+      DEBF("numberOfChannels: %d\n",    wav.numberOfChannels);
+      DEBF("sampleRate: %d\n",          wav.sampleRate);
+//      DEBF("byteRate: %d\n",            wav.byteRate);
+//      DEBF("bytesPerSample: %d\n",      wav.bytesPerSample);
+      DEBF("bitsPerSample: %d\n",       wav.bitsPerSample);
+      DEBF("dataSize: %d\n",            wav.dataSize); 
+//      DEBF("dataStartInBuffer: %d\n",   samplePlayer[i].sampleStart);
+//      DEBF("dataInBlock: %d\n",         (buffPointer - samplePlayer[i].sampleStart));
 #endif
-      samplePlayer[i].sampleSize =         wav.dataSize; /* without mark section and size info */
-      samplePlayer[i].sampleSeek = 0xFFFFFFFF;
+      samplePlayer[i].sampleSize =      wav.dataSize; /* without mark section and size info */
+      samplePlayer[i].sampleSeek =      0xFFFFFFFF;
       f.close();
     } else {
       DEBF("error opening file!\n");
@@ -199,7 +206,7 @@ void Sampler::Init() {
 
 inline void Sampler::SetNoteVolume_Midi( uint8_t data1) {
   volume_midi[ selectedNote + 1 ] = data1;
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
   DEBF("Sampler - Note[%d].midi_vol: %d\n",  selectedNote, data1 );
 #endif
 }
@@ -214,7 +221,7 @@ inline void Sampler::SetNotePan_Midi( uint8_t data1) {
     #endif
   */
   pan_midi[ selectedNote + 1 ] = data1;
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
   DEBF("Sampler - Note[%d].midi_pan: %d\n",  selectedNote, data1 );
 #endif
 }
@@ -231,7 +238,7 @@ inline void Sampler::SetNoteDecay_Midi( uint8_t data1) {
     #endif
   */
 
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
   DEBF("Sampler - Note[%d].decay_midi: %d\n",  selectedNote, data1);
 #endif
   decay_midi[ selectedNote + 1 ] = data1;
@@ -246,7 +253,7 @@ inline void Sampler::SetNoteOffset_Midi( uint8_t data1) {
     #endif
   */
 
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
   DEBF("Sampler - Note[%d].offset_midi: %d\n",  selectedNote, data1);
 #endif
   offset_midi[ selectedNote + 1 ] = data1;
@@ -257,7 +264,7 @@ inline void Sampler::SetSoundPitch_Midi( uint8_t data1) {
     samplePlayer[ selectedNote ].pitch_midi = data1;
     SetSoundPitch( MIDI_NORM * data1 );
   */
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
   DEBF("Sampler - Note[%d].pitch_midi: %d\n",  selectedNote, data1);
 #endif
   pitch_midi[ selectedNote + 1 ] = data1;
@@ -265,7 +272,7 @@ inline void Sampler::SetSoundPitch_Midi( uint8_t data1) {
 
 inline void Sampler::SetSoundPitch(float value) {
   samplePlayer[ selectedNote ].pitch = pow( 2.0f, 4.0f * ( value - 0.5f ) );
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
   DEBF("Sampler - Note[%d] pitch: %0.3f\n",  selectedNote, samplePlayer[ selectedNote ].pitch );
 #endif
 }
@@ -284,7 +291,7 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
     return;
   }
 
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
   DEBF("note %d on volume %d\n", note, vol );
  // DEBF("Filename: %s \n", samplePlayer[ j ].filename );
 #endif
@@ -302,7 +309,7 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
   */
 
   if ( volume_midi[ param_i ] != samplePlayer[ j ].volume_midi ) {
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
     DEB("Volume");
     DEBUG( j );
     DEB(" samplePlayer");
@@ -312,7 +319,7 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
   }
 
   if ( decay_midi[ param_i ] != samplePlayer[ j ].decay_midi ) {
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
     DEB("Decay");
     DEBUG( j );
     DEB(" samplePlayer");
@@ -324,7 +331,7 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
   }
 
   if ( pitch_midi[ param_i ] != samplePlayer[ j ].pitch_midi ) {
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
     DEB("Pitch");
     DEBUG( j );
     DEB(" samplePlayer");
@@ -336,7 +343,7 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
   }
 
   if ( pan_midi[ param_i ] != samplePlayer[ j ].pan_midi ) {
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
     DEB("Pan");
     DEBUG( j );
     DEB(" samplePlayer");
@@ -348,7 +355,7 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
   }
 
   if ( offset_midi[ param_i ] != samplePlayer[ j ].offset_midi ) {
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
     DEB("Attack Offset");
     DEBUG( j );
     DEB(" samplePlayer");
@@ -366,7 +373,7 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
     } else if ( samplePlayer[ j ].pitchdecay_midi > 65 ) {
       samplePlayer[ j ].pitchdecay = (float) - ( samplePlayer[ j ].pitchdecay_midi - 65) / 30.0f; // good from -0.2 to +1.0
     }
-#ifdef DEBUG_SAMPLER
+#ifdef DEBUG_MIDI
     DEB("PitchDecay");
     DEBUG( j );
     DEB(" samplePlayer ");

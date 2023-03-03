@@ -40,7 +40,11 @@ void SynthVoice::Init() {
   Drive.Init();
 
   Filter.Init((float)SAMPLE_RATE);
+  
+#if FILTER_TYPE == 2
   Filter.SetMode(TeeBeeFilter::LP_18);
+  //Filter.SetMode(TeeBeeFilter::TB_303);
+#endif
   highpass1.setMode(OnePoleFilter::HIGHPASS);
   highpass1.setCutoff(44.486f);
   highpass2.setMode(OnePoleFilter::HIGHPASS);
