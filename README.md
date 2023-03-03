@@ -16,7 +16,7 @@ A modified version of http://tips.ibawizard.net/acid-banger/, initially taken fr
 [demo5.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox5.mp3?raw=true) 7 minutes of random fully automated acid.
 
 # To build the thing
-Ideally, you need an ESP32 with PSRAM (ESP32 WROVER module). Also an external DAC, like PCM5102 is highly preferrable. 
+Ideally, you need an ESP32 or ESP32S3 with at least 4MB PSRAM (for example, ESP32 WROVER module). Also an external DAC, like PCM5102 is highly preferrable. 
 
 <b>ATTENTION! PSRAM handling requires up-to-date Arduino ESP32 core. Of what I tested, versions 2.0.4, 2.0.5, 2.0.6 are working, 2.0.0 is not</b>
 
