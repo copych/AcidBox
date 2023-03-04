@@ -21,9 +21,9 @@ Ideally, you need an ESP32 or ESP32S3 with at least 4MB PSRAM (for example, ESP3
 <b>ATTENTION! PSRAM handling requires up-to-date Arduino ESP32 core. Of what I tested, versions 2.0.4, 2.0.5, 2.0.6 are working, 2.0.0 is not</b>
 
 In ArduinoIDE (I've used v.1.8.20) select: 
-* board: ESP32 Dev Module
+* board: ESP32 Dev Module (or ESP32S3 Dev Module if you use S3)
 * partition scheme: No OTA (1MB APP/ 3MB SPIFFS)
-* PSRAM: enabled
+* PSRAM: enabled (or the type of your PSRAM)
 
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
 
