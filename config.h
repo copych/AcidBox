@@ -1,5 +1,5 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v.1.1.0a"
+#define VERSION         "v.1.1.1b"
 
 
 
@@ -98,19 +98,35 @@ const float MIDI_NORM = 1.0f/127.0f;
 const float DIV_PI = 1.0f/PI;
 const float DIV_TWOPI = 1.0f/TWOPI;
 #define FORMAT_LITTLEFS_IF_FAILED true
-//#define CONFIG_LITTLEFS_CACHE_SIZE 1024
 
-
+/*
+ * TR 808 programs
+  1 - Bass Drum 
+  2 - Snare Drum 
+  3 - Low Tom/Low Conga
+  4 - Mid Tom/Mid Conga 
+  5 - Hi Tom/Hi Conga 
+  6 - Rim Shot/Claves
+  7 - hand ClaP/MAracas
+  8 - Cow Bell
+  9 - CYmbal
+  10 - Open Hihat
+  11 - Closed Hihat
+*/
+#define GROUP_HATS  // if so, instruments 06 and 07 will terminate each other (sampler module)
+#define OH_NUMBER   // open hat instrument number in kit (for groupping)
+#define CH_NUMBER   // closed hat instrument number in kit (for groupping)
 #ifdef NO_PSRAM
   #define RAM_SAMPLER_CACHE  40000    // bytes, compact sample set is 132kB, first 8 samples is ~38kB
-  #define SAMPLECNT 8                 // how many sounds from the folder will be used in total
   #define DEFAULT_DRUMKIT 4           // /data/4/ folder
+  #define SAMPLECNT       8           // how many samples we prepare (here just 8)
 #else
   #define PSRAM_SAMPLER_CACHE 3000000 // bytes, we are going to preload ALL the samples from FLASH to PSRAM
-  #define SAMPLECNT (12*8)            // total samples, divided by kits, 12 samples per kit at max
                                       // we divide samples by octaves to use modifiers to particular instruments, not just note numbers
                                       // i.e. we know that all the "C" notes in all octaves are bass drums, and CC_808_BD_TONE affects all BD's
-  #define DEFAULT_DRUMKIT 0           // 0 has a massive bassdrum  ( folder number in /data/ )
+                                      
+  #define SAMPLECNT       (8 * 12)    // how many samples we prepare (8 octaves by 12 samples)
+  #define DEFAULT_DRUMKIT 6           // in my /data /0 has a massive bassdrum , /6 = 808 samples
 #endif
 
 #ifndef LED_BUILTIN

@@ -74,10 +74,7 @@
 #define send_midi_start() {}
 #define send_midi_stop()  {}
 #define send_midi_tick() {}
-
-// The BPM setting is very coarse, because it's based on `millis` clock and the
-// time between two midi ticks (1/6th of 16th note) has to be an integral number
-// of milliseconds...
+ 
 
 #define NUM_RAMPS 6           // simultaneous knob rotatings
 #ifndef NO_PSRAM
@@ -89,6 +86,8 @@
   #define NUM_DRUM_CCS  5     // how many drum CC params do we have to play
   #define VOL_SYNTH     60
 #endif
+
+uint8_t current_drumkit = (DEFAULT_DRUMKIT*12); // offset for drum note numbers (instruments are groupped by 12)
 
 struct sSynthCCs {
   uint8_t cc_number;
@@ -302,9 +301,6 @@ static const byte button_pins[ButLast] = {
 static void send_midi_noteon(byte chan, byte note, byte vol) {
   // MIDI.sendNoteOn(note, vol, chan);
   handleNoteOn( chan, note, vol) ;
-#ifdef DEBUG_JUKEBOX_
-  DEBUG("note on");
-#endif
 }
 static void send_midi_noteoff(byte chan, byte note) {
   //MIDI.sendNoteOn(note, 0, chan);
@@ -354,6 +350,7 @@ static uint16_t myRandomRaw() {
 }
 
 static inline uint16_t myRandom(uint16_t max) {
+  if (max==0) return 0;
   return myRandomRaw() % max;
 }
 
@@ -425,7 +422,7 @@ static void instr_noteon(byte instr, byte value, byte do_glide, byte do_accent) 
 #endif
   if (ins->is_drum) {
     // For drums: value is volume, accent and glide are ignored
-    instr_noteon_raw(instr, ins->drum_note, value, 0);
+    instr_noteon_raw(instr, current_drumkit + ins->drum_note, value, 0);
   } else {
     // For non-drums: value is note, volume is accent, glide is used
     instr_noteon_raw(instr, value, do_accent ? AccentedMidiVol : NormalMidiVol, do_glide);
@@ -456,6 +453,14 @@ void sequencer_step(byte step) {
   if (Break.after == bar_current && step == 0) {
     instr_noteon(NumInstruments - 1, 127, 0, 0);
     //    instr_noteon_raw(NumInstruments-1, CRASH_NOTE, 127, 0);
+    if (flip(30)) {
+      //change drumkit
+      current_drumkit = myRandom(((Drums.GetSamplesCount()-1)/12)) * 12 ;
+      
+#ifdef DEBUG_JUKEBOX
+      DEBF("Select drumkit: %d" , current_drumkit);
+#endif
+    }
 #ifdef DEBUG_JUKEBOX
     DEBUG("CRASH!!!!!!!!!!!!!!!!!!!!!");
 #endif
@@ -484,9 +489,10 @@ void sequencer_step(byte step) {
 static const int8_t *const offset_choices[] = {
   NOTE_LIST(0, 0, 12, 24, 27),
   NOTE_LIST(0, 0, 0, 12, 10, 19, 26, 27),
-  NOTE_LIST(0, 1, 7, 10, 12, 13),
+  NOTE_LIST(0, 0, 0, 1, 7, 10, 12, 13),
   NOTE_LIST(0),
-  NOTE_LIST(0, 0, 0, 12),
+  NOTE_LIST(0, 0, 0, 0, 0, 0, 1, 13, 25),
+  NOTE_LIST(0, 0, 0, 12, 24),
   NOTE_LIST(0, 0, 12, 12, 18, 24, 24),
   NOTE_LIST(0, 0, 7, 14, 24, 24),
   NOTE_LIST(0, 0, 12, 14, 15, 19),

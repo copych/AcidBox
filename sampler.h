@@ -31,6 +31,7 @@ DEBF("Select note: %d\r\n", note);
     uint16_t GetSoundPan_Midi()   { return samplePlayer[ selectedNote ].pan_midi; };
     uint8_t GetSoundPitch_Midi()  { return samplePlayer[ selectedNote ].pitch_midi; };
     uint8_t GetSoundVolume_Midi() { return samplePlayer[ selectedNote ].volume_midi; };
+    int32_t GetSamplesCount()     { return sampleInfoCount; }
     // Offset   for the Sample-Playback to cut the sample from the left
     inline void NoteOn( uint8_t note, uint8_t vol );
     inline void NoteOff( uint8_t note );
@@ -45,6 +46,8 @@ DEBF("Select note: %d\r\n", note);
     float _sendDelay = 0.0f;
     
   private:
+    void CreateDefaultSamples(fs::FS &fs);
+    void WriteFile(fs::FS &fs, const String fname, size_t fsize, const uint8_t bytearray[] );
     boolean is_muted[17]={ false, false,false,false,false ,false,false,false,false ,false,false,false,false ,false,false,false,false };
                   
     uint8_t volume_midi[17]     = { 127, 127,127,127,127, 127,127,127,127, 127,127,127,127, 127,127,127,127 };
@@ -119,7 +122,7 @@ DEBF("Select note: %d\r\n", note);
     
     // float global_pitch_decay = 0.0f; // good from -0.2 to +1.0
     
-    volatile uint32_t sampleInfoCount = 0; // storing the count if found samples in file system 
+    volatile int32_t sampleInfoCount = -1; // storing the count if found samples in file system 
     float slowRelease; // slow releasing signal will be used when sample playback stopped 
     uint8_t* RamCache = NULL ;
 

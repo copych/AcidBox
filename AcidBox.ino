@@ -6,11 +6,15 @@
   To build the thing
   You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external DAC, like PCM5102. In ArduinoIDE Tools menu select:
 
-* * Board: ESP32 Dev Module
+* * Board: "ESP32 Dev Module" or "ESP32S3 Dev Module"
 * * Partition scheme: No OTA (1MB APP/ 3MB SPIFFS)
-* * PSRAM: enabled
+* * PSRAM: "enabled" or "OPI PSRAM" or what type you have
 
-  Also you will need to upload samples from /data folder to the ESP32 flash. To do so follow the instructions:
+
+  !!!!!!!! ATTENTION !!!!!!!!!
+  You will need to upload samples from /data folder to the ESP32 flash. 
+  To do so follow the instructions:
+  
   https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
   And then use Tools -> ESP32 Sketch Data Upload
 

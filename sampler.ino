@@ -16,12 +16,47 @@
 */
 
 #include "sampler.h"
+#include "samples.h"
 
 /* You only need to format LittleFS the first time you run a
    test or else use the LittleFS plugin to create a partition
    https://github.com/lorol/arduino-esp32LittleFS-plugin */
 
 //#define DEBUG_SAMPLER
+void Sampler::CreateDefaultSamples(fs::FS &fs){
+  const String path = "/0";
+  size_t toWrite = 0;
+  fs.mkdir(path);
+  WriteFile(fs, (String)(path + "/001_BD.wav"), s01_sz, s01);
+  WriteFile(fs, (String)(path + "/002_SD.wav"), s02_sz, s02);
+  WriteFile(fs, (String)(path + "/005_CB.wav"), s05_sz, s05);
+  WriteFile(fs, (String)(path + "/007_CH.wav"), s07_sz, s07);
+  WriteFile(fs, (String)(path + "/008_OH.wav"), s08_sz, s08);
+  WriteFile(fs, (String)(path + "/010_CR.wav"), s10_sz, s10);
+  WriteFile(fs, (String)(path + "/003_.wav"), s00_sz, s00);
+  WriteFile(fs, (String)(path + "/004_.wav"), s00_sz, s00);
+  WriteFile(fs, (String)(path + "/006_.wav"), s00_sz, s00);
+  WriteFile(fs, (String)(path + "/009_.wav"), s00_sz, s00);
+}
+
+void Sampler::WriteFile(fs::FS &fs, const String fname, size_t fsize, const uint8_t bytearray[] ) {
+  size_t len = fsize;
+  size_t toWrite = len;
+  size_t arrPointer = 0;
+  File f = fs.open(fname, FILE_WRITE);
+  while( len ){
+    if(len > (1UL<<15)){
+      toWrite = (1UL<<15);
+    } else {
+      toWrite = len;
+    }
+    f.write(&(bytearray[arrPointer]), toWrite);
+    arrPointer += toWrite;
+    len -= toWrite;
+  }
+  DEBF("[sampler]: %s written %d bytes to flash\r\n", fname, fsize);
+  f.close();
+}
 
 void Sampler::ScanContents(fs::FS &fs, const char *dirname, uint8_t levels) {
   String str;
@@ -75,7 +110,7 @@ void Sampler::Init() {
   Effects.Init();
   Effects.SetBitCrusher( 0.0f );
 
-  size_t toRead = 512, buffPointer = 0;
+  size_t toRead = 512, oldPointer = 0, buffPointer = 0;
 
   if ( !LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)) {
     DEBUG("LittleFS Mount Failed");
@@ -89,7 +124,13 @@ void Sampler::Init() {
 
   sampleInfoCount = 0;
   ScanContents(LittleFS, myDir.c_str() , 5);
+  if (sampleInfoCount<5) {
+    CreateDefaultSamples(LittleFS);
+    ScanContents(LittleFS, myDir.c_str() , 5);
+  }
   repeat = min(sampleInfoCount , repeat); // 12 (an octave) or less
+
+  if (repeat==0) repeat = 1;
   
 #ifndef NO_PSRAM
   // allocate buffer in PSRAM to be able to load all samples 
@@ -144,6 +185,7 @@ void Sampler::Init() {
 
       // load sample data to the RAM/PSRAM buffer, we only do this step on startup
       samplePlayer[i].sampleStart = buffPointer;
+      oldPointer = buffPointer;
       while( len ){
         if(len > (1UL<<15)){
           toRead = (1UL<<15);
@@ -154,8 +196,9 @@ void Sampler::Init() {
         buffPointer += toRead;
         len -= toRead;
       }
+      wav.dataSize = min(wav.dataSize, buffPointer-oldPointer); // some samples have wrong header info
       
-      samplePlayer[i].file =            f; /* store file pointer for future use */
+  //    samplePlayer[i].file =            f;// store file pointer for future use // nope, we don't, we close file, LittleFS won't let us keep so many open files, neither  memory...
       samplePlayer[i].sampleRate =      wav.sampleRate;
 #ifdef DEBUG_SAMPLER
       DEBF("fileSize: %d\n",            wav.fileSize);
@@ -177,7 +220,7 @@ void Sampler::Init() {
     }
   }
 
-  for ( int i = 0; i < SAMPLECNT; i++ ) {
+  for ( int i = 0; i < sampleInfoCount; i++ ) {
     int j = (i % repeat ) + 1 ; 
     samplePlayer[i].sampleSeek = 0xFFFFFFFF;
     samplePlayer[i].active = false;
@@ -284,12 +327,25 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
   if ( sampleInfoCount == 0 ) {
     return;
   }
-  int j = note % SAMPLECNT;
+  int j = note % sampleInfoCount;
   int param_i = note % repeat + 1;
 
   if ( is_muted[ param_i ] == true) {
     return;
   }
+
+#ifdef GROUP_HATS
+  switch (param_i) {
+    case 7:
+      samplePlayer[note+1].active = false;
+      break;
+    case 8:
+      samplePlayer[note-1].active = false;
+      break;
+    default:
+      break;
+  }
+#endif
 
 #ifdef DEBUG_MIDI
   DEBF("note %d on volume %d\n", note, vol );
@@ -361,6 +417,8 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
     DEB(" samplePlayer");
     DEBUG( offset_midi[ param_i ] );
 #endif
+
+
     samplePlayer[ j ].offset_midi = offset_midi[ param_i ];
   }
 
@@ -543,7 +601,7 @@ inline void Sampler::Process( float *left, float *right ) {
 
   slowRelease = slowRelease * 0.99; // go slowly to zero
 
-  for ( int i = 0; i < SAMPLECNT; i++ ) {
+  for ( int i = 0; i < sampleInfoCount; i++ ) {
 
     if ( samplePlayer[i].active  ) {
       samplePlayer[i].samplePos = samplePlayer[i].samplePosF;
