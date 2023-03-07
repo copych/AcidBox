@@ -16,9 +16,9 @@
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
 //#define DEBUG_SYNTH
-//#define DEBUG_JUKEBOX
+#define DEBUG_JUKEBOX
 //#define DEBUG_FX
-//#define DEBUG_TIMING
+#define DEBUG_TIMING
 //#define DEBUG_MIDI
 
 //#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
@@ -121,12 +121,12 @@ const float DIV_TWOPI = 1.0f/TWOPI;
   #define DEFAULT_DRUMKIT 4           // /data/4/ folder
   #define SAMPLECNT       8           // how many samples we prepare (here just 8)
 #else
+ // #define PRELOAD_ALL                 // allows operating all the samples in realtime
   #define PSRAM_SAMPLER_CACHE 3000000 // bytes, we are going to preload ALL the samples from FLASH to PSRAM
                                       // we divide samples by octaves to use modifiers to particular instruments, not just note numbers
                                       // i.e. we know that all the "C" notes in all octaves are bass drums, and CC_808_BD_TONE affects all BD's
-                                      
   #define SAMPLECNT       (8 * 12)    // how many samples we prepare (8 octaves by 12 samples)
-  #define DEFAULT_DRUMKIT 6           // in my /data /0 has a massive bassdrum , /6 = 808 samples
+  #define DEFAULT_DRUMKIT 0           // in my /data /0 has a massive bassdrum , /6 = 808 samples
 #endif
 
 #ifndef LED_BUILTIN

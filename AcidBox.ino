@@ -246,7 +246,7 @@ static void audio_task1(void *userData) {
     taskYIELD(); 
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
       
-      taskYIELD(); 
+//      taskYIELD(); 
       
       current_gen_buf = current_out_buf;      // swap buffers
       current_out_buf = 1 - current_gen_buf;
@@ -257,7 +257,7 @@ static void audio_task1(void *userData) {
       synth1_generate();
       s1T = micros() - s1t;
       
-      taskYIELD(); 
+  //    taskYIELD(); 
         
       s2t = micros();
       synth2_generate();
@@ -265,7 +265,7 @@ static void audio_task1(void *userData) {
       
     }
     
-    taskYIELD();
+   // taskYIELD();
 
     i2s_output();
 
@@ -279,13 +279,13 @@ static void audio_task2(void *userData) {
     taskYIELD();
     
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
-    taskYIELD();
+ //   taskYIELD();
       
       fxt = micros();
       mixer(); 
       fxT = micros() - fxt;
  
-    taskYIELD();
+  //  taskYIELD();
     
       drt = micros();
       drums_generate();
@@ -294,7 +294,7 @@ static void audio_task2(void *userData) {
       xTaskNotifyGive(SynthTask1); 
     }
     
-    taskYIELD();
+  //  taskYIELD();
     
     art = micros();
     
@@ -307,7 +307,7 @@ static void audio_task2(void *userData) {
 #endif
     }    
     
-    taskYIELD();
+//    taskYIELD();
     arT = micros() - art;
     // hopefully, other Core1 tasks (for example, loop()) run here
   }

@@ -119,7 +119,11 @@ void Sampler::Init() {
 #ifdef NO_PSRAM
   String myDir = "/" + (String)progNumber + "/";
 #else
-  String myDir = "/" ;
+  #ifdef PRELOAD_ALL
+    String myDir = "/" ;
+  #else
+    String myDir = "/" + (String)progNumber + "/";
+  #endif
 #endif
 
   sampleInfoCount = 0;
