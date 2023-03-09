@@ -27,6 +27,7 @@ void FxFilterCrusher::SetBitCrusher( float value ) {
 };
 
 void FxFilterCrusher::Process( float* left, float* right ) {
+  static float oldLP, oldHP, oldReso;
   effect_prescaler++;
 
   Filter_Process(left, &mainFilterL_LP);
@@ -42,9 +43,15 @@ void FxFilterCrusher::Process( float* left, float* right ) {
   cutoff_hp_slow =  highpassC  ;
   /* we can not calculate in each cycle */
   if ( effect_prescaler % 16 == 0 ) {
-    Filter_CalculateTP(cutoff_lp_slow, div_2_reso, &filterGlobalC_LP);
-    Filter_CalculateHP(cutoff_hp_slow, div_2_reso, &filterGlobalC_HP);
+    if ( filtReso != oldReso || oldHP != highpassC || oldLP != lowpassC ) {
+      Filter_CalculateTP(cutoff_lp_slow, div_2_reso, &filterGlobalC_LP);
+      Filter_CalculateHP(cutoff_hp_slow, div_2_reso, &filterGlobalC_HP);
+      oldLP = lowpassC;
+      oldHP = highpassC;
+      oldReso = filtReso;    
+    }
   }
+
 
   if ( bitCrusher < 1.0f ) {
     int32_t ul = *left * (float)bitCrusher * (float)(1 << 29);

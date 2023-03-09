@@ -84,19 +84,18 @@ DEBF("Select note: %d\r\n", note);
         uint8_t wavHdr[44];
     };
 
-
-    struct samplePlayerS{
+    typedef struct samplePlayerS{
         char filename[32];
-        File file;
+   //     File file;
         uint32_t sampleRate; 
         uint32_t sampleStart; // in a PSRAM common buffer;
         uint32_t sampleSize;
         float samplePosF;
         uint32_t samplePos;
-        uint32_t lastDataOut; 
+     //   uint32_t lastDataOut; 
         bool active;
         uint32_t sampleSeek;
-        uint32_t dataIn;
+    //    uint32_t dataIn;
         float volume; // Volume of Track
         float signal;
         float decay;
@@ -116,9 +115,10 @@ DEBF("Select note: %d\r\n", note);
         float pitchdecay = 0.0f;
         uint8_t pitchdecay_midi;
       
-    };
+    } samplePlayerS ;
     
-    struct samplePlayerS samplePlayer[ SAMPLECNT ];
+    samplePlayerS samplePlayer[ SAMPLECNT ];
+   // samplePlayerS* samplePlayer = NULL;
     
     // float global_pitch_decay = 0.0f; // good from -0.2 to +1.0
     

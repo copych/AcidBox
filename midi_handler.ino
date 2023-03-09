@@ -30,6 +30,10 @@ inline void MidiInit() {
 
 
 inline void handleNoteOn(uint8_t inChannel, uint8_t inNote, uint8_t inVelocity) {
+#ifdef DEBUG_MIDI
+  DEB("MIDI note on ");
+  DEBUG(inNote);
+#endif
   if (inChannel == DRUM_MIDI_CHAN )         {Drums.NoteOn(inNote, inVelocity);}
   else if (inChannel == SYNTH1_MIDI_CHAN )  {Synth1.on_midi_noteON(inNote, inVelocity);}
   else if (inChannel == SYNTH2_MIDI_CHAN )  {Synth2.on_midi_noteON(inNote, inVelocity);}

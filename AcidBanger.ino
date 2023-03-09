@@ -310,7 +310,7 @@ static void init_midi() {
   //  Serial.begin(115200);
   //  MIDI.begin(MIDI_CHANNEL_OMNI);
   pinMode(LED_BUILTIN, OUTPUT);
-  for (byte i = 0; i < ButLast; i++) {
+  for (int i = 0; i < ButLast; i++) {
     init_button(&buttons[i], button_pins[i], i + 1 );
   }
   init_instruments();
@@ -390,7 +390,7 @@ static void instr_noteoff(byte instr) {
 }
 
 static void instr_allnotesoff() {
-  for (byte i = 0; i < NumInstruments; i++) {
+  for (int i = 0; i < NumInstruments; i++) {
     instr_noteoff(i);
   }
 }
@@ -439,7 +439,7 @@ void sequencer_step(byte step) {
   DEBF("midi step %d\r\n", step);
 #endif
   // Play all notes in current step
-  for (byte i = 0; i < NumInstruments; i++) {
+  for (int i = 0; i < NumInstruments; i++) {
     Pattern *pat = &memories[cur_memory].patterns[i];
     byte accent = (pat->accent >> step) & 1;
     byte glide = (pat->glide >> step) & 1;
@@ -457,9 +457,9 @@ void sequencer_step(byte step) {
       //change drumkit
       current_drumkit = myRandom(((Drums.GetSamplesCount()-1)/12)) * 12 ;
       
-#ifdef DEBUG_JUKEBOX
-      DEBF("Select drumkit: %d" , current_drumkit);
-#endif
+//#ifdef DEBUG_JUKEBOX
+      DEBF("Selected drumkit: %d\r\n" , current_drumkit);
+//#endif
     }
 #ifdef DEBUG_JUKEBOX
     DEBUG("CRASH!!!!!!!!!!!!!!!!!!!!!");
@@ -508,7 +508,7 @@ static byte generate_note_set(uint8_t *note_set) {
   byte set = myRandom(ARRAY_SIZE(offset_choices));
 
   // Copy notes from note set and offset them by "root note"
-  byte i;
+  int i;
   for (i = 0; i < MaxNoteSet; i++) {
     int8_t note = offset_choices[set][i];
     if (note < 0)
@@ -532,7 +532,7 @@ static void generate_melody(uint8_t *note_set, byte note_set_len,
 
   *accent = 0;
   *glide = 0;
-  for (byte i = 0; i < pattern_len; i++) {
+  for (int i = 0; i < pattern_len; i++) {
     uint8_t chance = ((uint16_t) density * (i % 4 == 0 ?  60 : (i % 3 == 0 ?  50 : (i % 2 == 0 ?  30 : 10)))) >> 8;
     if (flip(chance)) {
       pattern[i] = note_set[myRandom(note_set_len)];
@@ -635,12 +635,12 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
 
 
   if (kick_mode == KickFourFloor) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (i % 4 == 0)
         kick[i] = 120;
     }
   } else if (kick_mode == KickElectro) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (i == 0)
         kick[i] = 127;
       else if (i % 2 == 0 && i % 8 != 4 && flip(50))
@@ -649,7 +649,7 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
         kick[i] = myRandom(110);
     }
   } else if (kick_mode == KickBigbeat) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (i == 0)
         kick[i] = 127;
       else if (i == 14 && flip(20))
@@ -658,21 +658,21 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
   }
 
   if (snare_mode == SnareBackbeat) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (i % 8 == 0)
         snare[i] = 110;
     }
   } else if (snare_mode == SnareFill) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       snare[i] = 120;
     }
   } else if (snare_mode == SnareStraight) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (i % 8 == 4)
         snare[i] = 80;
     }
   } else if (snare_mode == SnareBreak) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       switch (i) {
         case 2:
         case 6:
@@ -687,7 +687,7 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
       }
     }
   } else if (snare_mode == SnareSkip) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (i % 8 == 3 || i % 8 == 6)
         snare[i] = 90 + myRandom(37);
       else if (i % 2 == 0 && flip(20))
@@ -698,7 +698,7 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
   }
 
   if (hat_mode == HatsOffbeats) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (i % 4 == 2)
         oh[i] = 50;
       else if (flip(30)) {
@@ -709,14 +709,14 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
       }
     }
   } else if (hat_mode == HatsClosed) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (i % 2 == 0)
         ch[i] = 50;
       else if (flip(50))
         ch[i] = myRandom(40);
     }
   } else if (hat_mode == HatsPop) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (i % 4 == 2)
         oh[i] = 60;
       else {
@@ -724,38 +724,38 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
       }
     }
   } else if (hat_mode == HatsPat1) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (i % 8 != 1 && i % 8 != 4 && i % 8 != 7 )
         ch[i] = 80;
     }
   }
 
   if (perc_mode == PercFiller) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if (oh[i] == 0 && ch[i] == 0 && kick[i] == 0 && snare[i] == 0)
         perc[i] = 90 + myRandom(37);
     }
   } else if (perc_mode == PercXor1) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if ((kick[i] == 0) ^ (snare[i] == 0))
         perc[i] = 90 + myRandom(37);
     }
   } else if (perc_mode == PercXor2) {
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       if ((oh[i] == 0) ^ (ch[i] == 0))
         perc[i] = 90 + myRandom(37);
     }
   } else if (perc_mode == PercEcho) {
     byte distance = 1 + myRandom(7);
 
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       byte prev_step = (i + PatternLength - distance) % PatternLength;
       if (ch[prev_step] || oh[prev_step])
         perc[i] = 90 + myRandom(37);
     }
   } else if (perc_mode == PercRolls) {
     byte roll = 0, roll_vol = 0;
-    for (byte i = 0; i < PatternLength; i++) {
+    for (int i = 0; i < PatternLength; i++) {
       byte do_roll = 0;
       if (i % 8 == 3 && flip(40))
         do_roll = 1;
@@ -809,7 +809,7 @@ void mem_generate_melody_and_seed(byte mem, byte voice) {
 void mem_generate_note_set(byte mem) {
   Memory *m = &memories[mem];
   m->num_notes_in_set = generate_note_set(m->note_set);
-  for (byte i = 0; i < 2; i++)
+  for (int i = 0; i < 2; i++)
     mem_generate_melody(mem, i);
 }
 
@@ -829,17 +829,17 @@ void mem_generate_drums(byte mem, enum drum_kinds drum_kind) {
 void mem_generate_all(byte mem) {
   mem_generate_note_set(mem);
   mem_generate_drums(mem, DrumStraight);
-  for (byte i = 0; i < 2; i++)
+  for (int i = 0; i < 2; i++)
     mem_generate_melody_and_seed(mem, i);
 }
 
 void print_pattern(struct Pattern *p, byte is_drum) {
 #ifdef DEBUG_JUKEBOX
-  for (byte i = 0; i < PatternLength; i++)
+  for (int i = 0; i < PatternLength; i++)
     DEBF("%3d ", p->notes[i]);
 
   if (!is_drum) {
-    for (byte i = 0; i < PatternLength; i++)
+    for (int i = 0; i < PatternLength; i++)
       DEBF(" %c%c \r\n", (p->accent & (1u << i)) ? 'A' : ' ', (p->glide & (1u << i)) ? '~' : ' ');
   }
 #endif
@@ -851,16 +851,16 @@ void print_memory(byte mem) {
   DEBF("--- memory %d ---", mem);
   DEBF("noteset[%d]:", m->num_notes_in_set);
 #endif
-  for (byte i = 0; i < m->num_notes_in_set; i++)
+  for (int i = 0; i < m->num_notes_in_set; i++)
 #ifdef DEBUG_JUKEBOX
     DEBF(" %d", m->note_set[i]);
 #endif
-  for (byte i = 0; i < NumInstruments; i++)
+  for (int i = 0; i < NumInstruments; i++)
     print_pattern(&m->patterns[i], instruments[i].is_drum);
 }
 
 void init_patterns() {
-  for (byte i = 0; i < NumMemories; i++)
+  for (int i = 0; i < NumMemories; i++)
     mem_generate_all(i);
 }
 
@@ -1127,7 +1127,7 @@ static void init_instruments() {
   Instrument *ins = &instruments[0];
 
   // Make synth instruments
-  for (byte i = 0; i < 2; i++) {
+  for (int i = 0; i < 2; i++) {
     ins->midi_channel = synth_midi_channels[i];
     ins->is_drum = 0;
     ins->noteon = send_midi_noteon;
@@ -1136,7 +1136,7 @@ static void init_instruments() {
   }
 
   // Make drum instruments
-  for (byte i = 0; i < 6; i++) {
+  for (int i = 0; i < 6; i++) {
     ins->midi_channel = DRUM_MIDI_CHAN;
     ins->is_drum = 1;
     ins->drum_note = drum_notes[i];
@@ -1153,7 +1153,7 @@ static void init_instruments() {
 /*
   void setup() {
   init_midi();
-  for (byte i = 0; i < ButLast; i++) {
+  for (int i = 0; i < ButLast; i++) {
     init_button(&buttons[i], button_pins[i]);
   }
   init_instruments();
@@ -1168,7 +1168,7 @@ void run_ui() {
   int8_t source_memory = -1;
 
   // If memory button is pressed, then it is a source_memory
-  for (byte i = 0; i < NumMemories; i++) {
+  for (int i = 0; i < NumMemories; i++) {
     if (is_pressed(ButMem1 + i) && !just_pressed(ButMem1 + i)) {
       source_memory = i;
     }
@@ -1176,7 +1176,7 @@ void run_ui() {
 
   // If a memory button is pressed, then switch to it.
   // But if another memory button is pressed, then copy one to another.
-  for (byte i = 0; i < NumMemories; i++) {
+  for (int i = 0; i < NumMemories; i++) {
     if (just_pressed(ButMem1 + i)) {
       if (source_memory >= 0) {
 #ifdef DEBUG_JUKEBOX
@@ -1233,7 +1233,7 @@ void run_tick() {
   now = millis();
   button_divider++;
   if (button_divider >= 4) {
-    for (byte i = 0; i < ButLast; i++) {
+    for (int i = 0; i < ButLast; i++) {
       read_button(&buttons[i]);
     }
     run_ui();

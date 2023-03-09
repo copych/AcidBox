@@ -92,6 +92,7 @@ void Sampler::ScanContents(fs::FS &fs, const char *dirname, uint8_t levels) {
       DEB("\tSIZE: ");
       DEBUG(file.size());
 #endif
+
       if ( sampleInfoCount < SAMPLECNT ) {
         str = (String)(file.name());
        // shortInstr[ sampleInfoCount ] = str.substring(str.length() - 7, str.length() - 4);
@@ -107,6 +108,8 @@ void Sampler::ScanContents(fs::FS &fs, const char *dirname, uint8_t levels) {
 
 
 void Sampler::Init() {
+ // samplePlayer = (samplePlayerS*)heap_caps_malloc( SAMPLECNT * sizeof( *samplePlayer), MALLOC_CAP_8BIT);
+  
   Effects.Init();
   Effects.SetBitCrusher( 0.0f );
 
@@ -149,6 +152,8 @@ void Sampler::Init() {
       DEBUG ("FAILED TO ALLOCATE PSRAM CACHE BUFFER!");
     } else {
       DEBF ("PSRAM BUFFER OF %d bytes ALLOCATED! STANDARD CONFIG ENGAGED!\r\n", PSRAM_SAMPLER_CACHE );
+      
+      heap_caps_print_heap_info(MALLOC_CAP_8BIT);
     }
   } else {
     DEBUG("STOP! Use #define NO_PSRAM option in config.h");
@@ -422,7 +427,6 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
     DEBUG( offset_midi[ param_i ] );
 #endif
 
-
     samplePlayer[ j ].offset_midi = offset_midi[ param_i ];
   }
 
@@ -446,7 +450,7 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
   }
 
 
-  struct samplePlayerS *newSamplePlayer = &samplePlayer[j];
+  samplePlayerS *newSamplePlayer = &samplePlayer[j];
 
   if ( newSamplePlayer->active ) {
     /* add last output signal to slow release to avoid noise */
@@ -455,15 +459,13 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
 
   newSamplePlayer->samplePosF = 4.0f * newSamplePlayer->offset_midi; // 0.0f;
   newSamplePlayer->samplePos  = 4 * newSamplePlayer->offset_midi; // 0;
-  //   newSamplePlayer->lastDataOut = PRELOADSIZE; /* trigger loading second half */
 
   newSamplePlayer->volume = vol * MIDI_NORM * newSamplePlayer->volume_midi * MIDI_NORM;
   newSamplePlayer->vel    = 1.0f;
-  newSamplePlayer->dataIn = 0;
+ // newSamplePlayer->dataIn = 0;
   newSamplePlayer->sampleSeek = 44 + 4 * newSamplePlayer->offset_midi; // 16 Bit-Samples wee nee
 
   newSamplePlayer->active = true;
-
 }
 
 inline void Sampler::NoteOff( uint8_t note ) {
@@ -594,16 +596,13 @@ inline void Sampler::ParseCC(uint8_t cc_number , uint8_t cc_value) {
 
 inline void Sampler::Process( float *left, float *right ) {
 
-  if ( progNumber !=  program_tmp ) {
-    SetProgram( program_tmp );
-  }
 
   float signal_l = 0.0f;
-  signal_l += slowRelease;
+  //signal_l += slowRelease;
   float signal_r = 0.0f;
-  signal_r += slowRelease;
+  //signal_r += slowRelease;
 
-  slowRelease = slowRelease * 0.99; // go slowly to zero
+  //slowRelease = slowRelease * 0.99; // go slowly to zero
 
   for ( int i = 0; i < sampleInfoCount; i++ ) {
 
@@ -642,18 +641,20 @@ inline void Sampler::Process( float *left, float *right ) {
         samplePlayer[i].samplePosF += 2.0f * sampler_playback * ( samplePlayer[i].pitch + samplePlayer[i].pitchdecay * (1 - samplePlayer[i].vel) ); // we have consumed two bytes
       }
 
+ //     samplePlayer[i].samplePosF += 2.0f * sampler_playback * ( samplePlayer[i].pitch  ); // we have consumed two bytes
       if ( samplePlayer[i].samplePos >= samplePlayer[i].sampleSize ) {
         samplePlayer[i].active = false;
+        
         samplePlayer[i].samplePos = 0;
         samplePlayer[i].samplePosF = 0.0f;
       }
     }
   }
   Effects.Process( &signal_l, &signal_r );
-  signal_l *= _volume;
-  signal_r *= _volume;
-  *left  = fclamp(signal_l, -1.0f, 1.0f);
-  *right = fclamp(signal_r, -1.0f, 1.0f);
-  // *left  = fast_tanh(signal_l);
-  // *right = fast_tanh(signal_r);
+  *left  = signal_l * _volume;
+  *right =  signal_r * _volume;
+  // *left  = fclamp(signal_l * _volume, -1.0f, 1.0f);
+  // *right = fclamp(signal_r * _volume, -1.0f, 1.0f);
+  // *left  = fast_tanh(signal_l * _volume);
+  // *right = fast_tanh(signal_r * _volume);
 }

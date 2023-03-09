@@ -32,7 +32,7 @@ public:
 	{
 		
     
-	  for (uint8_t i = 0; i < 5; i++) {
+	  for (int i = 0; i < 5; i++) {
 	    state[i] = delay[i] = 0;  
 	  }
 		

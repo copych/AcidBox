@@ -37,17 +37,17 @@ float freqToPhaseInc(float freq, uint16_t sampleSize, uint16_t sampleRate) {
 }
 
 void buildTables() {
-  for (uint8_t i = 0 ; i<128; ++i) {
+  for (int i = 0 ; i<128; ++i) {
     midi_pitches[i] = noteToFreq(i);
     midi_phase_steps[i] = noteToFreq(i) * PI * 2.0f * (float)DIV_SAMPLE_RATE;
     midi_tbl_steps[i] = noteToFreq(i) * (float)TABLE_SIZE * (float)DIV_SAMPLE_RATE;
   }
 
-  for (uint16_t i = 0; i <= TABLE_SIZE; i++) {
+  for (int i = 0; i <= TABLE_SIZE; i++) {
     exp_tbl[i] = expSaw_fill(i);
   }
 
-  for (uint16_t i = 0; i <= TABLE_SIZE; i++) {
+  for (int i = 0; i <= TABLE_SIZE; i++) {
     exp_square_tbl[i] = expSquare_fill(i);
     tanh_tbl[i] = tanh_fill(i); 
     knob_tbl[i] = knob_fill(i);

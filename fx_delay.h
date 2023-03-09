@@ -48,7 +48,7 @@ class FxDelay {
 		};
 
 		void Reset( void ){
-			for( int i = 0; i < MAX_DELAY; i++ ){
+			for (int i = 0; i < MAX_DELAY; i++ ){
 				delayLine_l[i] = 0;
 				delayLine_r[i] = 0;
 			}

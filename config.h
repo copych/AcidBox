@@ -4,19 +4,17 @@
 
 
 #define JUKEBOX                 // real-time endless auto-compose acid tunes
-#define JUKEBOX_PLAY_ON_START // should it play on power on, or should it wait for "boot" button to be pressed
+//#define JUKEBOX_PLAY_ON_START // should it play on power on, or should it wait for "boot" button to be pressed
 
 
 //#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: NOISY 8BIT STEREO
 //#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB TO BE SACRIFICED, ONE SMALL DRUM KIT SAMPLES USED 
 
-
-
 #define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
 //#define DEBUG_SYNTH
-#define DEBUG_JUKEBOX
+//#define DEBUG_JUKEBOX
 //#define DEBUG_FX
 #define DEBUG_TIMING
 //#define DEBUG_MIDI
@@ -54,7 +52,7 @@ float bpm = 130.0f;
 const float DIV_SAMPLE_RATE = 1.0f / (float)SAMPLE_RATE;
 const float DIV_2SAMPLE_RATE = 0.5f / (float)SAMPLE_RATE;
 
-#define TABLE_BIT  		        10UL				// bits per index of lookup tables for waveforms, exp(), sin(), cos() etc.
+#define TABLE_BIT  		        10UL				// bits per index of lookup tables for waveforms, exp(), sin(), cos() etc. 10 bit means 2^10 = 1024 samples
 #define TABLE_SIZE            (1<<TABLE_BIT)        // samples used for lookup tables (it works pretty well down to 32 samples due to linear approximation, so listen and free some memory at your choice)
 #define TABLE_MASK  	        (TABLE_SIZE-1)        // strip MSB's and remain within our desired range of TABLE_SIZE
 #define CICLE_INDEX(i)        (((int32_t)(i)) & TABLE_MASK ) // this way we can operate with periodic functions or waveforms without phase-reset ("if's" are time-consuming)
@@ -121,8 +119,8 @@ const float DIV_TWOPI = 1.0f/TWOPI;
   #define DEFAULT_DRUMKIT 4           // /data/4/ folder
   #define SAMPLECNT       8           // how many samples we prepare (here just 8)
 #else
- // #define PRELOAD_ALL                 // allows operating all the samples in realtime
-  #define PSRAM_SAMPLER_CACHE 3000000 // bytes, we are going to preload ALL the samples from FLASH to PSRAM
+  #define PRELOAD_ALL                 // allows operating all the samples in realtime
+  #define PSRAM_SAMPLER_CACHE 3145728 // bytes, we are going to preload ALL the samples from FLASH to PSRAM
                                       // we divide samples by octaves to use modifiers to particular instruments, not just note numbers
                                       // i.e. we know that all the "C" notes in all octaves are bass drums, and CC_808_BD_TONE affects all BD's
   #define SAMPLECNT       (8 * 12)    // how many samples we prepare (8 octaves by 12 samples)

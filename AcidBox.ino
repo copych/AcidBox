@@ -99,7 +99,7 @@ volatile float rvb_k1, rvb_k2, rvb_k3;
 volatile float dly_k1, dly_k2, dly_k3;
 
 size_t bytes_written;                       // i2s
-volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT, art, arT; // debug timing: if we use less vars, compiler optimizes them
+volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT, art, arT, c0t, c0T, c1t, c1T; // debug timing: if we use less vars, compiler optimizes them
 volatile static uint32_t prescaler;
 
 // tasks for Core0 and Core1
@@ -160,7 +160,7 @@ void setup(void) {
 #endif
 #endif
   /*
-    for (uint8_t i = 0; i < GPIO_BUTTONS; i++) {
+    for (int i = 0; i < GPIO_BUTTONS; i++) {
     pinMode(buttonGPIOs[i], INPUT_PULLDOWN);
     }
   */
@@ -198,8 +198,8 @@ void setup(void) {
 
   //xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask1, 0 );
   //xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask2, 1 );
- xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, 2, &SynthTask1, 0 );
- xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, 2, &SynthTask2, 1 );
+ xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 10000, NULL, 1, &SynthTask1, 0 );
+ xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 10000, NULL, 1, &SynthTask2, 1 );
 
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
@@ -242,9 +242,11 @@ void loop() { // default loopTask running on the Core1
 
 // Core0 task
 static void audio_task1(void *userData) {
+  
   while (true) {
     taskYIELD(); 
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
+      c0t = micros();
       
 //      taskYIELD(); 
       
@@ -258,18 +260,20 @@ static void audio_task1(void *userData) {
       s1T = micros() - s1t;
       
   //    taskYIELD(); 
-        
-      s2t = micros();
-      synth2_generate();
-      s2T = micros() - s2t;      
-      
+
+
+      drt = micros();
+      drums_generate();
+      drT = micros() - drt;
+
     }
     
    // taskYIELD();
 
-    i2s_output();
 
     taskYIELD();
+
+    c0T = micros() - c0t;
   }
 }
 
@@ -279,37 +283,38 @@ static void audio_task2(void *userData) {
     taskYIELD();
     
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
- //   taskYIELD();
+      c1t = micros();
       
       fxt = micros();
       mixer(); 
+      i2s_output();
       fxT = micros() - fxt;
- 
-  //  taskYIELD();
+      
+      taskYIELD();
     
-      drt = micros();
-      drums_generate();
-      drT = micros() - drt;
+      s2t = micros();
+      synth2_generate();
+      s2T = micros() - s2t;
       
       xTaskNotifyGive(SynthTask1); 
-    }
+    }    
     
-  //  taskYIELD();
-    
+    c1T = micros() - c1t;
+
     art = micros();
     
     if (timer2_fired) {
       timer2_fired = false;
       //readPots();
 #ifdef DEBUG_TIMING
-      // DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
-      DEBF ("Core0=%dus Core1=%dus DMA_BUF=%dus AllTheRestCore1=%dus\r\n" , s1T + s2T , fxT + drT + arT, DMA_BUF_TIME, arT);
+      DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
+  //    DEBF ("TaskCore0=%dus TaskCore1=%dus DMA_BUF=%dus\r\n" , c0T , c1T , DMA_BUF_TIME);
+  //    DEBF ("AllTheRestCore1=%dus\r\n" , arT);
 #endif
     }    
     
 //    taskYIELD();
     arT = micros() - art;
-    // hopefully, other Core1 tasks (for example, loop()) run here
   }
 }
 
