@@ -85,7 +85,7 @@ DEBF("Select note: %d\r\n", note);
     };
 
     typedef struct samplePlayerS{
-        char filename[32];
+   //     char filename[32]; // move it out of the struct in hope to speed up the sampler
    //     File file;
         uint32_t sampleRate; 
         uint32_t sampleStart; // in a PSRAM common buffer;
@@ -118,6 +118,7 @@ DEBF("Select note: %d\r\n", note);
     } samplePlayerS ;
     
     samplePlayerS samplePlayer[ SAMPLECNT ];
+    char filenames[ SAMPLECNT ][32];
    // samplePlayerS* samplePlayer = NULL;
     
     // float global_pitch_decay = 0.0f; // good from -0.2 to +1.0

@@ -10,13 +10,13 @@ float Overdrive::Process(float in)
 {
     float pre = (float)(pre_gain_ * in * 2.0f);
     
-    return (float)(fast_tanh(pre) * post_gain_ * compens_);
+    return (float)(fast_tanh(pre) * post_gain_) ;//* compens_);
  //   return SoftClip(pre) * post_gain_;
 }
 
 void Overdrive::SetDrive(float drive)
 {
-    compens_ = fast_tanh(0.09f - 3.05f * drive) * 0.77f + 1.0f ;
+ //   compens_ = fast_tanh(0.09f - 3.05f * drive) * 0.77f + 1.0f ;
     drive = 0.125f + (float)drive * (0.875f);
     //drive  = fclamp(drive, 0.f, 1.f);
     drive_ = 1.999f * (float)drive;

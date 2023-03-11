@@ -92,6 +92,27 @@ inline void i2s_output () {
   }
 }
 
+inline float bilinearLookup(float (&table)[16][16], float x, float y) {
+  static float kmap = 0.1181f; // map from 0-127 to 0-14.99
+  int32_t i,j;
+  float fi,fj;
+  float v1,v2,v3,v4;
+  float res1,res2,res3;
+  x *= kmap;
+  y *= kmap;
+  i = (int32_t)x;
+  j = (int32_t)y;
+  fi = (float)x - i;
+  fj = (float)y - j;
+  v1 = table[i][j];
+  v2 = table[i+1][j];
+  v3 = table[i][j+1];
+  v4 = table[i+1][j+1];  
+  res1 = (float)fi * (float)(v2-v1) + v1;
+  res2 = (float)fi * (float)(v4-v3) + v3;
+  res3 = (float)fj * (float)(res2-res1) + res1;
+  return res3;
+}
 
 inline float lookupTable(float (&table)[TABLE_SIZE+1], float index ) { // lookup value in a table by float index, using linear interpolation
   static float v1, v2, res;

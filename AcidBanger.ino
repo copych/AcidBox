@@ -533,7 +533,8 @@ static void generate_melody(uint8_t *note_set, byte note_set_len,
   *accent = 0;
   *glide = 0;
   for (int i = 0; i < pattern_len; i++) {
-    uint8_t chance = ((uint16_t) density * (i % 4 == 0 ?  60 : (i % 3 == 0 ?  50 : (i % 2 == 0 ?  30 : 10)))) >> 8;
+//    uint8_t chance = ((uint16_t) density * (i % 4 == 0 ?  60 : (i % 3 == 0 ?  50 : (i % 2 == 0 ?  30 : 10)))) >> 8;
+    uint8_t chance = ((uint16_t) density * (i % 4 == 0 ?  90 : (i % 3 == 0 ?  80 : (i % 2 == 0 ?  50 : 10)))) >> 8;
     if (flip(chance)) {
       pattern[i] = note_set[myRandom(note_set_len)];
       if (flip(30))

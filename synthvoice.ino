@@ -94,7 +94,7 @@ inline float SynthVoice::getSample() {
     samp = Drive.Process(samp);
     samp = Wfolder.Process(samp);
 
-    samp *=  _volume;
+    samp *=  _volume * _fx_compens * _flt_compens *16.0f;
 
 
 
@@ -163,6 +163,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_RESO:
       _reso = cc_value * MIDI_NORM ;
+      _flt_compens = one_div( bilinearLookup(cutoff_reso, cc_value, _cutoff/MIDI_NORM));
       SetReso(_reso);
       break;
     case CC_303_DECAY: // Env release
@@ -177,6 +178,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
+      _flt_compens = one_div( bilinearLookup(cutoff_reso, _reso/MIDI_NORM, cc_value));
       SetCutoff(_cutoff);
       break;
     case CC_303_DELAY_SEND:
@@ -193,10 +195,12 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_DISTORTION:
       _gain = (float)cc_value * MIDI_NORM ;
+      _fx_compens = one_div( bilinearLookup(wfolder_overdrive, _drive /MIDI_NORM,  cc_value));
       SetDistortionLevel(_gain);
       break;
     case CC_303_OVERDRIVE:
       _drive = (float)cc_value * MIDI_NORM ;
+      _fx_compens = one_div( bilinearLookup(wfolder_overdrive, cc_value, _gain/MIDI_NORM));
       SetOverdriveLevel(_drive);
       break;
     case CC_303_SATURATOR:

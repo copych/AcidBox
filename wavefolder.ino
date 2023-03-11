@@ -19,5 +19,5 @@ float Wavefolder::Process(float in) {
     sgn = (static_cast<int>(ft) % 2 == 0) ? 1.0f : -1.0f;
     //int rem = static_cast<int>(ft) % 2 ;
     //sgn = (float)(1 - 2 * rem); // should work a bit faster ???
-    return sgn * (in - 2.0f * ft) * compens_;
+    return sgn * (in - 2.0f * ft) ; //* compens_;
 }

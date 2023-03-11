@@ -98,7 +98,7 @@ inline void TeeBeeFilter::SetCutoff(float newCutoff, bool updateCoefficients)
 inline void TeeBeeFilter::SetResonance(float newResonance, bool updateCoefficients)
 {
   resonanceRaw    =  newResonance;
-  compens = 1.8f * (resonanceRaw + 0.25f) * one_div((resonanceRaw + 0.25f) * 0.75f + 0.113f); // gain compensation; one_div(x) = 1/x
+//  compens = 1.8f * (resonanceRaw + 0.25f) * one_div((resonanceRaw + 0.25f) * 0.75f + 0.113f); // gain compensation; one_div(x) = 1/x
   resonanceSkewed = (1.0f - exp(-3.0f * resonanceRaw)) / (1.0f - exp(-3.0f));
   if ( updateCoefficients == true )
     calculateCoefficientsApprox4();
@@ -258,7 +258,7 @@ inline float TeeBeeFilter::Process(float in)
   
   ret_val = (20.0f * (c0 * y0 + c1 * y1 + c2 * y2 + c3 * y3 + c4 * y4 )) ;
   // bias = 0.0005f * ret_val + 0.9995f * bias ;
-  return fast_tanh((ret_val - bias) ) * compens ;
+  return fast_tanh((ret_val - bias) );// * compens ;
 }
 
 inline void TeeBeeFilter::sinCos(float x, float* sinResult, float* cosResult)

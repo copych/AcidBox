@@ -97,7 +97,8 @@ void Sampler::ScanContents(fs::FS &fs, const char *dirname, uint8_t levels) {
         str = (String)(file.name());
        // shortInstr[ sampleInfoCount ] = str.substring(str.length() - 7, str.length() - 4);
         str = (String)dirname + str;
-        strncpy( samplePlayer[ sampleInfoCount ].filename, str.c_str() , 32);
+//        strncpy( samplePlayer[ sampleInfoCount ].filename, str.c_str() , 32);
+        strncpy( filenames[ sampleInfoCount ], str.c_str() , 32);
         sampleInfoCount ++;
       }
     }
@@ -178,10 +179,12 @@ void Sampler::Init() {
 #endif
   for (int i = 0; i < sampleInfoCount; i++ ) {
 #ifdef DEBUG_SAMPLER
-    DEBF( "s[%d]: %s\n", i, samplePlayer[i].filename );
+//    DEBF( "s[%d]: %s\n", i, samplePlayer[i].filename );
+    DEBF( "s[%d]: %s\n", i, filenames[i] );
 #endif
 
-    File f = LittleFS.open( (String)(samplePlayer[i].filename) );
+//    File f = LittleFS.open( (String)(samplePlayer[i].filename) );
+    File f = LittleFS.open( (String)(filenames[i]) );
 
     if ( f ) {
       size_t len = f.size();
