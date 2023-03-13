@@ -51,6 +51,12 @@ void SynthVoice::Init() {
   highpass2.setCutoff(24.167f);
   allpass.setMode(OnePoleFilter::ALLPASS);
   allpass.setCutoff(14.008f);
+  ampDeclicker.setMode(BiquadFilter::LOWPASS12);
+  ampDeclicker.setGain( amp2dB(sqrt(0.5f)) );
+  ampDeclicker.setFrequency(200.0f);
+  filtDeclicker.setMode(BiquadFilter::LOWPASS12);
+  filtDeclicker.setGain( amp2dB(sqrt(0.5f)) );
+  filtDeclicker.setFrequency(200.0f);
 }
 
 
@@ -66,7 +72,7 @@ inline float SynthVoice::getSample() {
     }
     //  if (i % 4 == 0) {
     final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 1.3f * (float)_accentation + 1.0f );
-    final_cut = filtDeclicker.Process( final_cut);
+    final_cut = filtDeclicker.getSample( final_cut);
     Filter.SetCutoff( final_cut );
     //    }
 
@@ -88,15 +94,14 @@ inline float SynthVoice::getSample() {
         }
 
     */
-    ampEnv = ampDeclicker.Process(ampEnv);
+   // ampEnv = ampDeclicker.getSample(ampEnv);
     samp *= ampEnv;
 
     samp = Drive.Process(samp);
     samp = Wfolder.Process(samp);
 
-    samp *=  _volume * _fx_compens * _flt_compens *16.0f;
-
-
+    _compens = ampDeclicker.getSample(_volume * _fx_compens * _flt_compens * 16.0f);
+    samp *=  _compens;
 
     //   if ( prescaler % DMA_BUF_LEN == 0 && _index == 0 ) DEBF( "off(Hz) %0.3f\r\n", _offset );
 
@@ -111,13 +116,18 @@ inline float SynthVoice::getSample() {
 
     // Increment and wrap phase
     _phaze += _currentStep;
+    /* 
+     *  // this is more accurate classical approach, but it gives quite early audible aliasing
     if ( _phaze >= TABLE_SIZE) {
-      // _phaze -= TABLE_SIZE ;
-      _phaze = 0.0f;
+       _phaze -= TABLE_SIZE ;
+    */
+    
+    // this is less accurate in terms of pitch, especially at higher notes, but at this price you have quite no aliasing, as phase reset produces no moire
+    if ( _phaze - 0.5f >= TABLE_SIZE) {
+      _phaze = 0.0f; 
     }
 
-    //synth_buf[_index][i] = fast_tanh(samp); // mono
-    //synth_buf[_index][i] = ampDeclicker.Process(samp);
+    //synth_buf[_index][i] = fast_tanh(samp); // mono limitter
     return  samp;
   
 }

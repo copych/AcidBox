@@ -54,16 +54,17 @@ static void mixer() { // sum buffers
 #endif
       mono_mix = 0.5*(mix_buf_l[current_out_buf][i] + mix_buf_r[current_out_buf][i]);
       Comp.Process(mono_mix); // calculate gain based on a mono mix, can be a side chain
+      
       mix_buf_l[current_out_buf][i] = (Comp.Apply(mix_buf_l[current_out_buf][i]));
       mix_buf_r[current_out_buf][i] = (Comp.Apply(mix_buf_r[current_out_buf][i]));
       
 #ifdef DEBUG_MASTER_OUT______________
       if ( i % 16 == 0) meter = meter * 0.95f + abs( mono_mix); 
 #endif
-   //   mix_buf_l[current_out_buf][i] = fclamp(mix_buf_l[current_out_buf][i] , -1.0f, 1.0f); // clipper
-    //  mix_buf_r[current_out_buf][i] = fclamp(mix_buf_r[current_out_buf][i] , -1.0f, 1.0f);
-       mix_buf_l[current_out_buf][i] = fast_tanh( mix_buf_l[current_out_buf][i]); // saturator
-       mix_buf_r[current_out_buf][i] = fast_tanh( mix_buf_r[current_out_buf][i]);
+      mix_buf_l[current_out_buf][i] = fclamp(mix_buf_l[current_out_buf][i] , -1.0f, 1.0f); // clipper
+      mix_buf_r[current_out_buf][i] = fclamp(mix_buf_r[current_out_buf][i] , -1.0f, 1.0f);
+  //   mix_buf_l[current_out_buf][i] = fast_tanh( mix_buf_l[current_out_buf][i]); // saturator
+  //   mix_buf_r[current_out_buf][i] = fast_tanh( mix_buf_r[current_out_buf][i]);
    }
 #ifdef DEBUG_MASTER_OUT
   meter *= 0.95f;
@@ -186,6 +187,16 @@ static __attribute__((always_inline)) inline float one_div(float a) {
     return result;
 }
 
+inline float dB2amp(float dB){
+  return expf(dB * 0.11512925464970228420089957273422f);
+  //return pow(10.0, (0.05*dB)); // naive, inefficient version
+}
+
+inline float amp2dB(float amp)
+{
+  return 8.6858896380650365530225783783321f * logf(amp);
+  //return 20*log10(amp); // naive version
+}
 
 inline float linToLin(float in, float inMin, float inMax, float outMin, float outMax)
 {
@@ -208,6 +219,7 @@ inline float linToExp(float in, float inMin, float inMax, float outMin, float ou
   //tmp = outMin * exp( tmp*(log(outMax)-log(outMin)) );
   return outMin * expf( tmp*(logf(outMax * one_div(outMin))) );
 }
+
 
 
 inline float expToLin(float in, float inMin, float inMax, float outMin, float outMax)

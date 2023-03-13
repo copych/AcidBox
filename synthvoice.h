@@ -21,6 +21,7 @@
 #endif
 
 #include "rosic_OnePoleFilter.h"
+#include "rosic_BiquadFilter.h"
 
 #include "wavefolder.h"
 #include "overdrive.h"
@@ -151,9 +152,12 @@ private:
   void note_off() ;
   void note_on(uint8_t midiNote, bool slide, bool accent) ;
   inline void calcEnvModScalerAndOffset();
-  Smoother          ampDeclicker;
-  Smoother          filtDeclicker;
+ // Smoother          ampDeclicker;
+ // Smoother          filtDeclicker;
 
+  BiquadFilter      ampDeclicker;
+  BiquadFilter      filtDeclicker;
+  
   OnePoleFilter     highpass1;  //taken from open303, subj to check
   OnePoleFilter     highpass2;
   OnePoleFilter     allpass; 

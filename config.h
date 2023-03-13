@@ -127,6 +127,8 @@ const float DIV_TWOPI = 1.0f/TWOPI;
   #define DEFAULT_DRUMKIT 0           // in my /data /0 has a massive bassdrum , /6 = 808 samples
 #endif
 
+#define TINY 0.000001f;
+
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 0
 #endif

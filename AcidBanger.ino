@@ -78,11 +78,11 @@
 
 #define NUM_RAMPS 6           // simultaneous knob rotatings
 #ifndef NO_PSRAM
-  #define NUM_SYNTH_CCS 11    // how many synth CC params do we have to play
+  #define NUM_SYNTH_CCS 12    // how many synth CC params do we have to play
   #define NUM_DRUM_CCS  7     // how many drum CC params do we have to play
   #define VOL_SYNTH     80
 #else
-  #define NUM_SYNTH_CCS 10    // how many synth CC params do we have to play
+  #define NUM_SYNTH_CCS 11    // how many synth CC params do we have to play
   #define NUM_DRUM_CCS  5     // how many drum CC params do we have to play
   #define VOL_SYNTH     60
 #endif
@@ -101,21 +101,19 @@ struct sSynthCCs {
 sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
   //cc                 cpl             def   min max   reset
   {CC_303_PAN,        0,              47,   0,  127,  true},
-  {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
   {CC_303_WAVEFORM,   0,              0,    0,  64,   true},
+  {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
+  {CC_303_CUTOFF,     CC_303_RESO,    20,   5,  120,  true},
+  {CC_303_DECAY,      0,              20,   15, 120,  true},
+  {CC_303_ATTACK,     0,              1,    3,  60,   true},
+  {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
+  {CC_303_ACCENT_LVL, 0,              64,   25, 100,  false},
 #ifndef NO_PSRAM
   {CC_303_REVERB_SEND, 0,              5,    2,  127,  true},
 #endif
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
-  {CC_303_ACCENT_LVL, 0,              64,   25, 100,  false},
-  {CC_303_DECAY,      0,              20,   15, 120,  true},
-  {CC_303_ATTACK,     0,              1,    3,  60,   true},
-  {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
-  {CC_303_CUTOFF,     CC_303_RESO,    20,   5,  120,  true},
   {CC_303_DISTORTION, 0,              0,    2,  127,  true},
-//  {CC_303_DECAY,      0,              20,   15, 120,  true},
-//  {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
-//  {CC_303_ACCENT_LVL, 0,              64,   25, 100,  false},
+  {CC_303_OVERDRIVE,  0,              0,    2,  127,  true}
 };
 
 sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
@@ -130,6 +128,7 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
 #endif
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
   {CC_303_OVERDRIVE,  0,              0,    2,  127,  true},
+  {CC_303_DISTORTION, 0,              0,    2,  127,  true},
   {CC_303_ACCENT_LVL, 0,              64,   25, 100,  false},
   {CC_303_DECAY,      0,              20,   15, 120,  true},
   {CC_303_ATTACK,     0,              1,    3,  60,   true}
