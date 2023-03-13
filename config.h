@@ -1,5 +1,5 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v.1.2.0b"
+#define VERSION         "v.1.2.5b"
 
 
 
