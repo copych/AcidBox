@@ -27,7 +27,7 @@
 #include "overdrive.h"
 
 #include "midi_config.h"
-#include "smoother.h"
+//#include "smoother.h"
 
 typedef struct 
 {
