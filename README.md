@@ -103,8 +103,9 @@ For the time being the following list of MIDI continious controllers is availabl
 
 # Thanks go to
 * Marcel Licence https://github.com/marcel-licence : synth and DSP related code (delay, bi-filter, bitcrusher initially were taken from here)
-* Infrasonic Audio https://github.com/infrasonicaudio : synth and DSP related code (moogladder filter, wavefolder and i2s base code were initially taken from here)
-* Erich Heinemann https://github.com/ErichHeinemann : forked Marcel Licence's sampler and drum samples were taken from here
+* Infrasonic Audio https://github.com/infrasonicaudio : i2s base code was initially taken from here
+* Seeduino Electro-Smith https://github.com/electro-smith/DaisySP : a lot of DSP and synth related code here 
+* Erich Heinemann https://github.com/ErichHeinemann : forked Marcel Licence's sampler and initial set of drum samples were taken from here
 * Dimitri Diakopoulos https://github.com/ddiakopoulos/MoogLadders : a collection of c++ implementations of Moogladder filters
 * Open303 project https://sourceforge.net/projects/open303/, https://www.kvraudio.com/forum/viewtopic.php?t=262829 -- guys have done a lot of research, their filters combination is now the default one.
 
