@@ -117,6 +117,8 @@ private:
   uint32_t _noteStartTime = 0;
   uint8_t _midiNote = 69;
   float  _currentStep = 1.0f;
+  float  _subStep = 4.0f;
+  int    _wave_cnt = 0;
   float  _currentPeriod = 1.0f; // should be int (trying to come exactly to 0 phase)
   float  _avgStep = 1.0f;
   float  _avgPeriod = 1.0f; // measured in samples
@@ -158,7 +160,8 @@ private:
   BiquadFilter      ampDeclicker;
   BiquadFilter      filtDeclicker;
   
-  OnePoleFilter     highpass1;  //taken from open303, subj to check
+  BiquadFilter      notch;        //taken from open303, subj to check
+  OnePoleFilter     highpass1;  
   OnePoleFilter     highpass2;
   OnePoleFilter     allpass; 
   

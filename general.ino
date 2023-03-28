@@ -52,14 +52,14 @@ static void mixer() { // sum buffers
       mix_buf_l[current_out_buf][i] = 0.25f * (synth1_out_l + synth2_out_l + drums_out_l + dly_l);
       mix_buf_r[current_out_buf][i] = 0.25f * (synth1_out_r + synth2_out_r + drums_out_r + dly_r);
 #endif
-      mono_mix = 0.5*(mix_buf_l[current_out_buf][i] + mix_buf_r[current_out_buf][i]);
+      mono_mix = 0.5f * (mix_buf_l[current_out_buf][i] + mix_buf_r[current_out_buf][i]);
       Comp.Process(mono_mix); // calculate gain based on a mono mix, can be a side chain
       
-      mix_buf_l[current_out_buf][i] = (Comp.Apply(mix_buf_l[current_out_buf][i]));
-      mix_buf_r[current_out_buf][i] = (Comp.Apply(mix_buf_r[current_out_buf][i]));
+      mix_buf_l[current_out_buf][i] = 1.5f * (Comp.Apply(mix_buf_l[current_out_buf][i]));
+      mix_buf_r[current_out_buf][i] = 1.5f * (Comp.Apply(mix_buf_r[current_out_buf][i]));
       
 #ifdef DEBUG_MASTER_OUT______________
-      if ( i % 16 == 0) meter = meter * 0.95f + abs( mono_mix); 
+      if ( i % 16 == 0) meter = meter * 0.95f + fabs( mono_mix); 
 #endif
       mix_buf_l[current_out_buf][i] = fclamp(mix_buf_l[current_out_buf][i] , -1.0f, 1.0f); // clipper
       mix_buf_r[current_out_buf][i] = fclamp(mix_buf_r[current_out_buf][i] , -1.0f, 1.0f);
@@ -68,7 +68,7 @@ static void mixer() { // sum buffers
    }
 #ifdef DEBUG_MASTER_OUT
   meter *= 0.95f;
-  meter += abs(mono_mix); 
+  meter += fabs(mono_mix); 
   DEBF("out= %0.5f\r\n", meter);
 #endif
 }
@@ -76,7 +76,7 @@ static void mixer() { // sum buffers
 
 inline void i2s_output () {
   // now out_buf is ready, output
-  if (processing) {
+//  if (processing) {
   #ifdef USE_INTERNAL_DAC
     for (int i=0; i < DMA_BUF_LEN; i++) {      
       out_buf[current_out_buf]._unsigned[i*2] = (uint16_t)(127.0f * ( fast_tanh( mix_buf_l[current_out_buf][i]) + 1.0f)) << 8U; // 256 output levels is way to little
@@ -90,7 +90,7 @@ inline void i2s_output () {
     }
     i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
   #endif
-  }
+//  }
 }
 
 inline float bilinearLookup(float (&table)[16][16], float x, float y) {
@@ -119,6 +119,7 @@ inline float lookupTable(float (&table)[TABLE_SIZE+1], float index ) { // lookup
   static float v1, v2, res;
   static int32_t i;
   static float f;
+ // if (index >= TABLE_SIZE) return table[TABLE_SIZE];
   i = (int32_t)index;
   f = (float)index - i;
   v1 = (table)[i];
@@ -133,19 +134,20 @@ inline float fclamp(float in, float min, float max){
 }
 
 inline float fast_tanh(float x){
-  //return tanh(x);
     float sign = 1.0f;
-    if (x<0.0f) {
-        sign=-1.0f;
-        x= -x;
+    if (x<0) {
+      x = -x;
+      sign = -1.0f;
     }
+   
     if (x>=4.95f) {
       return sign; // tanh(x) ~= 1, when |x| > 4
     }
+
   //  if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders; tanh(x) ~= x, when |x| < 0.4 
     return  sign * lookupTable(tanh_tbl, (x*TANH_LOOKUP_COEF)); // lookup table contains tanh(x), 0 <= x <= 5
- //  float poly = (2.12-2.88*x+4.0*x*x);
- //  return sign * x * (poly * one_div(poly * x + 1.0f)); // very good approximation found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
+  // float poly = (2.12f-2.88f*x+4.0f*x*x);
+   // return sign * x * (poly * one_div(poly * x + 1.0f)); // very good approximation found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
                                                     // but it uses float division which is not that fast on esp32
 }
 

@@ -68,18 +68,19 @@ DEBF("Select note: %d\r\n", note);
     // union is very handy for easy conversion of bytes to the wav header information
     union wavHeader{
         struct{
-            char riff[4];
-            uint32_t fileSize; // 22088
-            char waveType[4];
-            char format[4];
-            uint32_t lengthOfData;
-            uint16_t numberOfChannels;
-            uint32_t sampleRate;
-            uint32_t byteRate;
-            uint16_t bytesPerSample;
-            uint16_t bitsPerSample;
-            char dataStr[4];
-            uint32_t dataSize; // 22052
+            char riff[4];						// 4
+            uint32_t fileSize; 					// 8
+            char waveType[4];					// 12
+            char format[4];						// 16
+            uint32_t lengthOfData;				// 20
+            uint16_t numberOfChannels;			// 22
+            uint16_t audioFormat;				// 24
+            uint32_t sampleRate;				// 28
+            uint32_t byteRate;					// 32
+            uint16_t bytesPerSample;			// 34
+            uint16_t bitsPerSample;				// 36
+            char dataStr[4];					// 40
+            uint32_t dataSize; 					// 44
         };
         uint8_t wavHdr[44];
     };

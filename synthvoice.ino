@@ -57,6 +57,9 @@ void SynthVoice::Init() {
   filtDeclicker.setMode(BiquadFilter::LOWPASS12);
   filtDeclicker.setGain( amp2dB(sqrt(0.5f)) );
   filtDeclicker.setFrequency(200.0f);
+  notch.setMode(BiquadFilter::BANDREJECT);
+  notch.setFrequency(7.5164f);
+  notch.setBandwidth(4.7f);
 }
 
 
@@ -70,40 +73,22 @@ inline float SynthVoice::getSample() {
     } else {
       samp = 0.0f;
     }
-    //  if (i % 4 == 0) {
     final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 1.3f * (float)_accentation + 1.0f );
-    final_cut = filtDeclicker.getSample( final_cut);
+    final_cut = filtDeclicker.getSample( final_cut );
     Filter.SetCutoff( final_cut );
-    //    }
 
-    samp = highpass1.getSample(samp);        // pre-filter highpass
-    samp = Filter.Process(samp);
-    samp = allpass.getSample(samp);
-    samp = highpass2.getSample(samp);
+    samp = highpass1.getSample(samp);         // pre-filter highpass
+    samp = Filter.Process(samp);              // main filter
+    samp = allpass.getSample(samp);           // phase correction
+    samp = highpass2.getSample(samp);         // post-filtering
+    samp = notch.getSample(samp);             // post-filtering
+    samp *= ampEnv;                           // amp envelope
 
-    /*
-        if ( i % DMA_BUF_LEN == 0 && _index == 0) {
-          avgmax = avgmax*0.999 - (avgmax - avgmid) * 0.001f ;
-          avgmin = avgmin*0.999 + (avgmid - avgmin) * 0.001f ;
-          if (samp > avgmax) avgmax = samp ;
-          else if (samp < avgmin) avgmin = samp ;
-      //    avgmid = 0.5f * (avgmax+avgmin) * 0.001f + 0.999f * avgmid;
-       //   DEBF( " %0.3f  %0.3f  %0.3f\r\n", avgmin, avgmid, avgmax );
-          DEBF("%0.3f\r\n", avgmax-avgmin);
-      //  samp -= avgmid;
-        }
-
-    */
-   // ampEnv = ampDeclicker.getSample(ampEnv);
-    samp *= ampEnv;
-
-    samp = Drive.Process(samp);
-    samp = Wfolder.Process(samp);
+    samp = Drive.Process(samp);               // overdrive
+    samp = Wfolder.Process(samp);             // distortion
 
     _compens = ampDeclicker.getSample(_volume * _fx_compens * _flt_compens * 16.0f);
     samp *=  _compens;
-
-    //   if ( prescaler % DMA_BUF_LEN == 0 && _index == 0 ) DEBF( "off(Hz) %0.3f\r\n", _offset );
 
     if ((_slide || _portamento) && _deltaStep != 0.0f) {     // portamento / slide processing
       if (fabs(_targetStep - _currentStep) >= fabs(_deltaStep)) {
@@ -117,16 +102,32 @@ inline float SynthVoice::getSample() {
     // Increment and wrap phase
     _phaze += _currentStep;
     /* 
-     *  // this is more accurate classical approach, but it gives quite early audible aliasing
+     *  // this is more accurate classical approach, but it gives quite early audible aliasing when not using band-limited samples
     if ( _phaze >= TABLE_SIZE) {
        _phaze -= TABLE_SIZE ;
     */
-    
+   
+     
     // this is less accurate in terms of pitch, especially at higher notes, but at this price you have quite no aliasing, as phase reset produces no moire
-    if ( _phaze - 0.5f >= TABLE_SIZE) {
-      _phaze = 0.0f; 
+    if ( _phaze >= TABLE_SIZE) {
+      if (_wave_cnt == 3) { // we drop the phase every 4 periods
+        _wave_cnt = 0; 
+        _phaze = 0.0f; // we reset the phase, so aliasing will be present in the form of lower octave tones which is less annoying
+      } else {
+        _wave_cnt++;
+        _phaze -= TABLE_SIZE ;
+      }
+       
     }
+    
+    /*
+    // this is less accurate in terms of pitch, especially at higher notes, but at this price you have quite no aliasing, as phase reset produces no moire
+    if ( _phaze >= TABLE_SIZE) {
+      _phaze = 2.0f * (float)( (int)(0.5f * (_phaze - (float)TABLE_SIZE)) ); 
+      DEBF("%0.5f\r\n", _phaze);
+    }*/
 
+    
     //synth_buf[_index][i] = fast_tanh(samp); // mono limitter
     return  samp;
   
@@ -458,6 +459,7 @@ void  SynthVoice::note_on(uint8_t midiNote, bool slide, bool accent)
     _deltaStep = 0.0f ;
     _eAmpEnvState = ENV_INIT;
     _eFilterEnvState = ENV_INIT;
+    _phaze = 0.0f;
 
   }
   if (mva1.n == 1) {

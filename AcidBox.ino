@@ -12,8 +12,8 @@
 
 
   !!!!!!!! ATTENTION !!!!!!!!!
-  You will need to upload samples from /data folder to the ESP32 flash. 
-  To do so follow the instructions:
+  You will need to upload samples from /data folder to the ESP32 flash, otherwise you'll only have 40kB samples from samples.h. 
+  To upload samples follow the instructions:
   
   https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
   And then use Tools -> ESP32 Sketch Data Upload

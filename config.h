@@ -1,5 +1,5 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v.1.2.5b"
+#define VERSION         "v.1.2.6b"
 
 
 
@@ -20,7 +20,7 @@
 //#define DEBUG_MIDI
 
 //#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
-#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
+//#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
 #define MIDIRX_PIN      4       // this pin is used for input when MIDI_VIA_SERIAL2 defined (note that default pin 17 won't work with PSRAM)
 #define MIDITX_PIN      15      // this pin will be used for output (not implemented yet) when MIDI_VIA_SERIAL2 defined
 
@@ -66,30 +66,10 @@ const float TANH_LOOKUP_COEF = (float)TABLE_SIZE / TANH_LOOKUP_MAX;
 
 const uint32_t DMA_BUF_TIME = (uint32_t)(1000000.0f / (float)SAMPLE_RATE * (float)DMA_BUF_LEN); // microseconds per buffer, used for debugging of time-slots
 
-
-
 #define SYNTH1_MIDI_CHAN        1
 #define SYNTH2_MIDI_CHAN        2
 
 #define DRUM_MIDI_CHAN          10
-
-
-/*
-#define MUXED_BUTTONS   0
-#define GPIO_BUTTONS    1
-#define TOTAL_BUTTONS MUXED_BUTTONS+GPIO_BUTTONS 
-#define LOGICAL_ON      HIGH
-
-enum e_pins_t     { fn1 = MUXED_BUTTONS,  fn2,  fn3,  fn4, enc_but }; // mnemonics for bits, starting with the first after the muxed buttons
-uint8_t buttonGPIOs[GPIO_BUTTONS]{ 23 }; // GPIO buttons
-//e_pins_t gpio_pin;
-bool autoFireEnabled = false;                 // should the buttons generate continious clicks when pressed longer than a longPressThreshold
-bool lateClickEnabled = false;                // enable registering click after a longPress call
-const unsigned long longPressThreshold = 800; // the threshold (in milliseconds) before a long press is detected
-const unsigned long autoFireDelay = 500;      // the threshold (in milliseconds) between clicks if autofire is enabled
-const unsigned long riseThreshold = 20;       // the threshold (in milliseconds) for a button press to be confirmed (i.e. debounce, not "noise")
-const unsigned long fallThreshold = 10;       // debounce, not "noise", also this is the time, while new "touches" won't be registered
-*/
 
 const float TWOPI = PI*2.0f;
 const float MIDI_NORM = 1.0f/127.0f;
@@ -97,20 +77,6 @@ const float DIV_PI = 1.0f/PI;
 const float DIV_TWOPI = 1.0f/TWOPI;
 #define FORMAT_LITTLEFS_IF_FAILED true
 
-/*
- * TR 808 programs
-  1 - Bass Drum 
-  2 - Snare Drum 
-  3 - Low Tom/Low Conga
-  4 - Mid Tom/Mid Conga 
-  5 - Hi Tom/Hi Conga 
-  6 - Rim Shot/Claves
-  7 - hand ClaP/MAracas
-  8 - Cow Bell
-  9 - CYmbal
-  10 - Open Hihat
-  11 - Closed Hihat
-*/
 #define GROUP_HATS  // if so, instruments 06 and 07 will terminate each other (sampler module)
 #define OH_NUMBER   // open hat instrument number in kit (for groupping)
 #define CH_NUMBER   // closed hat instrument number in kit (for groupping)
@@ -119,7 +85,7 @@ const float DIV_TWOPI = 1.0f/TWOPI;
   #define DEFAULT_DRUMKIT 4           // /data/4/ folder
   #define SAMPLECNT       8           // how many samples we prepare (here just 8)
 #else
-  #define PRELOAD_ALL                 // allows operating all the samples in realtime
+//  #define PRELOAD_ALL                 // allows operating all the samples in realtime
   #define PSRAM_SAMPLER_CACHE 3145728 // bytes, we are going to preload ALL the samples from FLASH to PSRAM
                                       // we divide samples by octaves to use modifiers to particular instruments, not just note numbers
                                       // i.e. we know that all the "C" notes in all octaves are bass drums, and CC_808_BD_TONE affects all BD's
@@ -154,7 +120,9 @@ const float DIV_TWOPI = 1.0f/TWOPI;
       #define DEBUG(...)
 #endif
 
- float cutoff_reso[16][16] = {
+// normalizing matrices for TB filter and distortion/overdrive pairs
+
+float cutoff_reso[16][16] = {
 {4.8385, 4.88747, 4.92047, 4.76436, 4.8962, 5.01568, 4.98983, 5.01559, 5.10654, 5.03281, 5.01903, 4.95362, 4.81538, 4.8074, 4.74791, 4.54329},
 {3.87221, 3.90254, 3.82171, 3.75677, 3.7406, 3.67065, 3.69104, 3.56865, 3.54271, 3.67638, 3.65262, 3.57059, 3.58953, 3.51315, 3.45127, 3.37038},
 {3.1284, 3.14124, 3.14524, 3.09576, 3.02473, 3.06767, 3.04812, 3.06489, 3.0655, 2.99194, 2.95566, 2.83795, 2.68933, 2.75138, 2.64402, 2.47201},

@@ -121,6 +121,7 @@
 
 #endif
 /*
+ * TODO: rearrange samples according to 
  * TR 808 programs
   1 - Bass Drum 
   2 - Snare Drum 
