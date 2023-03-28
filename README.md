@@ -110,4 +110,6 @@ For the time being the following list of MIDI continious controllers is availabl
 * Open303 project https://sourceforge.net/projects/open303/, https://www.kvraudio.com/forum/viewtopic.php?t=262829 -- guys have done a lot of research, their filters combination is now the default one.
 
 <img src="https://github.com/copych/AcidBox/blob/main/media/2022-12-13%2015-44-53.JPG" width=100% > ESP32 proto
+
+
 <img src="https://github.com/copych/AcidBox/blob/main/hardware/2023-03-28%20at%2009.19.49.jpeg" width=100% > ESP32s3 proto
