@@ -26,6 +26,7 @@ In ArduinoIDE (I've used v.1.8.20) select:
 * PSRAM: enabled (or the type of your PSRAM)
 
 Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
+If you don't upload samples, the app will use the default drum kit from the samples.h
 
 # What if you only have WROOM module (no PSRAM)
 You can still compile and run the app, with NO_PSRAM option (line 11 in config.h). Note, that in this case you will get NO REVERB and just ONE SMALL DRUM KIT. 
