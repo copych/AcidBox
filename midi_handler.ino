@@ -64,7 +64,9 @@ inline void handleCC(uint8_t inChannel, uint8_t cc_number, uint8_t cc_value) {
     case CC_ANY_NOTES_OFF:
     case CC_ANY_SOUND_OFF:
         if (inChannel == 1 && millis()-last_reset>1000 ) {
+#ifdef JUKEBOX
           do_midi_stop();
+#endif
           Synth1.allNotesOff();
           Synth2.allNotesOff();
           last_reset = millis();
