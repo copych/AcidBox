@@ -69,11 +69,13 @@ static float midi_phase_steps[128];
 static float midi_tbl_steps[128];
 static float exp_square_tbl[TABLE_SIZE+1];
 //static float square_tbl[TABLE_SIZE+1];
-//static float saw_tbl[TABLE_SIZE+1];
+static float saw_tbl[TABLE_SIZE+1];
 static float exp_tbl[TABLE_SIZE+1];
 static float knob_tbl[TABLE_SIZE+1]; // exp-like curve
 static float tanh_tbl[TABLE_SIZE+1];
 static float sin_tbl[TABLE_SIZE+1];
+static float norm1_tbl[16][16]; // cutoff-reso pair gain compensation
+static float norm2_tbl[16][16]; // wavefolder-overdrive gain compensation
 static uint32_t last_reset = 0;
 static float param[POT_NUM];
 //static float (*tables[])[TABLE_SIZE+1] = {&exp_square_tbl, &square_tbl, &saw_tbl, &exp_tbl};
@@ -144,21 +146,106 @@ void IRAM_ATTR onTimer2() {
 }
 
 
+
+/* 
+ * Core Tasks ************************************************************************************************************************
+*/
+// forward declaration
+static void IRAM_ATTR mixer() ;
+// Core0 task 
+// static void audio_task1(void *userData) {
+static void IRAM_ATTR audio_task1(void *userData) {
+  
+  while (true) {
+    taskYIELD(); 
+    if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
+      c0t = micros();
+      
+//      taskYIELD(); 
+      
+      current_gen_buf = current_out_buf;      // swap buffers
+      current_out_buf = 1 - current_gen_buf;
+      
+      xTaskNotifyGive(SynthTask2);            // if we are here, then we've already received a notification from task2
+      
+      s1t = micros();
+      synth1_generate();
+      s1T = micros() - s1t;
+      
+  //    taskYIELD(); 
+
+      drt = micros();
+      drums_generate();
+      drT = micros() - drt;
+
+    }
+    
+   // taskYIELD();
+
+    taskYIELD();
+
+    c0T = micros() - c0t;
+  }
+}
+
+// task for Core1, which tipically runs user's code on ESP32
+// static void IRAM_ATTR audio_task2(void *userData) {
+static void IRAM_ATTR audio_task2(void *userData) {
+  while (true) {
+    taskYIELD();
+    
+    if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // wait for the notification from the SynthTask1
+      c1t = micros();
+      fxt = micros();
+      mixer(); 
+      i2s_output();
+      fxT = micros() - fxt;
+      
+      taskYIELD();
+    
+      s2t = micros();
+      synth2_generate();
+      s2T = micros() - s2t;
+      
+      xTaskNotifyGive(SynthTask1); 
+    }    
+    
+    c1T = micros() - c1t;
+
+    art = micros();
+    
+    if (timer2_fired) {
+      timer2_fired = false;
+      // readPots();
+#ifdef DEBUG_TIMING
+        DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
+        //    DEBF ("TaskCore0=%dus TaskCore1=%dus DMA_BUF=%dus\r\n" , c0T , c1T , DMA_BUF_TIME);
+        //    DEBF ("AllTheRestCore1=%dus\r\n" , arT);
+#endif
+    }    
+    
+//    taskYIELD();
+    arT = micros() - art;
+  }
+}
+
+
 /* 
  *  Quite an ordinary SETUP() *******************************************************************************************************************************
 */
 
 void setup(void) {
 
-  btStop(); // we don't want bluetooth to consume our precious cpu time 
-
-  MidiInit(); // init midi input and handling of midi events
-
 #ifdef DEBUG_ON
 #ifndef MIDI_VIA_SERIAL
   Serial.begin(115200);
 #endif
 #endif
+
+  btStop(); // we don't want bluetooth to consume our precious cpu time 
+
+  MidiInit(); // init midi input and handling of midi events
+
   /*
     for (int i = 0; i < GPIO_BUTTONS; i++) {
     pinMode(buttonGPIOs[i], INPUT_PULLDOWN);
@@ -198,12 +285,12 @@ void setup(void) {
 
   //xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask1, 0 );
   //xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask2, 1 );
- xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 10000, NULL, 1, &SynthTask1, 0 );
- xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 10000, NULL, 1, &SynthTask2, 1 );
+  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 5000, NULL, 1, &SynthTask1, 0 );
+  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 5000, NULL, 1, &SynthTask2, 1 );
 
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
-//  xTaskNotifyGive(SynthTask2);
+  //  xTaskNotifyGive(SynthTask2);
   processing = true;
 
   // timer interrupt
@@ -212,7 +299,7 @@ void setup(void) {
   timerAttachInterrupt(timer1, &onTimer1, true);  // Attach callback
   timerAlarmWrite(timer1, 4000, true);            // 4000us, autoreload
   timerAlarmEnable(timer1);
-*/
+  */
   timer2 = timerBegin(1, 80, true);               // Setup general purpose timer
   timerAttachInterrupt(timer2, &onTimer2, true);  // Attach callback
   timerAlarmWrite(timer2, 200000, true);          // 200ms, autoreload
@@ -230,100 +317,13 @@ void loop() { // default loopTask running on the Core1
   // or   vTaskDelete(NULL);
   
   // processButtons();
-
-  regular_checks();
-    
+  regular_checks();    
   taskYIELD(); // this can wait
-}
-
-/* 
- * Core Tasks ************************************************************************************************************************
-*/
-
-// Core0 task
-static void audio_task1(void *userData) {
-  
-  while (true) {
-    taskYIELD(); 
-    if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
-      c0t = micros();
-      
-//      taskYIELD(); 
-      
-      current_gen_buf = current_out_buf;      // swap buffers
-      current_out_buf = 1 - current_gen_buf;
-      
-      xTaskNotifyGive(SynthTask2);            // if we are here, then we've already received a notification from task2
-      
-      s1t = micros();
-      synth1_generate();
-      s1T = micros() - s1t;
-      
-  //    taskYIELD(); 
-
-
-      drt = micros();
-      drums_generate();
-      drT = micros() - drt;
-
-    }
-    
-   // taskYIELD();
-
-
-    taskYIELD();
-
-    c0T = micros() - c0t;
-  }
-}
-
-// task for Core1, which tipically runs user's code on ESP32
-static void audio_task2(void *userData) {
-  while (true) {
-    taskYIELD();
-    
-    if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
-      c1t = micros();
-      
-      fxt = micros();
-      mixer(); 
-      i2s_output();
-      fxT = micros() - fxt;
-      
-      taskYIELD();
-    
-      s2t = micros();
-      synth2_generate();
-      s2T = micros() - s2t;
-      
-      xTaskNotifyGive(SynthTask1); 
-    }    
-    
-    c1T = micros() - c1t;
-
-    art = micros();
-    
-    if (timer2_fired) {
-      timer2_fired = false;
-      //readPots();
-#ifdef DEBUG_TIMING
-      DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
-  //    DEBF ("TaskCore0=%dus TaskCore1=%dus DMA_BUF=%dus\r\n" , c0T , c1T , DMA_BUF_TIME);
-  //    DEBF ("AllTheRestCore1=%dus\r\n" , arT);
-#endif
-    }    
-    
-//    taskYIELD();
-    arT = micros() - art;
-  }
 }
 
 /* 
  *  Some debug and service routines *****************************************************************************************************************************
 */
-
-
-
 
 void readPots() {
   static const float snap = 0.008f;

@@ -16,7 +16,7 @@ static void synth2_generate() {
     } 
 }
 
-static void mixer() { // sum buffers 
+static void IRAM_ATTR mixer() { // sum buffers 
 #ifdef DEBUG_MASTER_OUT
   static float meter = 0.0f;
 #endif
@@ -85,8 +85,8 @@ inline void i2s_output () {
     i2s_write(i2s_num, out_buf[current_out_buf]._unsigned, sizeof(out_buf[current_out_buf]._unsigned), &bytes_written, portMAX_DELAY);
   #else
     for (int i=0; i < DMA_BUF_LEN; i++) {      
-      out_buf[current_out_buf]._signed[i*2] = 0x7fff * (float)(fast_tanh( mix_buf_l[current_out_buf][i])) ; 
-      out_buf[current_out_buf]._signed[i*2+1] = 0x7fff * (float)(fast_tanh( mix_buf_r[current_out_buf][i])) ;
+      out_buf[current_out_buf]._signed[i*2] = 0x7fff * (float)(( mix_buf_l[current_out_buf][i])) ; 
+      out_buf[current_out_buf]._signed[i*2+1] = 0x7fff * (float)(( mix_buf_r[current_out_buf][i])) ;
     }
     i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
   #endif

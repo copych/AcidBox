@@ -14,17 +14,18 @@
  *
  */
 #ifdef NO_PSRAM 
-#define REV_MULTIPLIER 1
+#define REV_MULTIPLIER 0.35f
 #else
-#define REV_MULTIPLIER 2
+#define REV_MULTIPLIER 0.8f
 #endif
-#define l_CB0 3620*REV_MULTIPLIER
-#define l_CB1 1311*REV_MULTIPLIER
-#define l_CB2 882*REV_MULTIPLIER
-#define l_CB3 312*REV_MULTIPLIER
-#define l_AP0 445*REV_MULTIPLIER
-#define l_AP1 161*REV_MULTIPLIER
-#define l_AP2 46*REV_MULTIPLIER
+
+#define l_CB0 (int)( 3604 * REV_MULTIPLIER)
+#define l_CB1 (int)( 3112 * REV_MULTIPLIER)
+#define l_CB2 (int)( 4044 * REV_MULTIPLIER)
+#define l_CB3 (int)( 4492 * REV_MULTIPLIER)
+#define l_AP0 (int)( 500 * REV_MULTIPLIER)
+#define l_AP1 (int)( 168 * REV_MULTIPLIER)
+#define l_AP2 (int)( 48 * REV_MULTIPLIER)
 
 #define STATIC_REV_BUFFER
 
