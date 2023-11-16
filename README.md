@@ -8,7 +8,6 @@ If you compile with #define JUKEBOX option in config.h, this becomes a stand-alo
 A modified version of http://tips.ibawizard.net/acid-banger/, initially taken from https://github.com/vitling/acid-banger included, there's no AI, but randomizing pattern algorithms.
 
 # Video
-[YouTube video](https://youtu.be/mhCWuZB_Tos)
 [![Video](https://img.youtube.com/vi/mhCWuZB_Tos/maxresdefault.jpg)]
 (https://www.youtube.com/watch?v=mhCWuZB_Tos)
 
