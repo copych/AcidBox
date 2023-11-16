@@ -9,6 +9,9 @@ A modified version of http://tips.ibawizard.net/acid-banger/, initially taken fr
 
 # Video
 [YouTube video](https://youtu.be/mhCWuZB_Tos)
+[![Video]
+(https://img.youtube.com/vi/mhCWuZB_Tos/maxresdefault.jpg)]
+(https://www.youtube.com/watch?v=mhCWuZB_Tos)
 
 # MP3 Sound samples
 [demo4.mp3](https://github.com/copych/AcidBox/blob/main/media/acidjukebox4.mp3?raw=true) fully automated breaks and fills.
