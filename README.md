@@ -9,8 +9,7 @@ A modified version of http://tips.ibawizard.net/acid-banger/, initially taken fr
 
 # Video
 [YouTube video](https://youtu.be/mhCWuZB_Tos)
-[![Video]
-(https://img.youtube.com/vi/mhCWuZB_Tos/maxresdefault.jpg)]
+[![Video](https://img.youtube.com/vi/mhCWuZB_Tos/maxresdefault.jpg)]
 (https://www.youtube.com/watch?v=mhCWuZB_Tos)
 
 # MP3 Sound samples
