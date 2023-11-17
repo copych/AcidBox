@@ -21,8 +21,15 @@ float knob_fill(uint16_t i) { // f(x) = (exp(k*x)-1)/b, 0 <= x <= 1, 0 <= f(x) <
   return res;
 }
 
-float tanh_fill(uint16_t i) {
-  float res = tanh( (float)i * TANH_LOOKUP_MAX * (float)DIV_TABLE_SIZE); // 0.0 -- 5.0 argument
+float shaper_fill(uint16_t i) {
+  float x = (float)i * SHAPER_LOOKUP_MAX * (float)DIV_TABLE_SIZE; // argument belongs [ 0 .. 5 ]
+#ifdef SHAPER_USE_TANH
+  float res = tanh( x ); 
+#endif
+#ifdef SHAPER_USE_CUBIC
+  x = fclamp(x, -1.4142, 1.4142);
+  float res = x - (x * x * x / 6.8283);
+#endif
   return res;
 }
 
@@ -56,7 +63,7 @@ void buildTables() {
 
   for (int i = 0; i <= TABLE_SIZE; i++) {
     exp_square_tbl[i] = expSquare_fill(i);
-    tanh_tbl[i] = tanh_fill(i); 
+    shaper_tbl[i] = shaper_fill(i); 
     knob_tbl[i] = knob_fill(i);
 	  sin_tbl[i]  = sin_fill(i);
   //  saw_tbl[i] = 1.0f - 2.0f * (float)i * (float)DIV_TABLE_SIZE;

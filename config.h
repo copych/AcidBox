@@ -1,16 +1,17 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v.1.2.19"
+#define VERSION         "v.1.3.0"
 
 
 
 #define JUKEBOX                 // real-time endless auto-compose acid tunes
-#define JUKEBOX_PLAY_ON_START // should it play on power on, or should it wait for "boot" button to be pressed
-
+#define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
+#define MIDI_RAMPS              // this is what makes automated Cutoff-Reso-FX turn
+#define TEST_POTS               // experimental interactivity with potentiometers connected to POT_PINS[] defined below
 
 //#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: NOISY 8BIT STEREO
 //#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB TO BE SACRIFICED, ONE SMALL DRUM KIT SAMPLES USED 
 
-//#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
+#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
 //#define DEBUG_SYNTH
@@ -46,7 +47,7 @@ float bpm = 130.0f;
 #ifdef USE_INTERNAL_DAC
 #define SAMPLE_RATE     22050   // price for increasing this value having NO_PSRAM is less delay time, you won't hear the difference at 8bit/sample
 #else
-#define SAMPLE_RATE     44100   // 44100 seems to be the right value, 48000 is also OK. Other values are not tested.
+#define SAMPLE_RATE     44100   // 44100 seems to be the right value, 48000 is also OK. Other values haven't been tested.
 #endif
 
 const float DIV_SAMPLE_RATE = 1.0f / (float)SAMPLE_RATE;
@@ -55,16 +56,21 @@ const float DIV_2SAMPLE_RATE = 0.5f / (float)SAMPLE_RATE;
 #define TABLE_BIT  		        10UL				// bits per index of lookup tables for waveforms, exp(), sin(), cos() etc. 10 bit means 2^10 = 1024 samples
 #define TABLE_SIZE            (1<<TABLE_BIT)        // samples used for lookup tables (it works pretty well down to 32 samples due to linear approximation, so listen and free some memory at your choice)
 #define TABLE_MASK  	        (TABLE_SIZE-1)        // strip MSB's and remain within our desired range of TABLE_SIZE
-#define CICLE_INDEX(i)        (((int32_t)(i)) & TABLE_MASK ) // this way we can operate with periodic functions or waveforms without phase-reset ("if's" are time-consuming)
+#define CICLE_INDEX(i)        (((int32_t)(i)) & TABLE_MASK ) // this way we can operate with periodic functions or waveforms without phase-reset ("if's" are pretty costly in the matter of time)
 
 const float DIV_TABLE_SIZE =  1.0f / (float)TABLE_SIZE;
 
-#define TANH_LOOKUP_MAX 5.0f        // maximum X argument value for tanh(X) lookup table, tanh(X)~=1 if X>4 
-const float TANH_LOOKUP_COEF = (float)TABLE_SIZE / TANH_LOOKUP_MAX;
+// illinear shaper, choose preferred parameters basing on your audial experience
+//#define SHAPER_USE_TANH             // use tanh() function to introduce illeniarity into the filter and compressor, it won't impact performance as this will be pre-calculated 
+#define SHAPER_USE_CUBIC              // use the cubic curve to introduce illeniarity into the filter and compressor, it won't impact performance as this will be pre-calculated
+
+// curve will be pre-calculated within -X..X range, outside this interval the function is assumed to be flat
+#define SHAPER_LOOKUP_MAX 5.0f        // maximum X argument value for tanh(X) lookup table, tanh(X)~=1 if X>4 
+const float SHAPER_LOOKUP_COEF = (float)TABLE_SIZE / SHAPER_LOOKUP_MAX;
 #define DMA_BUF_LEN     32          // there should be no problems with low values, down to 32 samples, 64 seems to be OK with some extra
 #define DMA_NUM_BUF     2           // I see no reasom to set more than 2 DMA buffers, but...
 
-const uint32_t DMA_BUF_TIME = (uint32_t)(1000000.0f / (float)SAMPLE_RATE * (float)DMA_BUF_LEN); // microseconds per buffer, used for debugging of time-slots
+const uint32_t DMA_BUF_TIME = (uint32_t)(1000000.0f / (float)SAMPLE_RATE * (float)DMA_BUF_LEN); // microseconds per buffer, used for debugging output of time-slots
 
 #define SYNTH1_MIDI_CHAN        1
 #define SYNTH2_MIDI_CHAN        2
@@ -73,13 +79,13 @@ const uint32_t DMA_BUF_TIME = (uint32_t)(1000000.0f / (float)SAMPLE_RATE * (floa
 
 const float TWOPI = PI*2.0f;
 const float MIDI_NORM = 1.0f/127.0f;
-const float DIV_PI = 1.0f/PI;
-const float DIV_TWOPI = 1.0f/TWOPI;
+const float ONE_DIV_PI = 1.0f/PI;
+const float ONE_DIV_TWOPI = 1.0f/TWOPI;
 #define FORMAT_LITTLEFS_IF_FAILED true
 
-#define GROUP_HATS  // if so, instruments 06 and 07 will terminate each other (sampler module)
-#define CH_NUMBER  6 // closed hat instrument number in kit (for groupping)
-#define OH_NUMBER  7 // open hat instrument number in kit (for groupping)
+#define GROUP_HATS  // if so, instruments CH_NUMBER and OH_NUMBER will terminate each other (sampler module)
+#define CH_NUMBER  6 // closed hat instrument number in kit (for groupping, zero-based)
+#define OH_NUMBER  7 // open hat instrument number in kit (for groupping, zero-based)
 
 #ifdef NO_PSRAM
   #define RAM_SAMPLER_CACHE  40000    // bytes, compact sample set is 132kB, first 8 samples is ~38kB

@@ -1,7 +1,8 @@
 #ifndef rosic_TeeBeeFilter_h
 #define rosic_TeeBeeFilter_h
 
-#define ONE_OVER_SQRT2 0.70710678118654752440084436210485f
+#define SQRT2 1.4142135623730950488016887242097f
+#define ONE_DIV_SQRT2 0.70710678118654752440084436210485f
 
 #include "rosic_OnePoleFilter.h"
 

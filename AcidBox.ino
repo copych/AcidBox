@@ -72,7 +72,7 @@ static float exp_square_tbl[TABLE_SIZE+1];
 static float saw_tbl[TABLE_SIZE+1];
 static float exp_tbl[TABLE_SIZE+1];
 static float knob_tbl[TABLE_SIZE+1]; // exp-like curve
-static float tanh_tbl[TABLE_SIZE+1];
+static float shaper_tbl[TABLE_SIZE+1]; // illinear tanh()-like curve
 static float sin_tbl[TABLE_SIZE+1];
 static float norm1_tbl[16][16]; // cutoff-reso pair gain compensation
 static float norm2_tbl[16][16]; // wavefolder-overdrive gain compensation
@@ -216,7 +216,11 @@ static void IRAM_ATTR audio_task2(void *userData) {
     
     if (timer2_fired) {
       timer2_fired = false;
-      // readPots();
+
+#ifdef TEST_POTS      
+       readPots();
+#endif
+       
 #ifdef DEBUG_TIMING
         DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
         //    DEBF ("TaskCore0=%dus TaskCore1=%dus DMA_BUF=%dus\r\n" , c0T , c1T , DMA_BUF_TIME);
@@ -326,7 +330,7 @@ void loop() { // default loopTask running on the Core1
 */
 
 void readPots() {
-  static const float snap = 0.008f;
+  static const float snap = 0.003f;
   static uint8_t i = 0;
   static float tmp;
   static const float NORMALIZE_ADC = 1.0f / 4096.0f;
@@ -343,18 +347,19 @@ void readPots() {
 
 void paramChange(uint8_t paramNum, float paramVal) {
   // paramVal === param[paramNum];
-
- // DEBF ("param %d val %0.4f\r\n" , paramNum, paramVal);
+  DEBF ("param %d val %0.4f\r\n" , paramNum, paramVal);
+  paramVal *= 127.0;
   switch (paramNum) {
     case 0:
       //set_bpm( 40.0f + (paramVal * 160.0f));
-      Synth1.SetCutoff(paramVal);
+      Synth2.ParseCC(CC_303_CUTOFF, paramVal);
       break;
     case 1:
-      Synth1.SetReso(paramVal);
+      Synth2.ParseCC(CC_303_RESO, paramVal);
       break;
     case 2:
-      Synth1.SetOverdriveLevel(paramVal);
+      Synth2.ParseCC(CC_303_OVERDRIVE, paramVal);
+      Synth2.ParseCC(CC_303_DISTORTION, paramVal);
       break;
     default:
       {}

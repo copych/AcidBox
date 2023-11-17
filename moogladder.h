@@ -8,7 +8,7 @@ Ported from soundpipe
 
 Original author(s) : Victor Lazzarini, John ffitch (fast tanh), Bob Moog
 
-fast_tanh() is now a hybrid linear/table-lookup function to speed up calculations (by copych)
+fast_shape() is now a hybrid linear/table-lookup function to speed up calculations (by copych)
 */
 class MoogLadder
 {

@@ -77,17 +77,18 @@ inline float SynthVoice::getSample() {
     final_cut = filtDeclicker.getSample( final_cut );
     Filter.SetCutoff( final_cut );
 
-    samp = highpass1.getSample(samp);         // pre-filter highpass
+    samp = highpass1.getSample(samp);         // pre-filter highpass, following open303
     samp = Filter.Process(samp);              // main filter
-    samp = allpass.getSample(samp);           // phase correction
-    samp = highpass2.getSample(samp);         // post-filtering
-    samp = notch.getSample(samp);             // post-filtering
+    samp = allpass.getSample(samp);           // phase correction, following open303
+    samp = highpass2.getSample(samp);         // post-filtering, following open303
+    samp = notch.getSample(samp);             // post-filtering, following open303
     samp *= ampEnv;                           // amp envelope
 
     samp = Drive.Process(samp);               // overdrive
     samp = Wfolder.Process(samp);             // distortion
 
-    _compens = ampDeclicker.getSample(_volume * _fx_compens * _flt_compens * 16.0f);
+    _compens = _volume * _fx_compens * _flt_compens * 16.0f;
+    _compens = ampDeclicker.getSample(_compens);
     samp *=  _compens;
 
     if ((_slide || _portamento) && _deltaStep != 0.0f) {     // portamento / slide processing
@@ -128,7 +129,7 @@ inline float SynthVoice::getSample() {
     }*/
 
     
-    //synth_buf[_index][i] = fast_tanh(samp); // mono limitter
+    //synth_buf[_index][i] = fast_shape(samp); // mono limitter
     return  samp;
   
 }

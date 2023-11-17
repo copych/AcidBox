@@ -196,7 +196,7 @@ inline void TeeBeeFilter::calculateCoefficientsApprox4()
 
   if ( mode == TB_303 )
   {
-    float fx = wc * ONE_OVER_SQRT2 * DIV_TWOPI;
+    float fx = wc * ONE_DIV_SQRT2 * ONE_DIV_TWOPI;
     b0 = (0.00045522346f + 6.1922189f * fx) * one_div(1.0f + 12.358354f * fx + 4.4156345f * (fx * fx));
     k  = fx * (fx * (fx * (fx * (fx * (fx + 7198.6997f) - 5837.7917f) - 476.47308f) + 614.95611f) + 213.87126f) + 16.998792f;
     g  = k * 0.05882352f; // 17 reciprocal
@@ -258,7 +258,7 @@ inline float TeeBeeFilter::Process(float in)
   
   ret_val = (20.0f * (c0 * y0 + c1 * y1 + c2 * y2 + c3 * y3 + c4 * y4 )) ;
   // bias = 0.0005f * ret_val + 0.9995f * bias ;
-  return fast_tanh((ret_val - bias) );// * compens ;
+  return fast_shape((ret_val - bias) );// * compens ;
 }
 
 inline void TeeBeeFilter::sinCos(float x, float* sinResult, float* cosResult)
@@ -288,7 +288,7 @@ inline float TeeBeeFilter::shape(float x)
   //  return x - r6*x*x*x;
 
     //return clip(x, -1.0, 1.0);
-    return fast_tanh(x);
+    return fast_shape(x);
   }
 
 

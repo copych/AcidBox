@@ -3,9 +3,6 @@
 // Author: shensley, AvAars
 //
 
-//#include <math.h>
-//#include <stdlib.h>
-//#include <stdint.h>
 #include "compressor.h"
 
 
@@ -27,9 +24,9 @@ void Compressor::Init(float sample_rate)
 
     SetRatio(12.0f);
     SetAttack(0.05f);
-    SetRelease(0.1f);
+    SetRelease(0.3f);
     SetThreshold(-20.0f);
-    AutoMakeup(false);
+    AutoMakeup(true);
 
     gain_rec_  = 0.1f;
     slope_rec_ = 0.1f;
@@ -42,7 +39,7 @@ float Compressor::Process(float in)
     slope_rec_    = ((slope_rec_ * cur_slo) + ((1.0f - cur_slo) * inAbs));
     gain_rec_     = ((atk_slo2_ * gain_rec_)
                  + (ratio_mul_
-                    * fmax(((20.f * fastlog10f(slope_rec_)) - thresh_), 0.f)));
+                    * fmax(((20.f * fastlog10f(slope_rec_)) - thresh_), 0.0f)));
     gain_         = pow10f(0.05f * (gain_rec_ + makeup_gain_));
 
     return gain_ * in;

@@ -46,9 +46,9 @@
 
 #define KICK_NOTE               0 //001
 #define SNARE_NOTE              1 //002
-#define CLOSED_HAT_NOTE         6 //007
-#define OPEN_HAT_NOTE           7 //008
-#define PERCUSSION_NOTE         4 //005
+#define CLOSED_HAT_NOTE         CH_NUMBER //007
+#define OPEN_HAT_NOTE           OH_NUMBER //008
+#define PERCUSSION_NOTE         11 //005
 #define CRASH_NOTE              9 //010
 
 // Pin numbers to which are buttons attached (connect one side of button to pin, the other to ground)
@@ -72,11 +72,16 @@
 #ifndef NO_PSRAM
   #define NUM_SYNTH_CCS 12    // how many synth CC params do we have to play
   #define NUM_DRUM_CCS  7     // how many drum CC params do we have to play
-  #define VOL_SYNTH     80
+  #define VOL_SYNTH1     100
+  #define VOL_SYNTH2     100
+  #define VOL_DRUMS     100
 #else
   #define NUM_SYNTH_CCS 11    // how many synth CC params do we have to play
   #define NUM_DRUM_CCS  5     // how many drum CC params do we have to play
-  #define VOL_SYNTH     60
+  #define VOL_SYNTH1     100
+  #define VOL_SYNTH2     100
+  #define VOL_DRUMS     100
+
 #endif
 
 uint8_t current_drumkit = (DEFAULT_DRUMKIT*12); // offset for drum note numbers (instruments are groupped by 12)
@@ -327,8 +332,16 @@ static inline uint16_t lfsr16_next(uint16_t x)
   return y;
 }
 
-//static uint16_t myRandomState = 0x1234;
-static uint16_t myRandomState = (uint16_t)(random(0, 0xffff));
+union seeder_t {
+  double dseed= 0.9876543021203450678091203456/random(3,0xffff);
+  struct{
+    uint8_t x;
+    uint16_t useed ;
+
+  };
+} seeder ;
+//static uint16_t myRandomState = 0x1234; 
+static uint16_t myRandomState = seeder.useed ;
 
 static uint16_t myRandomAddEntropy(uint16_t data) {
   myRandomState = lfsr16_next((myRandomState << 1) ^ data);
@@ -425,7 +438,9 @@ static void instr_noteon(byte instr, byte value, byte do_glide, byte do_accent) 
 */
 
 void sequencer_step(byte step) {
+#ifdef MIDI_RAMPS
   do_midi_ramps();
+#endif
 #ifdef DEBUG_JUKEBOX_
   DEBF("midi step %d\r\n", step);
 #endif
@@ -455,7 +470,9 @@ void sequencer_step(byte step) {
 #ifdef DEBUG_JUKEBOX
     DEBUG("CRASH!!!!!!!!!!!!!!!!!!!!!");
 #endif
+#ifdef MIDI_RAMPS
     check_midi_ramps(true);
+#endif
   }
   if (step % 4 == 0 || step == 1) {
     digitalWrite(LED_BUILTIN, HIGH);
@@ -556,7 +573,7 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
   switch (drum_kind) {
     case DrumBreak:
       rndVal = myRandom(100);
-      if (rndVal < 30) {
+      if (rndVal < 10) {
         kick_mode = KickBigbeat;
       } else if (rndVal < 60) {
         kick_mode = KickFourFloor;
@@ -578,7 +595,7 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
       break;
     case DrumStraight:
       rndVal = myRandom(100);
-      if (rndVal < 30) {
+      if (rndVal < 20) {
         kick_mode = KickBigbeat;
       } else {
         kick_mode = KickFourFloor;
@@ -667,18 +684,19 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
     for (int i = 0; i < PatternLength; i++) {
       switch (i) {
         case 2:
-        case 6:
         case 8:
-        case 10:
           break;
         case 4:
+        case 5:
+        case 6:
+        case 10:
           snare[i] = myRandom(100);
           break;
         default:
           snare[i] = 120;
       }
     }
-  } else if (snare_mode == SnareSkip) {
+  }  else if (snare_mode == SnareSkip) {
     for (int i = 0; i < PatternLength; i++) {
       if (i % 8 == 3 || i % 8 == 6)
         snare[i] = 90 + myRandom(37);
@@ -943,7 +961,7 @@ static void decide_on_break() {
     if (Break.after == bar_current) {
       Break.status = sIdle;
       mem_generate_drums(cur_memory, DrumStraight);
-      if (flip(30)) mem_generate_drums(cur_memory, DrumHang);
+      if (flip(10)) mem_generate_drums(cur_memory, DrumHang);
       if (flip(80)) mem_generate_melody_and_seed(cur_memory, 0);
       if (flip(60)) mem_generate_melody_and_seed(cur_memory, 1);
       if (flip(15)) mem_generate_note_set(cur_memory);
@@ -973,9 +991,9 @@ static void do_midi_start() {
   send_midi_control(SYNTH1_MIDI_CHAN, 91, 5);  // reverb send
   send_midi_control(SYNTH2_MIDI_CHAN, 91, 5);  // reverb send
   send_midi_control(DRUM_MIDI_CHAN,   91, 4);  // reverb send
-  send_midi_control(SYNTH1_MIDI_CHAN, 7, VOL_SYNTH);
-  send_midi_control(SYNTH2_MIDI_CHAN, 7, VOL_SYNTH);
-  send_midi_control(DRUM_MIDI_CHAN,   7, 127);
+  send_midi_control(SYNTH1_MIDI_CHAN, 7, VOL_SYNTH1);
+  send_midi_control(SYNTH2_MIDI_CHAN, 7, VOL_SYNTH2);
+  send_midi_control(DRUM_MIDI_CHAN,   7, VOL_DRUMS);
   send_midi_control(DRUM_MIDI_CHAN,   87, 127); // reverb time
   send_midi_control(SYNTH1_MIDI_CHAN, 94, 3);  // post-overdrive
   send_midi_control(SYNTH2_MIDI_CHAN, 94, 2);  // post-overdrive

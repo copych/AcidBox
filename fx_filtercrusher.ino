@@ -82,7 +82,7 @@ inline void FxFilterCrusher::Filter_CalculateTP(float c, float one_div_2_reso, s
     omega = c;
   }
 
-  // omega = fast_tanh(4.0f * c - 2.0f) * 0.5f + 0.5f; // it's smooth and sounds badly
+  // omega = fast_shape(4.0f * c - 2.0f) * 0.5f + 0.5f; // it's smooth and sounds badly
   
   // use lookup here to get quicker results
   /*
@@ -127,7 +127,7 @@ inline void FxFilterCrusher::Filter_CalculateHP(float c, float one_div_2_reso, s
     omega = c;
   }
 
-  //omega = fast_tanh(4.0f * c - 2.0f) * 0.5f + 0.5f;
+  //omega = fast_shape(4.0f * c - 2.0f) * 0.5f + 0.5f;
   // use lookup here to get quicker results
 /*
   cosOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega + (float)((1ULL << 30) - 1)))];
