@@ -18,7 +18,7 @@ A modified version of http://tips.ibawizard.net/acid-banger/, initially taken fr
 # To build the thing
 Ideally, you need an ESP32 or ESP32S3 with at least 4MB PSRAM (for example, ESP32 WROVER module). Also an external DAC, like PCM5102 is highly preferrable. 
 
-<b>ATTENTION! PSRAM handling requires up-to-date Arduino ESP32 core. Of what I have tested, versions 2.0.6 and 2.0.7 are working with both ESP32 and ESP32S3, while 2.0.0 is not working</b>
+<b>ATTENTION! PSRAM handling requires up-to-date Arduino ESP32 core. Of what I have tested, versions 2.0.6 up to current 2.0.14 are working with both ESP32 and ESP32S3, while 2.0.0 is not working</b>
 
 In ArduinoIDE (I've used v.1.8.20) select: 
 * board: ESP32 Dev Module (or ESP32S3 Dev Module if you use S3)
