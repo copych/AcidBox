@@ -52,10 +52,10 @@ Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do s
 # MIDI Control
 For the time being the following list of MIDI continious controllers is available:
 
-    #define CC_303_PORTATIME    5
-    #define CC_303_VOLUME       7
-    #define CC_303_PORTAMENTO   65
-    #define CC_303_PAN          10
+    #define CC_303_PORTATIME    5   // affects gliding time
+    #define CC_303_VOLUME       7   // mix volume
+    #define CC_303_PORTAMENTO   65  // gliding on/off
+    #define CC_303_PAN          10  // pano
     #define CC_303_WAVEFORM     70  // Blend between square and saw
     #define CC_303_RESO         71
     #define CC_303_CUTOFF       74
@@ -72,36 +72,36 @@ For the time being the following list of MIDI continious controllers is availabl
     #define CC_808_VOLUME       7
     #define CC_808_PAN          10
     #define CC_808_RESO         71
-    #define CC_808_CUTOFF       74
+    #define CC_808_CUTOFF       74  // Note that this filter's behaviour differs from the 303's, 64-127 means HP-, and 0-63 LP-filtering. 'Untouched' is at ~64.  
     #define CC_808_REVERB_SEND  91
     #define CC_808_DELAY_SEND   92
     #define CC_808_DISTORTION   94  // BitCrusher
-    #define CC_808_BD_TONE      21  // Specific per drum control
-    #define CC_808_BD_DECAY     23
-    #define CC_808_BD_LEVEL     24
-    #define CC_808_SD_TONE      25
-    #define CC_808_SD_SNAP      26
-    #define CC_808_SD_LEVEL     29
-    #define CC_808_CH_TUNE      61
-    #define CC_808_CH_LEVEL     63
-    #define CC_808_OH_TUNE      80
-    #define CC_808_OH_DECAY     81
-    #define CC_808_OH_LEVEL     82
+    #define CC_808_BD_TONE      21  // Bass Drum tone control
+    #define CC_808_BD_DECAY     23  // Bass Drum envelope decay
+    #define CC_808_BD_LEVEL     24  // Bass Drum mix level
+    #define CC_808_SD_TONE      25  // Snare Drum tone control
+    #define CC_808_SD_SNAP      26  // Snare Drum envelope decay
+    #define CC_808_SD_LEVEL     29  // Snare Drum mix level
+    #define CC_808_CH_TUNE      61  // Closed Hat tone control
+    #define CC_808_CH_LEVEL     63  // Closed Hat mix level
+    #define CC_808_OH_TUNE      80  // Open Hat tone control
+    #define CC_808_OH_DECAY     81  // Open Hat envelope decay
+    #define CC_808_OH_LEVEL     82  // Open Hat mix level
 
     // Global 
     #define CC_ANY_COMPRESSOR   93
-    #define CC_ANY_DELAY_TIME   84
-    #define CC_ANY_DELAY_FB     85
-    #define CC_ANY_DELAY_LVL    86
-    #define CC_ANY_REVERB_TIME  87
-    #define CC_ANY_REVERB_LVL   88
+    #define CC_ANY_DELAY_TIME   84  // delay time
+    #define CC_ANY_DELAY_FB     85  // delay feedback level
+    #define CC_ANY_DELAY_LVL    86  // delay mix level
+    #define CC_ANY_REVERB_TIME  87  // rebverb time
+    #define CC_ANY_REVERB_LVL   88  // reverb mix level
     #define CC_ANY_RESET_CCS    121
     #define CC_ANY_NOTES_OFF    123
     #define CC_ANY_SOUND_OFF    120
 
 # Functional diagram 
 <img src="https://github.com/copych/AcidBox/blob/main/media/2022-12-14_00-03-18.png" width=100%>
-("Acid Banger" JukeBox actually calls midi functions as an external app)
+("Acid Banger" JukeBox actually calls midi functions as an external app would do)
 
 # Thanks go to
 * Marcel Licence https://github.com/marcel-licence : synth and DSP related code (delay, bi-filter, bitcrusher initially were taken from here)
@@ -111,6 +111,7 @@ For the time being the following list of MIDI continious controllers is availabl
 * Dimitri Diakopoulos https://github.com/ddiakopoulos/MoogLadders : a collection of c++ implementations of Moogladder filters
 * Open303 project https://sourceforge.net/projects/open303/, https://www.kvraudio.com/forum/viewtopic.php?t=262829 -- guys have done a lot of research, their filters combination is now the default one.
 
+# 
 <img src="https://github.com/copych/AcidBox/blob/main/media/2022-12-13%2015-44-53.JPG" width=100% > ESP32 proto
 
 
