@@ -103,6 +103,10 @@ For the time being the following list of MIDI continious controllers is availabl
 <img src="https://github.com/copych/AcidBox/blob/main/media/2022-12-14_00-03-18.png" width=100%>
 ("Acid Banger" JukeBox actually calls midi functions as an external app would do)
 
+# Schematics and PCB
+[@streetuff](https://github.com/streetuff) has made such a great PCB and schematics! https://github.com/streetuff/AcidBox-PCB
+[![Schematics and PCB](https://github.com/streetuff/AcidBox-PCB/blob/main/3d-model.png)](https://github.com/streetuff/AcidBox-PCB)
+
 # Thanks go to
 * Marcel Licence https://github.com/marcel-licence : synth and DSP related code (delay, bi-filter, bitcrusher initially were taken from here)
 * Infrasonic Audio https://github.com/infrasonicaudio : i2s base code was initially taken from here
