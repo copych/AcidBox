@@ -295,13 +295,25 @@ static const byte button_pins[ButLast] = {
 
 
 static void send_midi_noteon(byte chan, byte note, byte vol) {
-  // MIDI.sendNoteOn(note, vol, chan);
+#ifdef MIDI_VIA_SERIAL  
+  MIDI.sendNoteOn(note, vol, chan);
+#endif
+#ifdef MIDI_VIA_SERIAL2  
+  MIDI2.sendNoteOn(note, vol, chan);
+#endif
   handleNoteOn( chan, note, vol) ;
 }
+
 static void send_midi_noteoff(byte chan, byte note) {
-  //MIDI.sendNoteOn(note, 0, chan);
+#ifdef MIDI_VIA_SERIAL  
+  MIDI.sendNoteOn(note, 0, chan);
+#endif
+#ifdef MIDI_VIA_SERIAL2  
+  MIDI2.sendNoteOn(note, 0, chan);
+#endif
   handleNoteOff( chan, note, 0) ;
 }
+
 static void init_midi() {
   //  Serial.begin(115200);
   //  MIDI.begin(MIDI_CHANNEL_OMNI);
@@ -476,11 +488,20 @@ void sequencer_step(byte step) {
   }
   if (step % 4 == 0 || step == 1) {
     digitalWrite(LED_BUILTIN, HIGH);
+    #ifdef LOLIN_RGB
+      pixels.setPixelColor(0, pixels.Color(rand() % 32, rand() % 32, rand() % 32));
+      pixels.show();
+    #endif
+
 #ifdef DEBUG_JUKEBOX
     DEBUG(step);
 #endif
   }  else {
     digitalWrite(LED_BUILTIN, LOW);
+    #ifdef LOLIN_RGB
+      pixels.setPixelColor(0, pixels.Color(0,0,0));
+      pixels.show();
+    #endif
   }
 }
 

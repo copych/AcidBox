@@ -36,6 +36,13 @@
 #include <MIDI.h>
 #endif
 
+#ifdef LOLIN_RGB
+  #include <Adafruit_NeoPixel.h>
+  #define LED 38
+  #define NUMPIXELS 1
+  Adafruit_NeoPixel pixels(NUMPIXELS, LED, NEO_GRB + NEO_KHZ800);
+#endif
+
 #ifdef MIDI_VIA_SERIAL
 // default settings for Hairless midi is 115200 8-N-1
 struct CustomBaudRateSettings : public MIDI_NAMESPACE::DefaultSerialSettings {
