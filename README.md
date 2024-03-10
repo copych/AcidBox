@@ -29,6 +29,9 @@ Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do s
 
 If you don't upload samples, the app will use the default drum kit from the samples.h
 
+# Dependencies
+* MIDI Library https://github.com/FortySevenEffects/arduino_midi_library
+
 # What if you only have WROOM module (no PSRAM)
 You can still compile and run the app, with NO_PSRAM option (line 11 in config.h). Note, that in this case you will get NO REVERB and just ONE SMALL DRUM KIT. 
 
