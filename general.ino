@@ -58,7 +58,7 @@ static void IRAM_ATTR mixer() { // sum buffers
       mono_mix = 0.5f * (mix_buf_l[current_out_buf][i] + mix_buf_r[current_out_buf][i]);
   //    Comp.Process(mono_mix);     // calculate gain based on a mono mix
 
-      Comp.Process(drums_out_l);  // calc compressor gain, side-chain driven by drums
+      Comp.Process(drums_out_l*0.25f);  // calc compressor gain, side-chain driven by drums
 
 
       mix_buf_l[current_out_buf][i] = (Comp.Apply( 0.25f * mix_buf_l[current_out_buf][i]));
@@ -80,25 +80,6 @@ static void IRAM_ATTR mixer() { // sum buffers
 #endif
 }
 
-
-inline void i2s_output () {
-  // now out_buf is ready, output
-//  if (processing) {
-  #ifdef USE_INTERNAL_DAC
-    for (int i=0; i < DMA_BUF_LEN; i++) {      
-      out_buf[current_out_buf]._unsigned[i*2] = (uint16_t)(127.0f * ( fast_shape( mix_buf_l[current_out_buf][i]) + 1.0f)) << 8U; // 256 output levels is way to little
-      out_buf[current_out_buf]._unsigned[i*2+1] = (uint16_t)(127.0f * ( fast_shape( mix_buf_r[current_out_buf][i]) + 1.0f)) << 8U ; // maybe you'll be lucky to fully use this range
-    }
-    i2s_write(i2s_num, out_buf[current_out_buf]._unsigned, sizeof(out_buf[current_out_buf]._unsigned), &bytes_written, portMAX_DELAY);
-  #else
-    for (int i=0; i < DMA_BUF_LEN; i++) {      
-      out_buf[current_out_buf]._signed[i*2] = 0x7fff * (float)(( mix_buf_l[current_out_buf][i])) ; 
-      out_buf[current_out_buf]._signed[i*2+1] = 0x7fff * (float)(( mix_buf_r[current_out_buf][i])) ;
-    }
-    i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
-  #endif
-//  }
-}
 
 inline float bilinearLookup(float (&table)[16][16], float x, float y) {
   static float kmap = 0.1181f; // map from 0-127 to 0-14.99
@@ -201,14 +182,12 @@ inline float dB2amp(float dB){
   //return pow(10.0, (0.05*dB)); // naive, inefficient version
 }
 
-inline float amp2dB(float amp)
-{
+inline float amp2dB(float amp){
   return 8.6858896380650365530225783783321f * logf(amp);
   //return 20*log10(amp); // naive version
 }
 
-inline float linToLin(float in, float inMin, float inMax, float outMin, float outMax)
-{
+inline float linToLin(float in, float inMin, float inMax, float outMin, float outMax){
   // map input to the range 0.0...1.0:
   float tmp = (in-inMin) * one_div(inMax-inMin);
 
@@ -219,8 +198,7 @@ inline float linToLin(float in, float inMin, float inMax, float outMin, float ou
   return tmp;
 }
 
-inline float linToExp(float in, float inMin, float inMax, float outMin, float outMax)
-{
+inline float linToExp(float in, float inMin, float inMax, float outMin, float outMax){
   // map input to the range 0.0...1.0:
   float tmp = (in-inMin) * one_div(inMax-inMin);
 
@@ -231,8 +209,7 @@ inline float linToExp(float in, float inMin, float inMax, float outMin, float ou
 
 
 
-inline float expToLin(float in, float inMin, float inMax, float outMin, float outMax)
-{
+inline float expToLin(float in, float inMin, float inMax, float outMin, float outMax){
   float tmp = logf(in * one_div(inMin)) * one_div( logf(inMax * one_div(inMin)));
   return outMin + tmp * (outMax-outMin);
 }

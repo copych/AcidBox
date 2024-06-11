@@ -1,7 +1,7 @@
 /*
 
   AcidBox
-  ESP32 headless acid combo of 303 + 303 + 808 like synths. MIDI driven. I2S output. No indication. Uses both cores of ESP32.
+  ESP32 acid combo of 303 + 303 + 808 like synths. MIDI driven. I2S output to DAC. No indication. Uses both cores of ESP32.
 
   To build the thing
   You will need an ESP32 with PSRAM (ESP32 WROVER module). Preferrable an external DAC, like PCM5102. In ArduinoIDE Tools menu select:
@@ -21,8 +21,6 @@
 */
 
 #include "config.h"
-
-#include "driver/i2s.h"
 #include "fx_delay.h"
 #ifndef NO_PSRAM
 #include "fx_reverb.h"
@@ -34,13 +32,6 @@
 
 #if defined MIDI_VIA_SERIAL2 || defined MIDI_VIA_SERIAL
 #include <MIDI.h>
-#endif
-
-#ifdef LOLIN_RGB
-  #include <Adafruit_NeoPixel.h>
-  #define LED 38
-  #define NUMPIXELS 1
-  Adafruit_NeoPixel pixels(NUMPIXELS, LED, NEO_GRB + NEO_KHZ800);
 #endif
 
 #ifdef MIDI_VIA_SERIAL
@@ -68,7 +59,6 @@ MIDI_NAMESPACE::SerialMIDI<HardwareSerial> Serial2MIDI2(Serial2);
 MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2MIDISettings>> MIDI2((MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2MIDISettings>&)Serial2MIDI2);
 #endif
 
-const i2s_port_t i2s_num = I2S_NUM_0; // i2s port number
 
 // lookuptables
 static float midi_pitches[128];
@@ -83,9 +73,15 @@ static float shaper_tbl[TABLE_SIZE+1]; // illinear tanh()-like curve
 static float sin_tbl[TABLE_SIZE+1];
 static float norm1_tbl[16][16]; // cutoff-reso pair gain compensation
 static float norm2_tbl[16][16]; // wavefolder-overdrive gain compensation
-static uint32_t last_reset = 0;
-static float param[POT_NUM];
 //static float (*tables[])[TABLE_SIZE+1] = {&exp_square_tbl, &square_tbl, &saw_tbl, &exp_tbl};
+
+// service variables and arrays
+volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT, art, arT, c0t, c0T, c1t, c1T; // debug timing: if we use less vars, compiler optimizes them
+volatile uint32_t prescaler;
+static  uint32_t  last_reset = 0;
+static  float     param[POT_NUM];
+static uint8_t    ctrl_hold_notes;
+
 
 // Audio buffers of all kinds
 volatile uint8_t current_gen_buf = 0; // set of buffers for generation
@@ -100,16 +96,13 @@ static union {                              // a dirty trick, instead of true co
   int16_t _signed[DMA_BUF_LEN * 2];
   uint16_t _unsigned[DMA_BUF_LEN * 2];
 } out_buf[2];                               // i2s L+R output buffer
+size_t bytes_written;                       // i2s result
 
 volatile boolean processing = false;
 #ifndef NO_PSRAM
 volatile float rvb_k1, rvb_k2, rvb_k3;
 #endif
 volatile float dly_k1, dly_k2, dly_k3;
-
-size_t bytes_written;                       // i2s
-volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT, art, arT, c0t, c0T, c1t, c1T; // debug timing: if we use less vars, compiler optimizes them
-volatile static uint32_t prescaler;
 
 // tasks for Core0 and Core1
 TaskHandle_t SynthTask1;
@@ -265,7 +258,7 @@ void setup(void) {
 
   buildTables();
 
-  for (int i = 0; i < POT_NUM; i++) pinMode( POT_PINS[i] , INPUT_PULLDOWN);
+  for (int i = 0; i < POT_NUM; i++) pinMode( POT_PINS[i] , INPUT);
 
   Synth1.Init();
   Synth2.Init();
@@ -292,7 +285,7 @@ void setup(void) {
   }
 
   i2sInit();
-  i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
+  // i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
 
   //xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask1, 0 );
   //xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask2, 1 );
@@ -304,6 +297,7 @@ void setup(void) {
   //  xTaskNotifyGive(SynthTask2);
   processing = true;
 
+#if ESP_ARDUINO_VERSION_MAJOR < 3 
   // timer interrupt
   /*
   timer1 = timerBegin(0, 80, true);               // Setup timer for midi
@@ -315,6 +309,11 @@ void setup(void) {
   timerAttachInterrupt(timer2, &onTimer2, true);  // Attach callback
   timerAlarmWrite(timer2, 200000, true);          // 200ms, autoreload
   timerAlarmEnable(timer2);
+#else 
+  timer2 = timerBegin(1000000);               // Setup general purpose timer
+  timerAttachInterrupt(timer2, &onTimer2);  // Attach callback
+  timerAlarm(timer2, 200000, true, 0);          // 200ms, autoreload
+#endif
 }
 
 static uint32_t last_ms = micros();
@@ -349,7 +348,8 @@ void readPots() {
   }
 
   i++;
-  if (i >= POT_NUM) i=0;
+  // if (i >= POT_NUM) i=0;
+  i %= POT_NUM;
 }
 
 void paramChange(uint8_t paramNum, float paramVal) {
@@ -367,6 +367,12 @@ void paramChange(uint8_t paramNum, float paramVal) {
     case 2:
       Synth2.ParseCC(CC_303_OVERDRIVE, paramVal);
       Synth2.ParseCC(CC_303_DISTORTION, paramVal);
+      break;
+    case 3:
+      Synth2.ParseCC(CC_303_ENVMOD_LVL, paramVal);
+      break;
+    case 4:
+      Synth2.ParseCC(CC_303_ACCENT_LVL, paramVal);
       break;
     default:
       {}
