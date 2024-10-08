@@ -12,7 +12,7 @@ TeeBeeFilter::TeeBeeFilter()
   resonanceSkewed     =     0.0f;
   g                   =     1.0f;
   sampleRate          = SAMPLE_RATE;
-  twoPiOverSampleRate = 2.0*PI/sampleRate;
+  twoPiOverSampleRate = 2.0f*PI/sampleRate;
 
   feedbackHighpass.setMode(OnePoleFilter::HIGHPASS);
   feedbackHighpass.setCutoff(100.0f);
@@ -133,7 +133,7 @@ inline void TeeBeeFilter::calculateCoefficientsExact()
   a1 = r * a1_fullRes + (1.0f - r) * a1_noRes;
   // calculate the b0-coefficient from the condition that each stage should be a leaky
   // integrator:
-  b0 = 1.0 + a1;
+  b0 = 1.0f + a1;
 
   // calculate feedback factor by dividing the resonance parameter by the magnitude at the
   // resonant frequency:
@@ -208,57 +208,33 @@ inline void TeeBeeFilter::calculateCoefficientsApprox4()
 
 inline float TeeBeeFilter::Process(float in)
 {
-  static float y0, ret_val;
-  if ( mode == TB_303 )
-  {
- //   y0 =  shape(in * drive) - feedbackHighpass.getSample(k * y4);
+  float y0;
+
+    if( mode == TB_303 )
+    {
+      //y0  = in - feedbackHighpass.getSample(k * shape(y4));  
+      y0 = in - feedbackHighpass.getSample(k*y4);  
+      //y0  = in - k*shape(y4);  
+      //y0  = in-k*y4;  
+      y1 += 2*b0*(y0-y1+y2);
+      y2 +=   b0*(y1-2*y2+y3);
+      y3 +=   b0*(y2-2*y3+y4);
+      y4 +=   b0*(y3-2*y4);
+      return 2*g*y4;
+      //return 3*y4;
+    }
+
+    // apply drive and feedback to obtain the filter's input signal:
+    //float y0 = inputFilter.getSample(0.125*driveFactor*in) - feedbackHighpass.getSample(k*y4);
+    y0 = 0.125f * driveFactor * in - feedbackHighpass.getSample(k*y4);  
     
-  y0 = fclamp(0.08f * in - feedbackHighpass.getSample(k * y4), -10e4, 10e4);
-    //y0  = in - k*shape(y4);
-    //y0  = in-k*y4;
-    y1 += 2.0f * b0 * (y0 - y1 + y2);
-    y2 += b0 * (y1 - 2.0f * y2 + y3);
-    y3 += b0 * (y2 - 2.0f * y3 + y4);
-    y4 += b0 * (y3 - 2.0f * y4);
-    return 2.0f * g * y4;
-  }
+    y1 = y0 + a1*(y0-y1);
+    y2 = y1 + a1*(y1-y2);
+    y3 = y2 + a1*(y2-y3);
+    y4 = y3 + a1*(y3-y4); // \todo: performance test both versions of the ladder
+    //y4 = shape(y3 + a1*(y3-y4)); // \todo: performance test both versions of the ladder
 
-  // apply drive and feedback to obtain the filter's input signal:
-  //float y0 = inputFilter.getSample(0.125*driveFactor*in) - feedbackHighpass.getSample(k*y4);
-  // y0 = 0.125*driveFactor*in - feedbackHighpass.getSample(k*y4);  
-  // y0 = fclamp(  (0.08f * in - feedbackHighpass.getSample(k * y4)), -1e8, 1e8);
-  y0 = fclamp(0.08f * in - feedbackHighpass.getSample(k * y4), -10e4, 10e4);
-
-  // DEBF("%0.3f\r\n", y0);
-  /*
-    // cascade of four 1st order sections with nonlinearities:
-    y1 = shape(b0*y0 - a1*y1);
-    y2 = shape(b0*y1 - a1*y2);
-    y3 = shape(b0*y2 - a1*y3);
-    y4 = shape(b0*y3 - a1*y4);
-  */
-
-  // cascade of four 1st order sections with only 1 nonlinearity:
-  /*
-    y1 =       b0*y0 - a1*y1;
-    y2 =       b0*y1 - a1*y2;
-    y3 =       b0*y2 - a1*y3;
-    y4 = shape(b0*y3 - a1*y4);
-  */
-  /*
-  y1 = fclamp(y0 + a1 * (y0 - y1), -1e8, 1e8);  // fclamp on 4 stages gives additional 200us per 64samp buffer (todo : optimize fclamp() to avoid fmax() and fmin())
-  y2 = fclamp(y1 + a1 * (y1 - y2), -1e8, 1e8);
-  y3 = fclamp(y2 + a1 * (y2 - y3), -1e8, 1e8);
-  y4 = fclamp(y3 + a1 * (y3 - y4), -1e8, 1e8); // \todo: performance test both versions of the ladder
-*/
-  y1 = y0 + a1 * (y0 - y1);
-  y2 = y1 + a1 * (y1 - y2);
-  y3 = y2 + a1 * (y2 - y3);
-  y4 = y3 + a1 * (y3 - y4); 
-  
-  ret_val = (20.0f * (c0 * y0 + c1 * y1 + c2 * y2 + c3 * y3 + c4 * y4 )) ;
-  // bias = 0.0005f * ret_val + 0.9995f * bias ;
-  return fast_shape((ret_val - bias) );// * compens ;
+    return 8.0f * (c0*y0 + c1*y1 + c2*y2 + c3*y3 + c4*y4);;
 }
 
 inline void TeeBeeFilter::sinCos(float x, float* sinResult, float* cosResult)
@@ -288,7 +264,7 @@ inline float TeeBeeFilter::shape(float x)
   //  return x - r6*x*x*x;
 
     //return clip(x, -1.0, 1.0);
-    return fast_shape(x);
+    return fast_shape(x*2.0f);
   }
 
 

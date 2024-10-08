@@ -25,6 +25,7 @@
 
 #include "wavefolder.h"
 #include "overdrive.h"
+//#include "fx_rat.h"
 
 #include "midi_config.h"
 //#include "smoother.h"
@@ -50,7 +51,7 @@ public:
   inline void SetPan(float pan)         {_pan = pan;};
   inline void SetDelaySend(float lvl)   {_sendDelay = lvl;};
   inline void SetReverbSend(float lvl)  {_sendReverb = lvl;};
-  inline void SetDistortionLevel(float lvl) {_gain = lvl; Wfolder.SetDrive(_gain ); };
+  inline void SetDistortionLevel(float lvl) {_gain = lvl; Distortion.SetDrive(_gain ); };
   inline void SetOverdriveLevel(float lvl) {_drive = lvl;  Drive.SetDrive(_drive ); };
   inline void SetCutoff(float lvl);
   inline void SetReso(float lvl)        {_reso = lvl; Filter.SetResonance(_reso); };
@@ -129,6 +130,12 @@ private:
   float  _phaze = 0.0f;
   
   // parameters of envelopes
+  float _sust_level = 0.2f;
+  float _release_lvl = 0.0f;
+  float _pass_val = 0.0f;
+  float _k_acc = 1.0f;
+  float _ampEnvVal = 0.0f;
+  float _filterEnvVal = 0.0f;
   float _ampEnvPosition = 0.0f;
   float _filterEnvPosition = 0.0f;
   float _ampAttackMs = 3.0f;
@@ -165,7 +172,9 @@ private:
   OnePoleFilter     highpass2;
   OnePoleFilter     allpass; 
   
-  Wavefolder        Wfolder;
+  Wavefolder        Distortion;
+//  RAT               Distortion;
+  
   Overdrive         Drive;
 };
 

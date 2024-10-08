@@ -97,49 +97,49 @@ struct sSynthCCs {
 
 sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
   //cc                 cpl             def   min max   reset
-  {CC_303_PAN,        0,              47,   0,  127,  true},
-  {CC_303_WAVEFORM,   0,              0,    0,  64,   true},
-  {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
-  {CC_303_CUTOFF,     CC_303_RESO,    20,   5,  120,  true},
-  {CC_303_DECAY,      0,              20,   15, 120,  true},
-  {CC_303_ATTACK,     0,              1,    3,  60,   true},
-  {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
-  {CC_303_ACCENT_LVL, 0,              64,   25, 100,  false},
 #ifndef NO_PSRAM
   {CC_303_REVERB_SEND, 0,              5,    2,  127,  true},
 #endif
+  {CC_303_PAN,        0,              47,   0,  127,  true},
+  {CC_303_WAVEFORM,   0,              0,    0,  64,   true}, // SQUARE
+  {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
+  {CC_303_CUTOFF,     CC_303_RESO,    30,   0,  127,  true},
+  {CC_303_DECAY,      0,              20,   15, 64,  true},
+  {CC_303_ATTACK,     0,              1,    3,  10,   true},
+  {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
+  {CC_303_ACCENT_LVL, 0,              64,   25, 70,  false},
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
-  {CC_303_DISTORTION, 0,              0,    2,  127,  true},
-  {CC_303_OVERDRIVE,  0,              0,    2,  127,  true}
+  {CC_303_DISTORTION, 0,              0,    0,  90,  true},
+  {CC_303_OVERDRIVE,  0,              0,    0,  20,  true}
 };
 
 sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
   //cc                 cpl             def   min max   reset
-  {CC_303_RESO,       CC_303_CUTOFF,  64,   60, 127,  true},
-  {CC_303_CUTOFF,     CC_303_RESO,    20,   0,  120,  false},
-  {CC_303_PAN,        0,              80,  0,  127,  true},
-  {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
-  {CC_303_WAVEFORM,   0,              127,  64, 127,  true},
 #ifndef NO_PSRAM
   {CC_303_REVERB_SEND, 0,              5,    2,  127,  true},
 #endif
+  {CC_303_RESO,       CC_303_CUTOFF,  64,   60, 127,  true},
+  {CC_303_CUTOFF,     CC_303_RESO,    20,   0,  120,  false},
+  {CC_303_PAN,        0,              80,   0,  127,  true},
+  {CC_303_ENVMOD_LVL, 0,              100,  15, 127,  false},
+  {CC_303_WAVEFORM,   0,              127,  64, 127,  true}, // SAW
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
-  {CC_303_OVERDRIVE,  0,              0,    2,  127,  true},
-  {CC_303_DISTORTION, 0,              0,    2,  127,  true},
-  {CC_303_ACCENT_LVL, 0,              64,   25, 100,  false},
-  {CC_303_DECAY,      0,              20,   15, 120,  true},
-  {CC_303_ATTACK,     0,              1,    3,  60,   true}
+  {CC_303_ACCENT_LVL, 0,              64,   10, 127,  false},
+  {CC_303_DECAY,      0,              20,   15, 64,  true},
+  {CC_303_ATTACK,     0,              1,    3,  15,   true},
+  {CC_303_OVERDRIVE,  0,              0,    2,  90,  true},
+  {CC_303_DISTORTION, 0,              0,    2,  20,  true}
 };
 
 sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
   //cc                  cpl def   min max   reset
-  {CC_808_CUTOFF,       0,  64,   64,  127, true},
-  {CC_808_RESO,         0,  64,   0,   127, true},
-  {CC_808_SD_TONE,      0,  64,   64,  127, true},
 #ifndef NO_PSRAM
   {CC_808_REVERB_SEND,  0,  5,    30,  127, true},  // reverb is not available with no psram
   {CC_808_DELAY_SEND,   0,  0,    64,  127, true}, // delay for drums needs more delay time (read 'RAM') than we can afford
 #endif
+  {CC_808_CUTOFF,       0,  64,   64,  127, true},
+  {CC_808_RESO,         0,  64,   0,   127, true},
+  {CC_808_SD_TONE,      0,  64,   64,  127, true},
   {CC_808_BD_DECAY,     0,  127,  50,  127, true},
   {CC_808_BD_TONE,      0,  64,   40,  64,  true}
 };
@@ -922,14 +922,14 @@ static void decide_on_break() {
       Break.after = Break.start + Break.length;
     } else if ( bars_played == 15 ) {
       // 50% 1-bar break
-      if (flip(50)) {
+      if (flip(20)) {
         Break.status = sPlaying;
         Break.start = bar_current  ;
         Break.length = 1;
         Break.after = Break.start + Break.length;
       }
     } else if (bars_played == 14) {
-      if (flip(30)) {
+      if (flip(15)) {
         // 2-bars break
         Break.status = sPlaying;
         Break.start = bar_current  ;
@@ -937,7 +937,7 @@ static void decide_on_break() {
         Break.after = Break.start + Break.length;
       }
     } else if (bars_played == 13) {
-      if (flip(30)) {
+      if (flip(15)) {
         // 3-bars break
         Break.status = sPlaying;
         Break.start = bar_current  ;
@@ -945,7 +945,7 @@ static void decide_on_break() {
         Break.after = Break.start + Break.length;
       }
     } else if (bars_played == 12) {
-      if (flip(30)) {
+      if (flip(15)) {
         // 4-bars break
         Break.status = sPlaying;
         Break.start = bar_current  ;

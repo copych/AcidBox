@@ -1,5 +1,5 @@
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v.1.3.0"
+#define VERSION         "v.1.3.3"
 
 
 
@@ -11,11 +11,11 @@
 //#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: NOISY 8BIT STEREO
 //#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB TO BE SACRIFICED, ONE SMALL DRUM KIT SAMPLES USED 
 
-//#define LOLIN_RGB               // Flashes the LOLIN S3 built-in RGB-LED
+//#define LOLIN_RGB               // Flashes the LOLIN S3 buildin RGB-LED
 
-//#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
+#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
-//#define DEBUG_SAMPLER
+#define DEBUG_SAMPLER
 //#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
@@ -258,3 +258,7 @@ const float cutoff_reso_avg = 3.19f;
 };
 const float wfolder_overdrive_avg = 41.225f;
 */
+
+
+inline float fast_shape(float x);
+static __attribute__((always_inline)) inline float one_div(float a) ;

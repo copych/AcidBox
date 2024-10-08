@@ -36,14 +36,14 @@ void SynthVoice::Init() {
   _filterEnvAttackStep = 15.0;
   _filterEnvDecayStep = 1.0;
 
-  Wfolder.Init();
+  Distortion.Init();
   Drive.Init();
 
   Filter.Init((float)SAMPLE_RATE);
   
 #if FILTER_TYPE == 2
-  Filter.SetMode(TeeBeeFilter::LP_18);
-  //Filter.SetMode(TeeBeeFilter::TB_303);
+//  Filter.SetMode(TeeBeeFilter::LP_18);
+  Filter.SetMode(TeeBeeFilter::TB_303);
 #endif
   highpass1.setMode(OnePoleFilter::HIGHPASS);
   highpass1.setCutoff(44.486f);
@@ -78,17 +78,26 @@ inline float SynthVoice::getSample() {
     Filter.SetCutoff( final_cut );
 
     samp = highpass1.getSample(samp);         // pre-filter highpass, following open303
-    samp = Filter.Process(samp);              // main filter
+    
     samp = allpass.getSample(samp);           // phase correction, following open303
+   
+    samp = Filter.Process(samp);              // main filter
+    
     samp = highpass2.getSample(samp);         // post-filtering, following open303
+    
     samp = notch.getSample(samp);             // post-filtering, following open303
+    
+    samp = Drive.Process(samp);               // overdrive
+    
+    samp = Distortion.Process(samp);             // distortion
+    
     samp *= ampEnv;                           // amp envelope
 
-    samp = Drive.Process(samp);               // overdrive
-    samp = Wfolder.Process(samp);             // distortion
 
-    _compens = _volume * _fx_compens * _flt_compens * 16.0f;
+    _compens = _volume * 8.0f  * _fx_compens ; // * _flt_compens;
+    
     _compens = ampDeclicker.getSample(_compens);
+    
     samp *=  _compens;
 
     if ((_slide || _portamento) && _deltaStep != 0.0f) {     // portamento / slide processing
@@ -223,14 +232,9 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
 }
 
 float SynthVoice::GetAmpEnv() {
-  const static float sust_level = 0.2f;
-  const static float k_sust = 1.0f - sust_level;
-  static float ret_val = 0.0f;
-  static float pass_val = 0.0f, release_lvl = 0.0f;
-  static float k_acc = 1.0f;
   switch (_eAmpEnvState) {
     case ENV_INIT:
-      k_acc = (1.0f + 0.3f * _accentation);
+      _k_acc = (1.0f + 0.3f * _accentation);
       _ampEnvPosition = 0.0f;
       _ampEnvAttackStep = _msToSteps * one_div( _ampAttackMs + 0.0001f);
       _ampEnvDecayStep = _msToSteps * one_div(_ampDecayMs + 0.0001f);
@@ -240,66 +244,65 @@ float SynthVoice::GetAmpEnv() {
         _ampEnvReleaseStep = _msToSteps * one_div(_ampAccentReleaseMs + 0.0001f);
       }
       _eAmpEnvState = ENV_ATTACK;
-      ret_val = (-exp_tbl[ 0 ] + 1.0f) * 0.5f;
+      _ampEnvVal = (-exp_tbl[ 0 ] + 1.0f) * 0.5f;
       break;
     case ENV_ATTACK:
       _ampEnvPosition += _ampEnvAttackStep;
       if (_ampEnvPosition >= TABLE_SIZE) {
         _eAmpEnvState = ENV_DECAY;
         _ampEnvPosition = 0;
-        ret_val = (-exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f * k_acc;
+        _ampEnvVal = (-exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f * _k_acc;
       } else {
-        ret_val = (-lookupTable(exp_tbl, _ampEnvPosition ) + 1.0f) * 0.5f * k_acc;
-        if (pass_val > ret_val) ret_val = pass_val;
+        _ampEnvVal = (-lookupTable(exp_tbl, _ampEnvPosition ) + 1.0f) * 0.5f * _k_acc;
+        if (_pass_val > _ampEnvVal) _ampEnvVal = _pass_val;
       }
-      pass_val = ret_val;
+      _pass_val = _ampEnvVal;
       break;
     case ENV_DECAY:
       _ampEnvPosition += _ampEnvDecayStep;
       if (_ampEnvPosition >= TABLE_SIZE) {
         _eAmpEnvState = ENV_SUSTAIN;
         _ampEnvPosition = 0;
-        ret_val = sust_level;
+        _ampEnvVal = _sust_level;
       } else {
-        ret_val = sust_level + k_sust * (lookupTable(exp_tbl, _ampEnvPosition) + 1.0f) * 0.5f * k_acc;
+        _ampEnvVal = _sust_level + (1.0f - _sust_level) * (lookupTable(exp_tbl, _ampEnvPosition) + 1.0f) * 0.5f * _k_acc;
       }
-      pass_val = ret_val;
+      _pass_val = _ampEnvVal;
       break;
     case ENV_SUSTAIN:
-      ret_val = sust_level; //  asuming sustain to be endless
-      pass_val = ret_val;
+      _ampEnvVal = _sust_level; //  asuming sustain to be endless
+      _pass_val = _ampEnvVal;
       _ampEnvPosition = 0;
       break;
     case ENV_RELEASE:
       if (_ampEnvPosition >= TABLE_SIZE) {
         _eAmpEnvState = ENV_IDLE;
         _ampEnvPosition = 0;
-        ret_val = 0.0f;
+        _ampEnvVal = 0.0f;
       } else {
-        if (_ampEnvPosition <= _ampEnvReleaseStep) release_lvl = pass_val;
-        ret_val = release_lvl * (lookupTable(exp_tbl, _ampEnvPosition) + 1.0f) * 0.5f * k_acc;
+        if (_ampEnvPosition <= _ampEnvReleaseStep) _release_lvl = _pass_val;
+        _ampEnvVal = _release_lvl * (lookupTable(exp_tbl, _ampEnvPosition) + 1.0f) * 0.5f * _k_acc;
       }
       _ampEnvPosition += _ampEnvReleaseStep;
-      pass_val = ret_val;
+      _pass_val = _ampEnvVal;
       break;
     case ENV_IDLE:
-      ret_val = 0.0f;
+      _ampEnvVal = 0.0f;
       break;
     default:
-      ret_val = 0.0f;
+      _ampEnvVal = 0.0f;
   }
   if (_accent) {
 
   }
-  return ret_val;
+  return _ampEnvVal;
 }
 
 inline float SynthVoice::GetFilterEnv() {
-  static volatile float ret_val = 0.0f;
   switch (_eFilterEnvState) {
     case ENV_INIT:
       //   k_acc = (1.0f + 0.45f * _accentation);
-      _offset = max(ret_val, _offset);
+      _offset = max(_filterEnvVal, _offset);
       _filterEnvPosition = 0.0f;
       _filterEnvAttackStep = _msToSteps * one_div(_filterAttackMs + 0.0001f);
       _filterEnvDecayStep = _msToSteps * one_div(_filterDecayMs + 0.0001f);
@@ -308,15 +311,15 @@ inline float SynthVoice::GetFilterEnv() {
         _filterEnvDecayStep *= 5.0f;
       }
       _eFilterEnvState = ENV_ATTACK;
-      ret_val = (-exp_tbl[ 0 ] + 1.0f) * 0.5f ;
+      _filterEnvVal = (-exp_tbl[ 0 ] + 1.0f) * 0.5f ;
       break;
     case ENV_ATTACK:
       if (_filterEnvPosition >= (float)TABLE_SIZE) {
         _eFilterEnvState = ENV_DECAY;
         _filterEnvPosition = 0.0f;
-        ret_val = (-exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f ;
+        _filterEnvVal = (-exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f ;
       } else {
-        ret_val = (-lookupTable(exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
+        _filterEnvVal = (-lookupTable(exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
       }
       _filterEnvPosition += _filterEnvAttackStep;
       break;
@@ -324,22 +327,22 @@ inline float SynthVoice::GetFilterEnv() {
       if (_filterEnvPosition >= (float)TABLE_SIZE) {
         _eFilterEnvState = ENV_IDLE; // Attack-Decay-0 envelope (?)
         _filterEnvPosition = 0.0f;
-        ret_val = 0.0f;
+        _filterEnvVal = 0.0f;
       } else {
-        ret_val =  (lookupTable(exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
+        _filterEnvVal =  (lookupTable(exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
       }
       _filterEnvPosition += _filterEnvDecayStep;
       _offset *= _offset_leak;
       break;
     case ENV_IDLE:
-      ret_val =  0.0f;
+      _filterEnvVal =  0.0f;
       _offset *= _offset_leak;
       break;
     default:
-      ret_val =  0.0f;
+      _filterEnvVal =  0.0f;
   }
-  ret_val += _offset;
-  return ret_val ;
+  _filterEnvVal += _offset;
+  return _filterEnvVal ;
 }
 
 
