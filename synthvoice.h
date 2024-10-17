@@ -54,7 +54,7 @@ public:
   inline void SetDistortionLevel(float lvl) {_gain = lvl; Distortion.SetDrive(_gain ); };
   inline void SetOverdriveLevel(float lvl) {_drive = lvl;  Drive.SetDrive(_drive ); };
   inline void SetCutoff(float lvl);
-  inline void SetReso(float lvl)        {_reso = lvl; Filter.SetResonance(_reso); };
+  inline void SetReso(float lvl)        {_reso = constrain(lvl, 0.0f, 1.0f); Filter.SetResonance(_reso); };
   inline void SetEnvModLevel(float lvl) {_envMod = lvl;};
   inline void SetAccentLevel(float lvl) {_accentLevel = lvl;};
   inline void SetTempo(float tempo)     {_tempo = tempo;};
@@ -123,11 +123,14 @@ private:
   float  _currentPeriod = 1.0f; // should be int (trying to come exactly to 0 phase)
   float  _avgStep = 1.0f;
   float  _avgPeriod = 1.0f; // measured in samples
-  float  _targetStep = 0.0f;
+  float  _targetStep = 1.0f;
   float  _targetPeriod = 0.0f;
   float  _deltaStep = 0.0f;
   float  _slideMs = 60.0f;
   float  _phaze = 0.0f;
+  float  _tuning = 1.0f;
+  float  _effectiveStep = 1.0f;
+  float  _pitchbend = 1.0f;
   
   // parameters of envelopes
   float _sust_level = 0.2f;

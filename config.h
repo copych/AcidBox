@@ -22,8 +22,8 @@
 //#define DEBUG_TIMING
 //#define DEBUG_MIDI
 
-//#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
-#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
+#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
+//#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
 #define MIDIRX_PIN      4       // this pin is used for input when MIDI_VIA_SERIAL2 defined (note that default pin 17 won't work with PSRAM)
 #define MIDITX_PIN      15      // this pin will be used for output (not implemented yet) when MIDI_VIA_SERIAL2 defined
 
@@ -54,6 +54,7 @@ float bpm = 130.0f;
 
 const float DIV_SAMPLE_RATE = 1.0f / (float)SAMPLE_RATE;
 const float DIV_2SAMPLE_RATE = 0.5f / (float)SAMPLE_RATE;
+const float TWO_DIV_16383 = 1.22077763e-04f;
 
 #define TABLE_BIT  		        10UL				// bits per index of lookup tables for waveforms, exp(), sin(), cos() etc. 10 bit means 2^10 = 1024 samples
 #define TABLE_SIZE            (1<<TABLE_BIT)        // samples used for lookup tables (it works pretty well down to 32 samples due to linear approximation, so listen and free some memory at your choice)
@@ -258,6 +259,25 @@ const float cutoff_reso_avg = 3.19f;
 };
 const float wfolder_overdrive_avg = 41.225f;
 */
+
+static const float tuning[128] = {
+  0.500000f, 0.500000f, 0.500000f, 0.500000f, 0.500000f, 0.529732f, 0.529732f, 0.529732f, 
+  0.529732f, 0.529732f, 0.561231f, 0.561231f, 0.561231f, 0.561231f, 0.561231f, 0.594604f, 
+  0.594604f, 0.594604f, 0.594604f, 0.594604f, 0.594604f, 0.629961f, 0.629961f, 0.629961f, 
+  0.629961f, 0.629961f, 0.667420f, 0.667420f, 0.667420f, 0.667420f, 0.667420f, 0.707107f, 
+  0.707107f, 0.707107f, 0.707107f, 0.707107f, 0.749154f, 0.749154f, 0.749154f, 0.749154f, 
+  0.749154f, 0.793701f, 0.793701f, 0.793701f, 0.793701f, 0.793701f, 0.840896f, 0.840896f, 
+  0.840896f, 0.840896f, 0.840896f, 0.890899f, 0.890899f, 0.890899f, 0.890899f, 0.890899f, 
+  0.943874f, 0.943874f, 0.943874f, 0.943874f, 0.943874f, 1.000000f, 1.000000f, 1.000000f, 
+  1.000000f, 1.000000f, 1.000000f, 1.059463f, 1.059463f, 1.059463f, 1.059463f, 1.059463f, 
+  1.122462f, 1.122462f, 1.122462f, 1.122462f, 1.122462f, 1.189207f, 1.189207f, 1.189207f, 
+  1.189207f, 1.189207f, 1.259921f, 1.259921f, 1.259921f, 1.259921f, 1.259921f, 1.334840f, 
+  1.334840f, 1.334840f, 1.334840f, 1.334840f, 1.414214f, 1.414214f, 1.414214f, 1.414214f, 
+  1.414214f, 1.498307f, 1.498307f, 1.498307f, 1.498307f, 1.498307f, 1.587401f, 1.587401f, 
+  1.587401f, 1.587401f, 1.587401f, 1.681793f, 1.681793f, 1.681793f, 1.681793f, 1.681793f, 
+  1.681793f, 1.781797f, 1.781797f, 1.781797f, 1.781797f, 1.781797f, 1.887749f, 1.887749f, 
+  1.887749f, 1.887749f, 1.887749f, 2.000000f, 2.000000f, 2.000000f, 2.000000f, 2.000000f
+};
 
 
 inline float fast_shape(float x);

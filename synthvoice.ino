@@ -16,6 +16,8 @@ void SynthVoice::Init() {
   _midiNote = 69;
   _currentStep = 1.0f;
   _targetStep = 1.0f;
+  _tuning = 1.0f;
+  _pitchbend = 1.0f;
   _deltaStep = 0.0f;
   _slideMs = 60.0f;
   _phaze = 0.0f;
@@ -25,16 +27,17 @@ void SynthVoice::Init() {
   // parameters of envelopes
   _ampEnvPosition = 0.0;
   _filterEnvPosition = 0.0;
-  _ampAttackMs = 3.0;
-  _ampDecayMs = 300.0;
-  _ampReleaseMs = 30.0;
-  _ampEnvAttackStep = 15.0;
-  _ampEnvDecayStep = 1.0;
-  _ampEnvReleaseStep = 15.0;
-  _filterAttackMs = 5.0;
+  _ampAttackMs = 0.5;
+  _ampDecayMs = 1230.0;
+  _ampReleaseMs = 1.0;
+  _ampAccentReleaseMs = 50.0f;
+ // _ampEnvAttackStep = 15.0;
+ // _ampEnvDecayStep = 1.0;
+ // _ampEnvReleaseStep = 15.0;
+  _filterAttackMs = 3.0;
   _filterDecayMs = 200.0;
-  _filterEnvAttackStep = 15.0;
-  _filterEnvDecayStep = 1.0;
+  //_filterEnvAttackStep = 15.0;
+  //_filterEnvDecayStep = 1.0;
 
   Distortion.Init();
   Drive.Init();
@@ -101,10 +104,10 @@ inline float SynthVoice::getSample() {
     samp *=  _compens;
 
     if ((_slide || _portamento) && _deltaStep != 0.0f) {     // portamento / slide processing
-      if (fabs(_targetStep - _currentStep) >= fabs(_deltaStep)) {
+      if (fabs(_effectiveStep - _currentStep) >= fabs(_deltaStep)) {
         _currentStep += _deltaStep;
       } else {
-        _currentStep = _targetStep;
+        _currentStep = _effectiveStep;
         _deltaStep = 0.0f;
       }
     }
@@ -154,7 +157,10 @@ inline void SynthVoice::SetCutoff(float lvl)  {
 
 inline void SynthVoice::PitchBend(int number) {
   //
-  DEBUG(number);
+  float semi = ((((float)number + 8191.5f) * (float)TWO_DIV_16383 ) - 1.0f ) * 12.0f;
+  _pitchbend = powf(1.059463f, semi);
+  _effectiveStep = _targetStep * _tuning * _pitchbend;
+  DEBUG(_effectiveStep);
 }
 
 inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
@@ -228,6 +234,10 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       _saturator = (float)cc_value * MIDI_NORM;
       Filter.SetDrive(_saturator);
       break;
+    case CC_303_TUNING:
+      _tuning = tuning[cc_value];
+      _effectiveStep = _targetStep * _tuning * _pitchbend;
+      break;
   }
 }
 
@@ -238,10 +248,11 @@ float SynthVoice::GetAmpEnv() {
       _ampEnvPosition = 0.0f;
       _ampEnvAttackStep = _msToSteps * one_div( _ampAttackMs + 0.0001f);
       _ampEnvDecayStep = _msToSteps * one_div(_ampDecayMs + 0.0001f);
-      _ampEnvReleaseStep = _msToSteps * one_div(_ampReleaseMs + 0.0001f);
       if (_accent) {
-        _ampEnvDecayStep *= 3.0f;
+        //_ampEnvDecayStep *= 5.0f;
         _ampEnvReleaseStep = _msToSteps * one_div(_ampAccentReleaseMs + 0.0001f);
+      } else {
+        _ampEnvReleaseStep = _msToSteps * one_div(_ampReleaseMs + 0.0001f);
       }
       _eAmpEnvState = ENV_ATTACK;
       _ampEnvVal = (-exp_tbl[ 0 ] + 1.0f) * 0.5f;
@@ -307,9 +318,10 @@ inline float SynthVoice::GetFilterEnv() {
       _filterEnvAttackStep = _msToSteps * one_div(_filterAttackMs + 0.0001f);
       _filterEnvDecayStep = _msToSteps * one_div(_filterDecayMs + 0.0001f);
       if (_accent) {
-        _filterEnvAttackStep *= 1.4f;
+       // _filterEnvAttackStep *= 1.4f;
         _filterEnvDecayStep *= 5.0f;
-      }
+       // _reso += 0.2f;
+      } 
       _eFilterEnvState = ENV_ATTACK;
       _filterEnvVal = (-exp_tbl[ 0 ] + 1.0f) * 0.5f ;
       break;
@@ -456,10 +468,11 @@ void  SynthVoice::note_on(uint8_t midiNote, bool slide, bool accent)
   _accent = accent;
   _slide = slide || _portamento;
   _targetStep = midi_tbl_steps[midiNote];
+  _effectiveStep = _targetStep * _tuning * _pitchbend;
   if (_slide) {
-    _deltaStep = (_targetStep - _currentStep) * (1000.0f * DIV_SAMPLE_RATE / _slideMs );
+    _deltaStep = (_effectiveStep - _currentStep) * (1000.0f * DIV_SAMPLE_RATE / _slideMs );
   } else {
-    _currentStep = _targetStep;
+    _currentStep = _effectiveStep;
     _deltaStep = 0.0f ;
     _eAmpEnvState = ENV_INIT;
     _eFilterEnvState = ENV_INIT;

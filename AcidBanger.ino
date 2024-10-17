@@ -107,10 +107,10 @@ sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
   {CC_303_DECAY,      0,              20,   15, 64,  true},
   {CC_303_ATTACK,     0,              1,    3,  10,   true},
   {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
-  {CC_303_ACCENT_LVL, 0,              64,   25, 70,  false},
+  {CC_303_ACCENT_LVL, 0,              10,   0,  70,  true},
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
-  {CC_303_DISTORTION, 0,              0,    0,  90,  true},
-  {CC_303_OVERDRIVE,  0,              0,    0,  20,  true}
+  {CC_303_DISTORTION, 0,              0,    0,  3,  true},
+  {CC_303_OVERDRIVE,  0,              5,    0,  50,  true}
 };
 
 sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
@@ -119,16 +119,16 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
   {CC_303_REVERB_SEND, 0,              5,    2,  127,  true},
 #endif
   {CC_303_RESO,       CC_303_CUTOFF,  64,   60, 127,  true},
-  {CC_303_CUTOFF,     CC_303_RESO,    20,   0,  120,  false},
+  {CC_303_CUTOFF,     CC_303_RESO,    20,   0,  100,  false},
   {CC_303_PAN,        0,              80,   0,  127,  true},
   {CC_303_ENVMOD_LVL, 0,              100,  15, 127,  false},
   {CC_303_WAVEFORM,   0,              127,  64, 127,  true}, // SAW
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
-  {CC_303_ACCENT_LVL, 0,              64,   10, 127,  false},
+  {CC_303_ACCENT_LVL, 0,              0,   0, 127,  true},
   {CC_303_DECAY,      0,              20,   15, 64,  true},
   {CC_303_ATTACK,     0,              1,    3,  15,   true},
-  {CC_303_OVERDRIVE,  0,              0,    2,  90,  true},
-  {CC_303_DISTORTION, 0,              0,    2,  20,  true}
+  {CC_303_OVERDRIVE,  0,              0,    0,  0,  true},
+  {CC_303_DISTORTION, 0,              20,    0,  40,  true}
 };
 
 sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
@@ -764,17 +764,17 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
   if (perc_mode == PercFiller) {
     for (int i = 0; i < PatternLength; i++) {
       if (oh[i] == 0 && ch[i] == 0 && kick[i] == 0 && snare[i] == 0)
-        perc[i] = 90 + myRandom(37);
+        perc[i] = 50 + myRandom(37);
     }
   } else if (perc_mode == PercXor1) {
     for (int i = 0; i < PatternLength; i++) {
       if ((kick[i] == 0) ^ (snare[i] == 0))
-        perc[i] = 90 + myRandom(37);
+        perc[i] = 50 + myRandom(37);
     }
   } else if (perc_mode == PercXor2) {
     for (int i = 0; i < PatternLength; i++) {
       if ((oh[i] == 0) ^ (ch[i] == 0))
-        perc[i] = 90 + myRandom(37);
+        perc[i] = 50 + myRandom(37);
     }
   } else if (perc_mode == PercEcho) {
     byte distance = 1 + myRandom(7);
@@ -782,7 +782,7 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
     for (int i = 0; i < PatternLength; i++) {
       byte prev_step = (i + PatternLength - distance) % PatternLength;
       if (ch[prev_step] || oh[prev_step])
-        perc[i] = 90 + myRandom(37);
+        perc[i] = 50 + myRandom(37);
     }
   } else if (perc_mode == PercRolls) {
     byte roll = 0, roll_vol = 0;
@@ -796,7 +796,7 @@ static void generate_drums(byte *kick, byte *snare, byte *oh, byte *ch, byte *pe
         do_roll = 1;
 
       if (do_roll) {
-        roll_vol = 90 + myRandom(37);
+        roll_vol = 50 + myRandom(37);
         roll = 4;
       }
 
