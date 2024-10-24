@@ -1,7 +1,7 @@
 #define PROG_NAME       "ESP32 AcidBox"
 #define VERSION         "v.1.3.3"
 
-
+#define BOARD_HAS_UART_CHIP
 
 #define JUKEBOX                 // real-time endless auto-compose acid tunes
 #define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
@@ -111,24 +111,41 @@ const float ONE_DIV_TWOPI = 1.0f/TWOPI;
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
-// Debugging macros
-#ifndef MIDI_VIA_SERIAL
-  #ifndef DEB
-    #ifdef DEBUG_ON
-      #define DEB(...) Serial.print(__VA_ARGS__) 
-      #define DEBF(...) Serial.printf(__VA_ARGS__) 
-      #define DEBUG(...) Serial.println(__VA_ARGS__) 
-    #else
-      #define DEB(...)
-      #define DEBF(...)
-      #define DEBUG(...)
-    #endif
-  #endif
-#else
-      #define DEB(...)
-      #define DEBF(...)
-      #define DEBUG(...)
+#if (defined ARDUINO_LOLIN_S3_PRO)
+#undef BOARD_HAS_UART_CHIP
 #endif
+
+#if (defined BOARD_HAS_UART_CHIP)
+  #define MIDI_PORT_TYPE HardwareSerial
+  #define MIDI_PORT Serial
+  #define DEBUG_PORT Serial
+#else
+  #if (ESP_ARDUINO_VERSION_MAJOR < 3)
+    #define MIDI_PORT_TYPE HWCDC
+    #define MIDI_PORT USBSerial
+    #define DEBUG_PORT Serial
+  #else
+    #define MIDI_PORT_TYPE HardwareSerial
+    #define MIDI_PORT Serial
+    #define DEBUG_PORT Serial
+  #endif
+#endif
+
+#ifdef MIDI_VIA_SERIAL
+  #undef DEBUG_ON
+#endif
+
+// debug macros
+#ifdef DEBUG_ON
+  #define DEB(...)    DEBUG_PORT.print(__VA_ARGS__) 
+  #define DEBF(...)   DEBUG_PORT.printf(__VA_ARGS__)
+  #define DEBUG(...)  DEBUG_PORT.println(__VA_ARGS__)
+#else
+  #define DEB(...)
+  #define DEBF(...)
+  #define DEBUG(...)
+#endif
+
 
 // normalizing matrices for TB filter and distortion/overdrive pairs
 #define NORM1_DEPTH 1.0f 

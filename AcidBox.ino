@@ -30,25 +30,27 @@
 #include "sampler.h"
 #include <Wire.h>
 
+
+// =============================================================== MIDI interfaces ===============================================================
+
 #if defined MIDI_VIA_SERIAL2 || defined MIDI_VIA_SERIAL
 #include <MIDI.h>
 #endif
 
 #ifdef MIDI_VIA_SERIAL
-// default settings for Hairless midi is 115200 8-N-1
-struct CustomBaudRateSettings : public MIDI_NAMESPACE::DefaultSerialSettings {
-  static const long BaudRate = 115200;
-};
-struct SerialMIDISettings : public midi::DefaultSettings {
-  static const long BaudRate = 115200;
-  static const bool Use1ByteParsing = false;
-};
-MIDI_NAMESPACE::SerialMIDI<HardwareSerial, CustomBaudRateSettings> serialMIDI(Serial);
-MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, SerialMIDISettings>> MIDI((MIDI_NAMESPACE::SerialMIDI<HardwareSerial, SerialMIDISettings>&)serialMIDI);
+
+  struct CustomBaudRateSettings : public MIDI_NAMESPACE::DefaultSettings {
+    static const long BaudRate = 115200;
+    static const bool Use1ByteParsing = false;
+  };
+
+  MIDI_NAMESPACE::SerialMIDI<MIDI_PORT_TYPE, CustomBaudRateSettings> serialMIDI(MIDI_PORT);
+  MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<MIDI_PORT_TYPE, CustomBaudRateSettings>> MIDI((MIDI_NAMESPACE::SerialMIDI<MIDI_PORT_TYPE, CustomBaudRateSettings>&)serialMIDI);
+
 #endif
 
 #ifdef MIDI_VIA_SERIAL2
-// MIDI port on UART2,   pins 16 (RX) and 17 (TX) prohibited, as they are used for PSRAM
+// MIDI port on UART2,   pins 16 (RX) and 17 (TX) prohibited on ESP32, as they are used for PSRAM
 struct Serial2MIDISettings : public midi::DefaultSettings {
   static const long BaudRate = 31250;
   static const int8_t RxPin  = MIDIRX_PIN;
@@ -70,6 +72,7 @@ static float saw_tbl[TABLE_SIZE+1];
 static float exp_tbl[TABLE_SIZE+1];
 static float knob_tbl[TABLE_SIZE+1]; // exp-like curve
 static float shaper_tbl[TABLE_SIZE+1]; // illinear tanh()-like curve
+static float lim_tbl[TABLE_SIZE+1]; // diode soft clipping at about 1.0
 static float sin_tbl[TABLE_SIZE+1];
 static float norm1_tbl[16][16]; // cutoff-reso pair gain compensation
 static float norm2_tbl[16][16]; // wavefolder-overdrive gain compensation
