@@ -245,7 +245,7 @@ void setup(void) {
 
 #ifdef DEBUG_ON
 #ifndef MIDI_VIA_SERIAL
-  Serial.begin(115200);
+  DEBUG_PORT.begin(115200);
 #endif
 #endif
 
