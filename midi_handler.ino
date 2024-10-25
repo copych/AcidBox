@@ -1,7 +1,7 @@
 inline void MidiInit() {
   
 #ifdef MIDI_VIA_SERIAL
-  MIDI_PORT.begin(115200, SERIAL_8N1);
+  MIDI_PORT.begin(115200);
 #endif
 #ifdef MIDI_VIA_SERIAL2
   pinMode( MIDIRX_PIN , INPUT_PULLDOWN);

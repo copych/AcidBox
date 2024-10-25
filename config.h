@@ -5,17 +5,17 @@
 
 #define JUKEBOX                 // real-time endless auto-compose acid tunes
 #define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
-#define MIDI_RAMPS              // this is what makes automated Cutoff-Reso-FX turn
-#define TEST_POTS               // experimental interactivity with potentiometers connected to POT_PINS[] defined below
+//#define MIDI_RAMPS              // this is what makes automated Cutoff-Reso-FX turn
+//#define TEST_POTS               // experimental interactivity with potentiometers connected to POT_PINS[] defined below
 
 //#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: NOISY 8BIT STEREO
 //#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB TO BE SACRIFICED, ONE SMALL DRUM KIT SAMPLES USED 
 
-//#define LOLIN_RGB               // Flashes the LOLIN S3 buildin RGB-LED
+//#define LOLIN_RGB               // Flashes the LOLIN S3 built-in RGB-LED
 
-#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
+//#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
-#define DEBUG_SAMPLER
+//#define DEBUG_SAMPLER
 //#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
