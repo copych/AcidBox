@@ -99,7 +99,7 @@ inline void TeeBeeFilter::SetResonance(float newResonance, bool updateCoefficien
 {
   resonanceRaw    =  newResonance;
 //  compens = 1.8f * (resonanceRaw + 0.25f) * one_div((resonanceRaw + 0.25f) * 0.75f + 0.113f); // gain compensation; one_div(x) = 1/x
-  resonanceSkewed = (1.0f - exp(-3.0f * resonanceRaw)) / (1.0f - exp(-3.0f));
+  resonanceSkewed = 1.02f * (1.0f - exp(-3.0f * resonanceRaw)) / (1.0f - exp(-3.0f));
   if ( updateCoefficients == true )
     calculateCoefficientsApprox4();
 }
