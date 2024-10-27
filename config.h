@@ -32,7 +32,7 @@
 #define I2S_BCLK_PIN    5       // I2S BIT CLOCK pin (BCL BCK CLK)
 #define I2S_WCLK_PIN    7       // I2S WORD CLOCK pin (WCK WCL LCK)
 #define I2S_DOUT_PIN    6       // to I2S DATA IN pin (DIN D DAT)
-const uint8_t POT_PINS[POT_NUM] = {40, 41, 42};
+const uint8_t POT_PINS[POT_NUM] = {15, 16, 17};
 #elif defined(CONFIG_IDF_TARGET_ESP32)
 #define I2S_BCLK_PIN    5       // I2S BIT CLOCK pin (BCL BCK CLK)
 #define I2S_WCLK_PIN    19      // I2S WORD CLOCK pin (WCK WCL LCK)
