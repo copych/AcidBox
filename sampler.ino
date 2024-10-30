@@ -29,14 +29,14 @@ void Sampler::CreateDefaultSamples(fs::FS &fs){
   fs.mkdir(path);
   WriteFile(fs, (String)(path + "/001_BD.wav"), s01_sz, s01);
   WriteFile(fs, (String)(path + "/002_SD.wav"), s02_sz, s02);
-  WriteFile(fs, (String)(path + "/005_CB.wav"), s05_sz, s05);
-  WriteFile(fs, (String)(path + "/007_CH.wav"), s07_sz, s07);
-  WriteFile(fs, (String)(path + "/008_OH.wav"), s08_sz, s08);
-  WriteFile(fs, (String)(path + "/010_CR.wav"), s10_sz, s10);
   WriteFile(fs, (String)(path + "/003_.wav"), s00_sz, s00);
   WriteFile(fs, (String)(path + "/004_.wav"), s00_sz, s00);
+  WriteFile(fs, (String)(path + "/005_CB.wav"), s05_sz, s05);
   WriteFile(fs, (String)(path + "/006_.wav"), s00_sz, s00);
+  WriteFile(fs, (String)(path + "/007_CH.wav"), s07_sz, s07);
+  WriteFile(fs, (String)(path + "/008_OH.wav"), s08_sz, s08);
   WriteFile(fs, (String)(path + "/009_.wav"), s00_sz, s00);
+  WriteFile(fs, (String)(path + "/010_CR.wav"), s10_sz, s10);
 }
 
 void Sampler::WriteFile(fs::FS &fs, const String fname, size_t fsize, const uint8_t bytearray[] ) {
