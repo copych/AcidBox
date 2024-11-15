@@ -1,5 +1,4 @@
 #pragma once
-
 #ifndef FXFCR_H
 #define FXFCR_H
 /*

@@ -27,7 +27,7 @@ void FxFilterCrusher::SetBitCrusher( float value ) {
 };
 
 void FxFilterCrusher::Process( float* left, float* right ) {
-  static float oldLP, oldHP, oldReso;
+  float oldLP, oldHP, oldReso;
   effect_prescaler++;
 
   Filter_Process(left, &mainFilterL_LP);

@@ -50,7 +50,6 @@ inline void handleCC(uint8_t inChannel, uint8_t cc_number, uint8_t cc_value) {
   switch (cc_number) { // global parameters yet set via ANY channel CCs
     case CC_ANY_COMPRESSOR:
       Comp.SetRatio(3.0f + cc_value * 0.307081f);
-      DEBF("Set Comp Ratio %d\r\n", cc_value);
       break;
     case CC_ANY_DELAY_TIME:
       Delay.SetLength(cc_value * MIDI_NORM);

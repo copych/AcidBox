@@ -19,7 +19,7 @@
   And then use Tools -> ESP32 Sketch Data Upload
 
 */
-
+#pragma GCC optimize ("O2")
 #include "config.h"
 #include "fx_delay.h"
 #ifndef NO_PSRAM
@@ -85,7 +85,6 @@ static  uint32_t  last_reset = 0;
 static  float     param[POT_NUM];
 static uint8_t    ctrl_hold_notes;
 
-
 // Audio buffers of all kinds
 volatile uint8_t current_gen_buf = 0; // set of buffers for generation
 volatile uint8_t current_out_buf = 1 - 0; // set of buffers for output
@@ -112,8 +111,8 @@ TaskHandle_t SynthTask1;
 TaskHandle_t SynthTask2;
 
 // 303-like synths
-SynthVoice Synth1(0); // instance 0 to recognize from the inside
-SynthVoice Synth2(1); // instance 1 to recognize from the inside
+SynthVoice Synth1(0); 
+SynthVoice Synth2(1); 
 
 // 808-like drums
 Sampler Drums( DEFAULT_DRUMKIT ); // argument: starting drumset [0 .. total-1]
@@ -129,8 +128,8 @@ hw_timer_t * timer1 = NULL;            // Timer variables
 hw_timer_t * timer2 = NULL;            // Timer variables
 portMUX_TYPE timer1Mux = portMUX_INITIALIZER_UNLOCKED; 
 portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED; 
-volatile boolean timer1_fired = false;   // Update battery icon flag
-volatile boolean timer2_fired = false;   // Update battery icon flag
+volatile boolean timer1_fired = false;
+volatile boolean timer2_fired = false;
 
 /*
  * Timer interrupt handler **********************************************************************************************************************************
@@ -141,27 +140,23 @@ void IRAM_ATTR onTimer1() {
    timer1_fired = true;
    portEXIT_CRITICAL_ISR(&timer1Mux);
 }
-
+ 
 void IRAM_ATTR onTimer2() {
    portENTER_CRITICAL_ISR(&timer2Mux);
    timer2_fired = true;
    portEXIT_CRITICAL_ISR(&timer2Mux);
 }
 
-
-
 /* 
  * Core Tasks ************************************************************************************************************************
 */
-// forward declaration
-static void IRAM_ATTR mixer() ;
 // Core0 task 
 // static void audio_task1(void *userData) {
 static void IRAM_ATTR audio_task1(void *userData) {
   
   while (true) {
     taskYIELD(); 
-    if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
+//    if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
       c0t = micros();
       
 //      taskYIELD(); 
@@ -169,19 +164,30 @@ static void IRAM_ATTR audio_task1(void *userData) {
       current_gen_buf = current_out_buf;      // swap buffers
       current_out_buf = 1 - current_gen_buf;
       
-      xTaskNotifyGive(SynthTask2);            // if we are here, then we've already received a notification from task2
+    //  xTaskNotifyGive(SynthTask2);            // if we are here, then we've already received a notification from task2
       
       s1t = micros();
       synth1_generate();
       s1T = micros() - s1t;
+      
+      s2t = micros();
+      synth2_generate();
+      s2T = micros() - s2t;
       
   //    taskYIELD(); 
 
       drt = micros();
       drums_generate();
       drT = micros() - drt;
+      
+      c1t = micros();
+      fxt = micros();
+      mixer(); 
+      fxT = micros() - fxt;
+      
+      i2s_output();
 
-    }
+ //   }
     
    // taskYIELD();
 
@@ -196,36 +202,28 @@ static void IRAM_ATTR audio_task1(void *userData) {
 static void IRAM_ATTR audio_task2(void *userData) {
   while (true) {
     taskYIELD();
-    
+ /*   
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // wait for the notification from the SynthTask1
-      c1t = micros();
-      fxt = micros();
-      mixer(); 
-      i2s_output();
-      fxT = micros() - fxt;
+
       
       taskYIELD();
     
-      s2t = micros();
-      synth2_generate();
-      s2T = micros() - s2t;
       
       xTaskNotifyGive(SynthTask1); 
     }    
-    
+ */
     c1T = micros() - c1t;
 
     art = micros();
     
     if (timer2_fired) {
       timer2_fired = false;
-
 #ifdef TEST_POTS      
        readPots();
 #endif
        
 #ifdef DEBUG_TIMING
-        DEBF ("synt1=%dus synt2=%dus drums=%dus mixer=%dus DMA_BUF=%dus\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
+        DEBF ("CORE micros: synt1, synt2, drums, mixer, DMA_LEN\t%d\t%d\t%d\t%d\t%d\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
         //    DEBF ("TaskCore0=%dus TaskCore1=%dus DMA_BUF=%dus\r\n" , c0T , c1T , DMA_BUF_TIME);
         //    DEBF ("AllTheRestCore1=%dus\r\n" , arT);
 #endif
@@ -243,11 +241,10 @@ static void IRAM_ATTR audio_task2(void *userData) {
 
 void setup(void) {
 
-#ifdef DEBUG_ON
-#ifndef MIDI_VIA_SERIAL
-  DEBUG_PORT.begin(115200);
+#ifdef DEBUG_ON 
+  DEBUG_PORT.begin(115200); 
 #endif
-#endif
+delay(200);
 
   btStop(); // we don't want bluetooth to consume our precious cpu time 
 
@@ -310,13 +307,15 @@ void setup(void) {
   */
   timer2 = timerBegin(1, 80, true);               // Setup general purpose timer
   timerAttachInterrupt(timer2, &onTimer2, true);  // Attach callback
-  timerAlarmWrite(timer2, 200000, true);          // 200ms, autoreload
+  timerAlarmWrite(timer2, 200000, true);          // 200ms, autoreload 
   timerAlarmEnable(timer2);
+  
 #else 
   timer2 = timerBegin(1000000);               // Setup general purpose timer
   timerAttachInterrupt(timer2, &onTimer2);  // Attach callback
   timerAlarm(timer2, 200000, true, 0);          // 200ms, autoreload
 #endif
+DEBUG("setup done");
 }
 
 static uint32_t last_ms = micros();
@@ -340,14 +339,14 @@ void loop() { // default loopTask running on the Core1
 
 void readPots() {
   static const float snap = 0.003f;
-  static uint8_t i = 0;
-  static float tmp;
+  static int i = 0;
+  float tmp;
   static const float NORMALIZE_ADC = 1.0f / 4096.0f;
 //read one pot per call
   tmp = (float)analogRead(POT_PINS[i]) * NORMALIZE_ADC;
   if (fabs(tmp - param[i]) > snap) {
     param[i] = tmp;
-    paramChange(i, tmp);
+  //  paramChange(i, tmp);
   }
 
   i++;
@@ -407,4 +406,87 @@ void regular_checks() {
 #endif
 
 
+}
+
+
+inline void IRAM_ATTR drums_generate() {
+    for (int i=0; i < DMA_BUF_LEN; i++){
+      Drums.Process( &drums_buf_l[current_gen_buf][i], &drums_buf_r[current_gen_buf][i] );      
+    } 
+}
+
+inline void IRAM_ATTR synth1_generate() {
+    for (int i=0; i < DMA_BUF_LEN; i++){
+      synth1_buf[current_gen_buf][i] = Synth1.getSample() ;      
+    } 
+}
+
+inline void IRAM_ATTR synth2_generate() {
+    for (int i=0; i < DMA_BUF_LEN; i++){
+      synth2_buf[current_gen_buf][i] = Synth2.getSample() ;      
+    } 
+}
+
+void IRAM_ATTR mixer() { // sum buffers 
+#ifdef DEBUG_MASTER_OUT
+  static float meter = 0.0f;
+#endif
+  static float synth1_out_l, synth1_out_r, synth2_out_l, synth2_out_r, drums_out_l, drums_out_r;
+  static float dly_l, dly_r, rvb_l, rvb_r;
+  static float mono_mix;
+    dly_k1 = Synth1._sendDelay;
+    dly_k2 = Synth2._sendDelay;
+    dly_k3 = Drums._sendDelay;
+#ifndef NO_PSRAM 
+    rvb_k1 = Synth1._sendReverb;
+    rvb_k2 = Synth2._sendReverb;
+    rvb_k3 = Drums._sendReverb;
+#endif
+    for (int i=0; i < DMA_BUF_LEN; i++) { 
+      drums_out_l = drums_buf_l[current_out_buf][i];
+      drums_out_r = drums_buf_r[current_out_buf][i];
+
+      synth1_out_l = Synth1.GetPan() * synth1_buf[current_out_buf][i];
+      synth1_out_r = (1.0f - Synth1.GetPan()) * synth1_buf[current_out_buf][i];
+      synth2_out_l = Synth2.GetPan() * synth2_buf[current_out_buf][i];
+      synth2_out_r = (1.0f - Synth2.GetPan()) * synth2_buf[current_out_buf][i];
+
+      
+      dly_l = dly_k1 * synth1_out_l + dly_k2 * synth2_out_l + dly_k3 * drums_out_l; // delay bus
+      dly_r = dly_k1 * synth1_out_r + dly_k2 * synth2_out_r + dly_k3 * drums_out_r;
+      Delay.Process( &dly_l, &dly_r );
+#ifndef NO_PSRAM
+      rvb_l = rvb_k1 * synth1_out_l + rvb_k2 * synth2_out_l + rvb_k3 * drums_out_l; // reverb bus
+      rvb_r = rvb_k1 * synth1_out_r + rvb_k2 * synth2_out_r + rvb_k3 * drums_out_r;
+      Reverb.Process( &rvb_l, &rvb_r );
+
+      mix_buf_l[current_out_buf][i] = (synth1_out_l + synth2_out_l + drums_out_l + dly_l + rvb_l);
+      mix_buf_r[current_out_buf][i] = (synth1_out_r + synth2_out_r + drums_out_r + dly_r + rvb_r);
+#else
+      mix_buf_l[current_out_buf][i] = (synth1_out_l + synth2_out_l + drums_out_l + dly_l);
+      mix_buf_r[current_out_buf][i] = (synth1_out_r + synth2_out_r + drums_out_r + dly_r);
+#endif
+      mono_mix = 0.5f * (mix_buf_l[current_out_buf][i] + mix_buf_r[current_out_buf][i]);
+  //    Comp.Process(mono_mix);     // calculate gain based on a mono mix
+
+      Comp.Process(drums_out_l*0.25f);  // calc compressor gain, side-chain driven by drums
+
+
+      mix_buf_l[current_out_buf][i] = (Comp.Apply( 0.25f * mix_buf_l[current_out_buf][i]));
+      mix_buf_r[current_out_buf][i] = (Comp.Apply( 0.25f * mix_buf_r[current_out_buf][i]));
+
+      
+#ifdef DEBUG_MASTER_OUT
+      if ( i % 16 == 0) meter = meter * 0.95f + fabs( mono_mix); 
+#endif
+  //    mix_buf_l[current_out_buf][i] = fclamp(mix_buf_l[current_out_buf][i] , -1.0f, 1.0f); // clipper
+  //    mix_buf_r[current_out_buf][i] = fclamp(mix_buf_r[current_out_buf][i] , -1.0f, 1.0f);
+     mix_buf_l[current_out_buf][i] = fast_shape( mix_buf_l[current_out_buf][i]); // soft limitter/saturator
+     mix_buf_r[current_out_buf][i] = fast_shape( mix_buf_r[current_out_buf][i]);
+   }
+#ifdef DEBUG_MASTER_OUT
+  meter *= 0.95f;
+  meter += fabs(mono_mix); 
+  DEBF("out= %0.5f\r\n", meter);
+#endif
 }

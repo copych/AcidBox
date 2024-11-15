@@ -33,6 +33,12 @@ float shaper_fill(uint16_t i) {
   return res;
 }
 
+float lim_fill(uint16_t i) {
+  float x = (float)i * 1.0f * (float)DIV_TABLE_SIZE; // argument belongs [ 0 .. 1 ]
+  float res = pow( tanh( pow( 1.1f * x, 12.0f) ), (1.0f / 12.0f) ); 
+  return res;
+}
+
 float sin_fill(uint16_t i) {
   float res = sinf( (float)i * TWOPI * (float)DIV_TABLE_SIZE ); // 0.0 -- 2*pi argument
   return res;
@@ -64,6 +70,7 @@ void buildTables() {
   for (int i = 0; i <= TABLE_SIZE; i++) {
     exp_square_tbl[i] = expSquare_fill(i);
     shaper_tbl[i] = shaper_fill(i); 
+    lim_tbl[i] = lim_fill(i);
     knob_tbl[i] = knob_fill(i);
 	  sin_tbl[i]  = sin_fill(i);
   //  saw_tbl[i] = 1.0f - 2.0f * (float)i * (float)DIV_TABLE_SIZE;

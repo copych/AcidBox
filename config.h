@@ -1,19 +1,22 @@
+#pragma once
+
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v.1.3.3"
+#define VERSION         "v.1.3.6 S3"
 
 #define BOARD_HAS_UART_CHIP
 
 #define JUKEBOX                 // real-time endless auto-compose acid tunes
 #define JUKEBOX_PLAY_ON_START   // should it play on power on, or should it wait for "boot" button to be pressed
-//#define MIDI_RAMPS              // this is what makes automated Cutoff-Reso-FX turn
+#define MIDI_RAMPS              // this is what makes automated Cutoff-Reso-FX turn
 //#define TEST_POTS               // experimental interactivity with potentiometers connected to POT_PINS[] defined below
 
 //#define USE_INTERNAL_DAC      // use this for testing, SOUND QUALITY SACRIFICED: NOISY 8BIT STEREO
 //#define NO_PSRAM              // if you don't have PSRAM on your board, then use this define, but REVERB TO BE SACRIFICED, ONE SMALL DRUM KIT SAMPLES USED 
 
+//#define FLASH_LED               // flash built-in LED
 //#define LOLIN_RGB               // Flashes the LOLIN S3 built-in RGB-LED
 
-//#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
+#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
 //#define DEBUG_SYNTH
@@ -22,16 +25,16 @@
 //#define DEBUG_TIMING
 //#define DEBUG_MIDI
 
-#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
-//#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
+//#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
+#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
 #define MIDIRX_PIN      4       // this pin is used for input when MIDI_VIA_SERIAL2 defined (note that default pin 17 won't work with PSRAM)
 #define MIDITX_PIN      15      // this pin will be used for output (not implemented yet) when MIDI_VIA_SERIAL2 defined
 
 #define POT_NUM 3
 #if defined(CONFIG_IDF_TARGET_ESP32S3)
 #define I2S_BCLK_PIN    5       // I2S BIT CLOCK pin (BCL BCK CLK)
-#define I2S_WCLK_PIN    7       // I2S WORD CLOCK pin (WCK WCL LCK)
 #define I2S_DOUT_PIN    6       // to I2S DATA IN pin (DIN D DAT)
+#define I2S_WCLK_PIN    7       // I2S WORD CLOCK pin (WCK WCL LCK)
 const uint8_t POT_PINS[POT_NUM] = {15, 16, 17};
 #elif defined(CONFIG_IDF_TARGET_ESP32)
 #define I2S_BCLK_PIN    5       // I2S BIT CLOCK pin (BCL BCK CLK)
@@ -43,8 +46,8 @@ const uint8_t POT_PINS[POT_NUM] = {34, 35, 36};
 
 float bpm = 130.0f;
 
-#define MAX_CUTOFF_FREQ 4000.0f
-#define MIN_CUTOFF_FREQ 250.0f
+#define MAX_CUTOFF_FREQ 2400.0f
+#define MIN_CUTOFF_FREQ 300.0f
 
 #ifdef USE_INTERNAL_DAC
 #define SAMPLE_RATE     22050   // price for increasing this value having NO_PSRAM is less delay time, you won't hear the difference at 8bit/sample
@@ -55,17 +58,20 @@ float bpm = 130.0f;
 const float DIV_SAMPLE_RATE = 1.0f / (float)SAMPLE_RATE;
 const float DIV_2SAMPLE_RATE = 0.5f / (float)SAMPLE_RATE;
 const float TWO_DIV_16383 = 1.22077763e-04f;
+const float MS_TO_S = 0.001f;
 
 #define TABLE_BIT  		        10UL				// bits per index of lookup tables for waveforms, exp(), sin(), cos() etc. 10 bit means 2^10 = 1024 samples
 #define TABLE_SIZE            (1<<TABLE_BIT)        // samples used for lookup tables (it works pretty well down to 32 samples due to linear approximation, so listen and free some memory at your choice)
 #define TABLE_MASK  	        (TABLE_SIZE-1)        // strip MSB's and remain within our desired range of TABLE_SIZE
-#define CICLE_INDEX(i)        (((int32_t)(i)) & TABLE_MASK ) // this way we can operate with periodic functions or waveforms without phase-reset ("if's" are pretty costly in the matter of time)
+#define CYCLE_INDEX(i)        (((int32_t)(i)) & TABLE_MASK ) // this way we can operate with periodic functions or waveforms without phase-reset ("if's" are pretty costly in the matter of time)
 
 const float DIV_TABLE_SIZE =  1.0f / (float)TABLE_SIZE;
+const int HALF_TABLE =  TABLE_SIZE/2;
+
 
 // illinear shaper, choose preferred parameters basing on your audial experience
-//#define SHAPER_USE_TANH             // use tanh() function to introduce illeniarity into the filter and compressor, it won't impact performance as this will be pre-calculated 
-#define SHAPER_USE_CUBIC              // use the cubic curve to introduce illeniarity into the filter and compressor, it won't impact performance as this will be pre-calculated
+#define SHAPER_USE_TANH             // use tanh() function to introduce illeniarity into the filter and compressor, it won't impact performance as this will be pre-calculated 
+//#define SHAPER_USE_CUBIC              // use the cubic curve to introduce illeniarity into the filter and compressor, it won't impact performance as this will be pre-calculated
 
 // curve will be pre-calculated within -X..X range, outside this interval the function is assumed to be flat
 #define SHAPER_LOOKUP_MAX 5.0f        // maximum X argument value for tanh(X) lookup table, tanh(X)~=1 if X>4 
@@ -84,6 +90,10 @@ const float TWOPI = PI*2.0f;
 const float MIDI_NORM = 1.0f/127.0f;
 const float ONE_DIV_PI = 1.0f/PI;
 const float ONE_DIV_TWOPI = 1.0f/TWOPI;
+
+const float  PI_DIV_TWO     =       HALF_PI;
+const float  NORM_RADIANS = ONE_DIV_TWOPI * TABLE_SIZE;
+
 #define FORMAT_LITTLEFS_IF_FAILED true
 
 #define GROUP_HATS  // if so, instruments CH_NUMBER and OH_NUMBER will terminate each other (sampler module)
@@ -123,7 +133,7 @@ const float ONE_DIV_TWOPI = 1.0f/TWOPI;
   #if (ESP_ARDUINO_VERSION_MAJOR < 3)
     #define MIDI_PORT_TYPE HWCDC
     #define MIDI_PORT USBSerial
-    #define DEBUG_PORT Serial
+    #define DEBUG_PORT USBSerial
   #else
     #define MIDI_PORT_TYPE HardwareSerial
     #define MIDI_PORT Serial
@@ -296,6 +306,23 @@ static const float tuning[128] = {
   1.887749f, 1.887749f, 1.887749f, 2.000000f, 2.000000f, 2.000000f, 2.000000f, 2.000000f
 };
 
-
-inline float fast_shape(float x);
-static __attribute__((always_inline)) inline float one_div(float a) ;
+// =========================== forward declarations ================================================
+// =========================== someday I refactor this *** =========================================
+static float IRAM_ATTR bilinearLookup(float (&table)[16][16], float x, float y);
+static float IRAM_ATTR lookupTable(float (&table)[TABLE_SIZE+1], float index );
+static float IRAM_ATTR fclamp(float in, float minv, float maxv) ;
+static float IRAM_ATTR fast_shape(float x);
+static void  IRAM_ATTR fast_sincos(float x, float* sinRes, float* cosRes);
+static float IRAM_ATTR fast_sin(float x);
+static float IRAM_ATTR fast_cos(float x);
+static float __attribute__((always_inline)) inline one_div(float);
+float dB2amp(float dB);
+float amp2dB(float amp);
+float linToLin(float in, float inMin, float inMax, float outMin, float outMax);
+float linToExp(float in, float inMin, float inMax, float outMin, float outMax);
+float expToLin(float in, float inMin, float inMax, float outMin, float outMax);
+float knobMap(float in, float outMin, float outMax);
+static void IRAM_ATTR drums_generate();
+static void IRAM_ATTR synth1_generate();
+static void IRAM_ATTR synth2_generate();
+static void IRAM_ATTR mixer();

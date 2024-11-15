@@ -131,8 +131,10 @@ class TeeBeeFilter
     inline float shape(float x);
 
     /** Implements limitting of a given value */
-    inline float fclamp(float val, float minval, float maxval) {
-      return fmin(fmax(val, minval), maxval) ;
+    inline float fclamp(float in, float min, float max){
+      if (in>max) return max;
+      if (in<min) return min;
+      return in;
     };
 
     /** Resets the internal state variables. */

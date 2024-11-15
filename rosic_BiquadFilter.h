@@ -22,8 +22,8 @@ enum modes
   BANDREJECT,
   PEAK,
   LOW_SHELF,
-  //HIGH_SHELF,
-  //ALLPASS,
+  HIGH_SHELF,
+  ALLPASS,
 
   NUM_FILTER_MODES
 };

@@ -156,15 +156,43 @@ void BiquadFilter::calcCoeffs()
       float beta  = sqrt(A) / q;
       float scale = 1.0f / ( (A+1.0f) + (A-1.0f)*c + beta*s);
       a1 = 2.0f *     ( (A-1.0f) + (A+1.0f)*c          ) * scale;
-      a2 = -         ( (A+1.0f) + (A-1.0f)*c - beta*s ) * scale;
-      b0 =       A * ( (A+1.0f) - (A-1.0f)*c + beta*s ) * scale;
+      a2 = -          ( (A+1.0f) + (A-1.0f)*c - beta*s ) * scale;
+      b0 =        A * ( (A+1.0f) - (A-1.0f)*c + beta*s ) * scale;
       b1 = 2.0f * A * ( (A-1.0f) - (A+1.0f)*c          ) * scale;
-      b2 =       A * ( (A+1.0f) - (A-1.0f)*c - beta*s ) * scale;
+      b2 =        A * ( (A+1.0f) - (A-1.0f)*c - beta*s ) * scale;
+    }
+    break;
+  case HIGH_SHELF: 
+    {
+      // formula from Robert Bristow Johnson's biquad cookbook:
+      fast_sincos(w, &s, &c);
+      float A     = dB2amp(0.5f*gain);
+      float q     = 1.0f / (2.0f*sinh( 0.5f*log(2.0f) * bandwidth ));
+      float beta  = sqrt(A) / q;
+      float scale = 1.0f / ( (A+1.0f) + (A-1.0f)*c + beta*s);
+      
+      a1 =     -2 * ( (A-1) - (A+1)*c          ) * scale;
+      a2 =      -   ( (A+1) - (A-1)*c - beta*s ) * scale;
+      b0 =      A * ( (A+1) + (A-1)*c + beta*s ) * scale;
+      b1 = -2 * A * ( (A-1) + (A+1)*c          ) * scale;
+      b2 =      A * ( (A+1) + (A-1)*c - beta*s ) * scale;
     }
     break;
 
+  case ALLPASS:
+    {
+      fast_sincos(w, &s, &c);
+      float alpha = s * sinh( 0.5f*log(2.0f) * bandwidth * w / s );
+      float A     = dB2amp(gain);
+      float scale = 1.0f/(1.0f+alpha/A);
 
-
+      a1 = (  2 * c) * scale;
+      a2 =-(  1 - alpha/A) * scale;
+      b0 = (  1 - alpha*A) * scale;
+      b1 = ( -2 * c) * scale;
+      b2 = (  1 + alpha*A) * scale;
+    }
+    
 
     // \todo: implement shelving and allpass modes
 

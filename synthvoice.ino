@@ -1,16 +1,13 @@
 #include "synthvoice.h"
 
-
 void SynthVoice::Init() {
   _envMod = 0.5f;
   _accentLevel = 0.5f;
-  _cutoff = 0.2f; // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically floats this range
+  _cutoff = 0.2f; // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically doubles this range
   _filter_freq = linToExp(_cutoff, 0.0f, 1.0f, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
   _reso = 0.4f;
   _gain = 0.0f; // values >1 will distort sound
   _drive = 0.0f;
-  _eAmpEnvState = ENV_IDLE;
-  _eFilterEnvState = ENV_IDLE;
   //  midiNotes[0] = -1;
   //  midiNotes[1] = -1;
   _midiNote = 69;
@@ -24,21 +21,17 @@ void SynthVoice::Init() {
   mva1.n = 0 ;
   _pan = 0.5;
 
+  AmpEnv.init(SAMPLE_RATE);
+  FltEnv.init(SAMPLE_RATE);
   // parameters of envelopes
-  _ampEnvPosition = 0.0;
-  _filterEnvPosition = 0.0;
   _ampAttackMs = 0.5;
   _ampDecayMs = 1230.0;
   _ampReleaseMs = 1.0;
-  _ampAccentReleaseMs = 50.0f;
- // _ampEnvAttackStep = 15.0;
- // _ampEnvDecayStep = 1.0;
- // _ampEnvReleaseStep = 15.0;
   _filterAttackMs = 3.0;
-  _filterDecayMs = 200.0;
-  //_filterEnvAttackStep = 15.0;
-  //_filterEnvDecayStep = 1.0;
-
+  _filterDecayMs = 1000.0;
+  _filterAccentAttackMs = 30.0;
+  _filterAccentDecayMs = 200.0;
+  
   Distortion.Init();
   Drive.Init();
 
@@ -67,19 +60,31 @@ void SynthVoice::Init() {
 
 
 inline float SynthVoice::getSample() {
-  float samp = 0.0f, filtEnv = 0.0f, ampEnv = 0.0f, final_cut = 0.0f;
-    filtEnv = GetFilterEnv();
-    ampEnv = GetAmpEnv();
-    if (_eAmpEnvState != ENV_IDLE) {
+  
+    float samp = 0.0f, filtEnv = 0.0f, ampEnv = 0.0f, final_cut = 0.0f;
+    filtEnv = FltEnv.process()*2.0f-0.3f;
+    
+    ampEnv = AmpEnv.process() * _k_acc;
+    
+    if (AmpEnv.isRunning()) {
       // samp = (float)((1.0f - _waveMix) * lookupTable(*(tables[_waveBase]), _phaze)) + (float)(_waveMix * lookupTable(*(tables[_waveBase+1]), _phaze)) ; // lookup and blend waveforms
-      samp = (float)((1.0f - _waveMix) * lookupTable(exp_square_tbl, _phaze)) + (float)(_waveMix * lookupTable(saw_tbl, _phaze)) ; // lookup and blend waveforms
+       samp = (float)((1.0f - _waveMix) * lookupTable(exp_square_tbl, _phaze)) + (float)(_waveMix * lookupTable(saw_tbl, _phaze)) ; // lookup and blend waveforms
+      // samp = _phaze < HALF_TABLE ? 2 * _waveMix * _phaze * DIV_TABLE_SIZE - 1.0f   :    2 * _waveMix * (_phaze * DIV_TABLE_SIZE - 1.0f) + 1.0f; 
     } else {
       samp = 0.0f;
     }
-    final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 1.3f * (float)_accentation + 1.0f );
-    final_cut = filtDeclicker.getSample( final_cut );
+    final_cut = (float)_filter_freq * (1.0f + (_envMod + 0.2f) * filtEnv * (_accentation + 0.2f) );
+    //final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 1.3f * (float)_accentation + 1.0f );
+//    final_cut = filtDeclicker.getSample( final_cut );
     Filter.SetCutoff( final_cut );
 
+    
+    
+     decimator++;
+     if (decimator % 128 == 0 && _index == 0) {
+      DEBF("%f\r\n", final_cut);
+     }
+     
     samp = highpass1.getSample(samp);         // pre-filter highpass, following open303
     
     samp = allpass.getSample(samp);           // phase correction, following open303
@@ -92,15 +97,15 @@ inline float SynthVoice::getSample() {
     
     samp = Drive.Process(samp);               // overdrive
     
-    samp = Distortion.Process(samp);             // distortion
+    samp = Distortion.Process(samp);          // distortion
     
     samp *= ampEnv;                           // amp envelope
 
 
-    _compens = _volume * 8.0f  * _fx_compens ; // * _flt_compens;
-    
+    _compens = _volume * 8.0f * _fx_compens ; // * _flt_compens;
+
     _compens = ampDeclicker.getSample(_compens);
-    
+   
     samp *=  _compens;
 
     if ((_slide || _portamento) && _deltaStep != 0.0f) {     // portamento / slide processing
@@ -119,8 +124,8 @@ inline float SynthVoice::getSample() {
     if ( _phaze >= TABLE_SIZE) {
        _phaze -= TABLE_SIZE ;
     */
-   
-     
+
+
     // this is less accurate in terms of pitch, especially at higher notes, but at this price you have quite no aliasing, as phase reset produces no moire
     if ( _phaze >= TABLE_SIZE) {
       if (_wave_cnt == 3) { // we drop the phase every 4 periods
@@ -129,8 +134,7 @@ inline float SynthVoice::getSample() {
       } else {
         _wave_cnt++;
         _phaze -= TABLE_SIZE ;
-      }
-       
+      } 
     }
     
     /*
@@ -139,11 +143,9 @@ inline float SynthVoice::getSample() {
       _phaze = 2.0f * (float)( (int)(0.5f * (_phaze - (float)TABLE_SIZE)) ); 
       DEBF("%0.5f\r\n", _phaze);
     }*/
-
     
     //synth_buf[_index][i] = fast_shape(samp); // mono limitter
-    return  samp;
-  
+    return  samp;  
 }
 
 
@@ -160,7 +162,6 @@ inline void SynthVoice::PitchBend(int number) {
   float semi = ((((float)number + 8191.5f) * (float)TWO_DIV_16383 ) - 1.0f ) * 12.0f;
   _pitchbend = powf(1.059463f, semi);
   _effectiveStep = _targetStep * _tuning * _pitchbend;
-  DEBUG(_effectiveStep);
 }
 
 inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
@@ -195,13 +196,13 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_DECAY: // Env release
       tmp = (float)cc_value * MIDI_NORM;
-      _filterDecayMs = knobMap(tmp, 15.0f, 5000.0f);
-      _ampDecayMs = knobMap(tmp, 15.0f, 7500.0f);
+      _filterDecayMs = knobMap(tmp, 200.0f, 2000.0f);
+      //_ampDecayMs = knobMap(tmp, 15.0f, 7500.0f);
       break;
     case CC_303_ATTACK: // Env attack
       tmp = (float)cc_value * MIDI_NORM;
-      _filterAttackMs = knobMap(tmp, 3.0f, 500.0f);
-      _ampAttackMs =  knobMap(tmp, 3.0f, 700.0f);
+      _filterAttackMs = knobMap(tmp, 3.0f, 100.0f);
+      _ampAttackMs =  knobMap(tmp, 0.1f, 500.0f);
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
@@ -215,7 +216,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       _sendReverb = (float)cc_value * MIDI_NORM;
       break;
     case CC_303_ENVMOD_LVL:
-      _envMod = (float)cc_value * MIDI_NORM;
+      _envMod = (float)cc_value * MIDI_NORM ;
       break;
     case CC_303_ACCENT_LVL:
       _accentLevel = (float)cc_value * MIDI_NORM;
@@ -239,122 +240,6 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       _effectiveStep = _targetStep * _tuning * _pitchbend;
       break;
   }
-}
-
-float SynthVoice::GetAmpEnv() {
-  switch (_eAmpEnvState) {
-    case ENV_INIT:
-      _k_acc = (1.0f + 0.3f * _accentation);
-      _ampEnvPosition = 0.0f;
-      _ampEnvAttackStep = _msToSteps * one_div( _ampAttackMs + 0.0001f);
-      _ampEnvDecayStep = _msToSteps * one_div(_ampDecayMs + 0.0001f);
-      if (_accent) {
-        //_ampEnvDecayStep *= 5.0f;
-        _ampEnvReleaseStep = _msToSteps * one_div(_ampAccentReleaseMs + 0.0001f);
-      } else {
-        _ampEnvReleaseStep = _msToSteps * one_div(_ampReleaseMs + 0.0001f);
-      }
-      _eAmpEnvState = ENV_ATTACK;
-      _ampEnvVal = (-exp_tbl[ 0 ] + 1.0f) * 0.5f;
-      break;
-    case ENV_ATTACK:
-      _ampEnvPosition += _ampEnvAttackStep;
-      if (_ampEnvPosition >= TABLE_SIZE) {
-        _eAmpEnvState = ENV_DECAY;
-        _ampEnvPosition = 0;
-        _ampEnvVal = (-exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f * _k_acc;
-      } else {
-        _ampEnvVal = (-lookupTable(exp_tbl, _ampEnvPosition ) + 1.0f) * 0.5f * _k_acc;
-        if (_pass_val > _ampEnvVal) _ampEnvVal = _pass_val;
-      }
-      _pass_val = _ampEnvVal;
-      break;
-    case ENV_DECAY:
-      _ampEnvPosition += _ampEnvDecayStep;
-      if (_ampEnvPosition >= TABLE_SIZE) {
-        _eAmpEnvState = ENV_SUSTAIN;
-        _ampEnvPosition = 0;
-        _ampEnvVal = _sust_level;
-      } else {
-        _ampEnvVal = _sust_level + (1.0f - _sust_level) * (lookupTable(exp_tbl, _ampEnvPosition) + 1.0f) * 0.5f * _k_acc;
-      }
-      _pass_val = _ampEnvVal;
-      break;
-    case ENV_SUSTAIN:
-      _ampEnvVal = _sust_level; //  asuming sustain to be endless
-      _pass_val = _ampEnvVal;
-      _ampEnvPosition = 0;
-      break;
-    case ENV_RELEASE:
-      if (_ampEnvPosition >= TABLE_SIZE) {
-        _eAmpEnvState = ENV_IDLE;
-        _ampEnvPosition = 0;
-        _ampEnvVal = 0.0f;
-      } else {
-        if (_ampEnvPosition <= _ampEnvReleaseStep) _release_lvl = _pass_val;
-        _ampEnvVal = _release_lvl * (lookupTable(exp_tbl, _ampEnvPosition) + 1.0f) * 0.5f * _k_acc;
-      }
-      _ampEnvPosition += _ampEnvReleaseStep;
-      _pass_val = _ampEnvVal;
-      break;
-    case ENV_IDLE:
-      _ampEnvVal = 0.0f;
-      break;
-    default:
-      _ampEnvVal = 0.0f;
-  }
-  if (_accent) {
-
-  }
-  return _ampEnvVal;
-}
-
-inline float SynthVoice::GetFilterEnv() {
-  switch (_eFilterEnvState) {
-    case ENV_INIT:
-      //   k_acc = (1.0f + 0.45f * _accentation);
-      _offset = max(_filterEnvVal, _offset);
-      _filterEnvPosition = 0.0f;
-      _filterEnvAttackStep = _msToSteps * one_div(_filterAttackMs + 0.0001f);
-      _filterEnvDecayStep = _msToSteps * one_div(_filterDecayMs + 0.0001f);
-      if (_accent) {
-       // _filterEnvAttackStep *= 1.4f;
-        _filterEnvDecayStep *= 5.0f;
-       // _reso += 0.2f;
-      } 
-      _eFilterEnvState = ENV_ATTACK;
-      _filterEnvVal = (-exp_tbl[ 0 ] + 1.0f) * 0.5f ;
-      break;
-    case ENV_ATTACK:
-      if (_filterEnvPosition >= (float)TABLE_SIZE) {
-        _eFilterEnvState = ENV_DECAY;
-        _filterEnvPosition = 0.0f;
-        _filterEnvVal = (-exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f ;
-      } else {
-        _filterEnvVal = (-lookupTable(exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
-      }
-      _filterEnvPosition += _filterEnvAttackStep;
-      break;
-    case ENV_DECAY:
-      if (_filterEnvPosition >= (float)TABLE_SIZE) {
-        _eFilterEnvState = ENV_IDLE; // Attack-Decay-0 envelope (?)
-        _filterEnvPosition = 0.0f;
-        _filterEnvVal = 0.0f;
-      } else {
-        _filterEnvVal =  (lookupTable(exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
-      }
-      _filterEnvPosition += _filterEnvDecayStep;
-      _offset *= _offset_leak;
-      break;
-    case ENV_IDLE:
-      _filterEnvVal =  0.0f;
-      _offset *= _offset_leak;
-      break;
-    default:
-      _filterEnvVal =  0.0f;
-  }
-  _filterEnvVal += _offset;
-  return _filterEnvVal ;
 }
 
 
@@ -458,34 +343,44 @@ void SynthVoice::mva_note_off(mva_data *p, uint8_t note)
   }
 }
 
-void SynthVoice::mva_reset(mva_data *p)
-{
+void SynthVoice::mva_reset(mva_data *p) {
   p->n = 0;
 }
 
-void  SynthVoice::note_on(uint8_t midiNote, bool slide, bool accent)
-{
+void  SynthVoice::note_on(uint8_t midiNote, bool slide, bool accent) {
   _accent = accent;
   _slide = slide || _portamento;
   _targetStep = midi_tbl_steps[midiNote];
   _effectiveStep = _targetStep * _tuning * _pitchbend;
+  if (mva1.n == 1) {
+    if (_accent) {
+      _accentation = _accentLevel; 
+      AmpEnv.setReleaseTimeMs(_ampReleaseMs * 50.0f);
+      FltEnv.setDecayTimeMs(_filterAccentDecayMs );
+      FltEnv.setAttackTimeMs(_filterAccentAttackMs );
+    } else {
+      _accentation = 0.0f;
+      AmpEnv.setReleaseTimeMs( _ampReleaseMs );
+      FltEnv.setDecayTimeMs(_filterDecayMs );
+      FltEnv.setAttackTimeMs(_filterAttackMs );
+    }
+  }
+  AmpEnv.setAttackTimeMs(_ampAttackMs);
+  AmpEnv.setDecayTimeMs(_ampDecayMs);
   if (_slide) {
     _deltaStep = (_effectiveStep - _currentStep) * (1000.0f * DIV_SAMPLE_RATE / _slideMs );
   } else {
     _currentStep = _effectiveStep;
     _deltaStep = 0.0f ;
-    _eAmpEnvState = ENV_INIT;
-    _eFilterEnvState = ENV_INIT;
     _phaze = 0.0f;
-
+    AmpEnv.retrigger(Adsr::END_NOW);
+    FltEnv.retrigger(false);    
   }
-  if (mva1.n == 1) {
-    if (_accent) _accentation = _accentLevel; else _accentation = 0.0f;
-  }
+  _k_acc = (1.0f + 0.4f * _accentation);
+ // DEBF ("ampRelease %f \t ampDecay %f \t \r\n", _ampReleaseMs, _ampDecayMs );
 }
 
-void  SynthVoice::note_off()
-{
-  _eAmpEnvState = ENV_RELEASE;
-  _ampEnvPosition = 0;
+void  SynthVoice::note_off() {
+  AmpEnv.end(Adsr::END_REGULAR);
+ // FltEnv.end(false);
 }

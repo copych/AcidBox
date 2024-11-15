@@ -1,5 +1,6 @@
-#ifndef TB303VOICE_H
-#define TB303VOICE_H
+#pragma once
+#include "adsr.h"
+#include "ad.h"
 
 #define FILTER_TYPE 2       // 0 = Moogladder by Victor Lazzarini
                             // 1 = Tim Stilson's model by Aaron Krajeski
@@ -39,6 +40,9 @@ typedef struct
 
 class SynthVoice {
 public:
+ size_t     decimator =0;
+  Adsr        AmpEnv;
+  AD_env      FltEnv;
   SynthVoice();
   SynthVoice(uint8_t ind) {_index = ind;};
   void Init();
@@ -61,7 +65,7 @@ public:
   inline void SetIndex(uint8_t ind)       {_index = ind;};
   inline void ParseCC(uint8_t cc_number, uint8_t cc_value);
   inline void PitchBend(int number) ;
-  inline void allNotesOff()               {mva1.n=0; _ampEnvPosition = 0.0; _filterEnvPosition = 0.0; _eAmpEnvState = ENV_IDLE; _eFilterEnvState = ENV_IDLE;};
+  inline void allNotesOff()               {mva1.n=0;  AmpEnv.end(Adsr::END_FAST); FltEnv.end(false);};
   inline float GetAmpEnv();                // call once per sample
   inline float GetFilterEnv();             // call once per sample
   inline float GetPan()                 {return _pan;}
@@ -145,13 +149,11 @@ private:
   float _ampDecayMs = 300.0f;
   float _ampReleaseMs = 30.0f;
   float _ampEnvAttackStep = 15.0f;
-  float _ampEnvDecayStep = 1.0f;
-  float _ampEnvReleaseStep = 15.0f;
   float _ampAccentReleaseMs = 50.0f;
-  float _filterAttackMs = 5.0f;
-  float _filterDecayMs = 200.0f;
-  float _filterEnvAttackStep = 15.0f;
-  float _filterEnvDecayStep = 1.0f;
+  float _filterAttackMs = 3.0f;
+  float _filterDecayMs = 1000.0f;
+  float _filterAccentDecayMs = 200.0f;
+  float _filterAccentAttackMs = 50.0f;
   float _offset = 0.0f; // filter discharge 
   float _offset_leak = 0.9999f; 
   float _msToSteps = (float)TABLE_SIZE * DIV_SAMPLE_RATE * 1000.0f;
@@ -180,5 +182,3 @@ private:
   
   Overdrive         Drive;
 };
-
-#endif

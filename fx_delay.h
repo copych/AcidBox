@@ -1,3 +1,4 @@
+#pragma once
 /*
  * This is a simple implementation of a delay line
  * - level adjustable
@@ -5,49 +6,47 @@
  * - length adjustable
  *
  * Author: Marcel Licence
+ * https://github.com/marcel-licence
+ * 
+ * - formed into a class
+ * - buffer allocation 
+ * by copych 2022
+ * https://github.com/copych
+ * 
  */
 
+// max delay can be changed, but memory consumption will also change
+#ifdef BOARD_HAS_PSRAM 
+  #define MALLOC_CAP        (MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT)
+  #define MAX_DELAY         (SAMPLE_RATE)
+#else
+  #define MALLOC_CAP        (MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT)
+  #define MAX_DELAY         (SAMPLE_RATE/4)
+#endif
 
 class FxDelay {
 	public:
 		FxDelay() {}
-   
-		// max delay can be changed but changes also the PSRAM consumption
 		void Init( void ){
-#ifdef NO_PSRAM
-  #define MAX_DELAY 42000/4 // 
     // heap_caps_print_heap_info(MALLOC_CAP_8BIT);
-     delayLine_l = (float *)malloc(sizeof(float) * MAX_DELAY);
+      delayLine_l = (float *)heap_caps_calloc(1, sizeof(float) * MAX_DELAY, MALLOC_CAP);
       if( delayLine_l == NULL){
-        DEBUG("No more RAM for delay L !");
+        DEBUG("DELAY: No more memory for delay L !");
       } else {
-        DEBUG("Memory allocated for delay L");
+        DEBUG("DELAY: Memory allocated for delay L");
       }
    // heap_caps_print_heap_info(MALLOC_CAP_8BIT);
-      delayLine_r = (float *)malloc(sizeof(float) * MAX_DELAY);
+      delayLine_r = (float *)heap_caps_calloc(1, sizeof(float) * MAX_DELAY, MALLOC_CAP);
       if( delayLine_r == NULL ){
-        DEBF("No more RAM for delay R !");
+        DEBF("DELAY: No more memory for delay R !");
       } else {
-        DEBUG("Memory allocated for delay R");
+        DEBUG("DELAY: Memory allocated for delay R");
       }
       Reset();
-      
-#else
-#define MAX_DELAY SAMPLE_RATE // 1 second
-//#define MAX_DELAY 38000 // 1 second
-			delayLine_l = (float *)ps_malloc(sizeof(float) * MAX_DELAY);
-			if( delayLine_l == NULL){
-				DEBF("No more PSRAM!\n");
-			}
-			delayLine_r = (float *)ps_malloc(sizeof(float) * MAX_DELAY);
-			if( delayLine_r == NULL ){
-				DEBF("No more PSRAM!\n");
-			}
-			Reset();
-#endif
-		};
+		}
 
 		void Reset( void ){
+      //float bpm = 120;
 			for (int i = 0; i < MAX_DELAY; i++ ){
 				delayLine_l[i] = 0;
 				delayLine_r[i] = 0;

@@ -102,14 +102,14 @@ sSynthCCs synth1_ramps[NUM_SYNTH_CCS] = {
 #endif
   {CC_303_PAN,        0,              47,   0,  127,  true},
   {CC_303_WAVEFORM,   0,              0,    0,  64,   true}, // SQUARE
-  {CC_303_RESO,       CC_303_CUTOFF,  64,   40, 125,  true},
-  {CC_303_CUTOFF,     CC_303_RESO,    30,   0,  127,  true},
+  {CC_303_RESO,       CC_303_CUTOFF,  30,   40, 125,  true},
+  {CC_303_CUTOFF,     CC_303_RESO,    60,   0,  127,  true},
   {CC_303_DECAY,      0,              20,   15, 64,  true},
   {CC_303_ATTACK,     0,              1,    3,  10,   true},
   {CC_303_ENVMOD_LVL, 0,              100,  0,  127,  false},
   {CC_303_ACCENT_LVL, 0,              10,   0,  70,  true},
   {CC_303_DELAY_SEND, 0,              0,    64, 127,  false},
-  {CC_303_DISTORTION, 0,              0,    0,  3,  true},
+  {CC_303_DISTORTION, 0,              0,    0,  100,  true},
   {CC_303_OVERDRIVE,  0,              5,    0,  50,  true}
 };
 
@@ -127,8 +127,8 @@ sSynthCCs synth2_ramps[NUM_SYNTH_CCS] = {
   {CC_303_ACCENT_LVL, 0,              0,   0, 127,  true},
   {CC_303_DECAY,      0,              20,   15, 64,  true},
   {CC_303_ATTACK,     0,              1,    3,  15,   true},
-  {CC_303_OVERDRIVE,  0,              0,    0,  0,  true},
-  {CC_303_DISTORTION, 0,              20,    0,  40,  true}
+  {CC_303_OVERDRIVE,  0,              1,    0,  10,  true},
+  {CC_303_DISTORTION, 0,              20,    0,  127,  true}
 };
 
 sSynthCCs drum_ramps[NUM_DRUM_CCS] = {
@@ -486,16 +486,14 @@ void sequencer_step(byte step) {
     check_midi_ramps(true);
 #endif
   }
+  
+#ifdef FLASH_LED
   if (step % 4 == 0 || step == 1) {
     digitalWrite(LED_BUILTIN, HIGH);
     #ifdef LOLIN_RGB
       pixels.setPixelColor(0, pixels.Color(rand() % 32, rand() % 32, rand() % 32));
       pixels.show();
     #endif
-
-#ifdef DEBUG_JUKEBOX
-    DEBUG(step);
-#endif
   }  else {
     digitalWrite(LED_BUILTIN, LOW);
     #ifdef LOLIN_RGB
@@ -503,6 +501,7 @@ void sequencer_step(byte step) {
       pixels.show();
     #endif
   }
+#endif
 }
 
 /*
