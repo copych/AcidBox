@@ -1,4 +1,4 @@
-# AcidBox
+# AcidBox S3
 ESP32 headless acid combo of tb303 + tb303 + tr808 like synths. Filter cutoff, reso, env mod, accent, wavefolder, overdrive within each 303, per-instrument tunings, hi-pass/lo-pass filter and bitcrusher in drums, send to reverb, delay and master compression.
 All MIDI driven. 44100, 16bit stereo I2S output to the external DAC or 8bit to the built-in DAC. No indication. Uses both cores of ESP32. Cheap ~$10.
 Consult with midi_config.h to find out and to set up MIDI continous control messages.
