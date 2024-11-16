@@ -46,9 +46,6 @@ const uint8_t POT_PINS[POT_NUM] = {34, 35, 36};
 
 float bpm = 130.0f;
 
-#define MAX_CUTOFF_FREQ 2400.0f
-#define MIN_CUTOFF_FREQ 300.0f
-
 #ifdef USE_INTERNAL_DAC
 #define SAMPLE_RATE     22050   // price for increasing this value having NO_PSRAM is less delay time, you won't hear the difference at 8bit/sample
 #else

@@ -73,7 +73,7 @@ inline float SynthVoice::getSample() {
     } else {
       samp = 0.0f;
     }
-    final_cut = (float)_filter_freq * (1.0f + (_envMod + 0.2f) * filtEnv * (_accentation + 0.2f) );
+    final_cut = (float)_filter_freq_cut * (0.8f + (_envMod) * (filtEnv - 0.3f) * (_accentation + 0.2f) );
     //final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 1.3f * (float)_accentation + 1.0f );
 //    final_cut = filtDeclicker.getSample( final_cut );
     Filter.SetCutoff( final_cut );
@@ -152,10 +152,19 @@ inline float SynthVoice::getSample() {
 inline void SynthVoice::SetCutoff(float lvl)  {
   _cutoff = lvl;
   _filter_freq = knobMap( lvl, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
+  _filter_freq_mod = knobMap( lvl, MIN_CUTOFF_FREQ_MOD, MAX_CUTOFF_FREQ_MOD);
+  _filter_freq_cut = knobMap( _envMod, _filter_freq, _filter_freq_mod);
 #ifdef DEBUG_SYNTH
   DEBF("Synth %d cutoff=%0.3f freq=%0.3f\r\n" , _index, _cutoff, _filter_freq);
 #endif
 }
+
+
+inline void SynthVoice::SetEnvModLevel(float lvl) {
+  _envMod = lvl;
+  _filter_freq_cut = knobMap( _envMod, _filter_freq, _filter_freq_mod);
+};
+
 
 inline void SynthVoice::PitchBend(int number) {
   //
@@ -216,7 +225,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       _sendReverb = (float)cc_value * MIDI_NORM;
       break;
     case CC_303_ENVMOD_LVL:
-      _envMod = (float)cc_value * MIDI_NORM ;
+      SetEnvModLevel ( (float)cc_value * MIDI_NORM ) ;
       break;
     case CC_303_ACCENT_LVL:
       _accentLevel = (float)cc_value * MIDI_NORM;
@@ -283,7 +292,6 @@ inline void SynthVoice::on_midi_noteOFF(uint8_t note, uint8_t velocity)
     note_off();
   }
 }
-
 
 void SynthVoice::mva_note_on(mva_data *p, uint8_t note, uint8_t accent)
 {

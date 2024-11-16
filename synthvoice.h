@@ -40,7 +40,11 @@ typedef struct
 
 class SynthVoice {
 public:
- size_t     decimator =0;
+  static float constexpr MIN_CUTOFF_FREQ = 500.0;
+  static float constexpr MAX_CUTOFF_FREQ = 3530.0;
+  static float constexpr MIN_CUTOFF_FREQ_MOD = 2740.0;
+  static float constexpr MAX_CUTOFF_FREQ_MOD = 19300.0;
+  size_t      decimator = 0; // debugging only needs!
   Adsr        AmpEnv;
   AD_env      FltEnv;
   SynthVoice();
@@ -59,7 +63,7 @@ public:
   inline void SetOverdriveLevel(float lvl) {_drive = lvl;  Drive.SetDrive(_drive ); };
   inline void SetCutoff(float lvl);
   inline void SetReso(float lvl)        {_reso = constrain(lvl, 0.0f, 1.0f); Filter.SetResonance(_reso); };
-  inline void SetEnvModLevel(float lvl) {_envMod = lvl;};
+  inline void SetEnvModLevel(float lvl);
   inline void SetAccentLevel(float lvl) {_accentLevel = lvl;};
   inline void SetTempo(float tempo)     {_tempo = tempo;};
   inline void SetIndex(uint8_t ind)       {_index = ind;};
@@ -73,7 +77,7 @@ public:
   inline float getSample() ;
   float _sendDelay = 0.0f;
   float _sendReverb = 0.0f;
-  int midiNotes[2] = {-1, -1};
+  int WORD_ALIGNED_ATTR  midiNotes[2] = {-1, -1};
 
   mva_data mva1;
 
@@ -90,37 +94,29 @@ public:
   
 private:
   // most CC controlled values internally are float, nevertheless their range maps to MIDI 0-127 (internally 0.0f-1.0f)
-  uint8_t _index = 0;
-  bool _slide = false;
-  bool _portamento = false; // slide, but managed by CC 65 
-  float _tempo = 100.0f;
+  float WORD_ALIGNED_ATTR  _tempo = 100.0f;
   float _waveMix = 1.0f ; // exp-square = 0.0f and exp-saw = 1.0f
-  int8_t _waveBase = 0; // calculate pointers to the two tables to blend
+  int _waveBase = 0; // calculate pointers to the two tables to blend
   float _sampleRate = (float)SAMPLE_RATE;
-  uint16_t bufSize = DMA_BUF_LEN;
+  int bufSize = DMA_BUF_LEN;
   float _detuneCents = 0.0f;
   float _envMod = 0.5f;
-  bool _accent = false;
   float _accentLevel = 0.5f;
   float _accentation = 0.0f;
   float _cutoff = 0.2f;   // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically doubles this range
-  float _filter_freq = 400.0f; // cutoff freq, Hz
+  float _filter_freq = 500.0f; // cutoff freq, Hz
+  float _filter_freq_mod = 2740.0f; // cutoff freq, Hz with envMod up
+  float _filter_freq_cut = 500.0f;
   float _filt_avg = 400.0f;
   float _reso = 0.4f; // normalized
   float _saturator = 0.0; // pre shaper
   float _gain = 0.0;      // post distortion, cc94
   float _drive = 0.0;      // post overdrive, cc95
-  enum eEnvState_t {ENV_IDLE, ENV_INIT, ENV_ATTACK, ENV_DECAY, ENV_SUSTAIN, ENV_RELEASE, ENV_WAITING};
-  volatile eEnvState_t _eAmpEnvState = ENV_IDLE;
-  volatile eEnvState_t _eFilterEnvState = ENV_IDLE;
-  float _envScaler = 1.0f;
-  float _envOffset = 0.0f;
   
   float _pan = 0.5f;
   float _volume = 1.0f;
   
   uint32_t _noteStartTime = 0;
-  uint8_t _midiNote = 69;
   float  _currentStep = 1.0f;
   float  _subStep = 4.0f;
   int    _wave_cnt = 0;
@@ -168,6 +164,11 @@ private:
   inline void calcEnvModScalerAndOffset();
  // Smoother          ampDeclicker;
  // Smoother          filtDeclicker;
+  uint8_t _midiNote = 69;
+  uint8_t _index = 0;
+  bool _accent = false;
+  bool _slide = false;
+  bool _portamento = false; // slide, but managed by CC 65 
 
   BiquadFilter      ampDeclicker;
   BiquadFilter      filtDeclicker;

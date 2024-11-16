@@ -63,19 +63,19 @@ MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2
 
 
 // lookuptables
-static float midi_pitches[128];
-static float midi_phase_steps[128];
-static float midi_tbl_steps[128];
-static float exp_square_tbl[TABLE_SIZE+1];
+static float DRAM_ATTR WORD_ALIGNED_ATTR midi_pitches[128];
+static float DRAM_ATTR WORD_ALIGNED_ATTR  midi_phase_steps[128];
+static float DRAM_ATTR WORD_ALIGNED_ATTR  midi_tbl_steps[128];
+static float DRAM_ATTR WORD_ALIGNED_ATTR  exp_square_tbl[TABLE_SIZE+1];
 //static float square_tbl[TABLE_SIZE+1];
-static float saw_tbl[TABLE_SIZE+1];
-static float exp_tbl[TABLE_SIZE+1];
-static float knob_tbl[TABLE_SIZE+1]; // exp-like curve
-static float shaper_tbl[TABLE_SIZE+1]; // illinear tanh()-like curve
-static float lim_tbl[TABLE_SIZE+1]; // diode soft clipping at about 1.0
-static float sin_tbl[TABLE_SIZE+1];
-static float norm1_tbl[16][16]; // cutoff-reso pair gain compensation
-static float norm2_tbl[16][16]; // wavefolder-overdrive gain compensation
+static float DRAM_ATTR WORD_ALIGNED_ATTR  saw_tbl[TABLE_SIZE+1];
+static float DRAM_ATTR WORD_ALIGNED_ATTR  exp_tbl[TABLE_SIZE+1];
+static float DRAM_ATTR WORD_ALIGNED_ATTR  knob_tbl[TABLE_SIZE+1]; // exp-like curve
+static float DRAM_ATTR WORD_ALIGNED_ATTR  shaper_tbl[TABLE_SIZE+1]; // illinear tanh()-like curve
+static float DRAM_ATTR WORD_ALIGNED_ATTR  lim_tbl[TABLE_SIZE+1]; // diode soft clipping at about 1.0
+static float DRAM_ATTR WORD_ALIGNED_ATTR  sin_tbl[TABLE_SIZE+1];
+static float DRAM_ATTR WORD_ALIGNED_ATTR  norm1_tbl[16][16]; // cutoff-reso pair gain compensation
+static float DRAM_ATTR WORD_ALIGNED_ATTR  norm2_tbl[16][16]; // wavefolder-overdrive gain compensation
 //static float (*tables[])[TABLE_SIZE+1] = {&exp_square_tbl, &square_tbl, &saw_tbl, &exp_tbl};
 
 // service variables and arrays
@@ -83,20 +83,20 @@ volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT, art, arT, c0t, c0T, c1
 volatile uint32_t prescaler;
 static  uint32_t  last_reset = 0;
 static  float     param[POT_NUM];
-static uint8_t    ctrl_hold_notes;
+static int    ctrl_hold_notes;
 
 // Audio buffers of all kinds
-volatile uint8_t current_gen_buf = 0; // set of buffers for generation
-volatile uint8_t current_out_buf = 1 - 0; // set of buffers for output
-static float synth1_buf[2][DMA_BUF_LEN];    // synth1 mono
-static float synth2_buf[2][DMA_BUF_LEN];    // synth2 mono
-static float drums_buf_l[2][DMA_BUF_LEN];   // drums L
-static float drums_buf_r[2][DMA_BUF_LEN];   // drums R
-static float mix_buf_l[2][DMA_BUF_LEN];     // mix L channel
-static float mix_buf_r[2][DMA_BUF_LEN];     // mix R channel
+volatile int current_gen_buf = 0; // set of buffers for generation
+volatile int current_out_buf = 1 - 0; // set of buffers for output
+static float DRAM_ATTR WORD_ALIGNED_ATTR  synth1_buf[2][DMA_BUF_LEN];    // synth1 mono
+static float DRAM_ATTR WORD_ALIGNED_ATTR  synth2_buf[2][DMA_BUF_LEN];    // synth2 mono
+static float DRAM_ATTR WORD_ALIGNED_ATTR  drums_buf_l[2][DMA_BUF_LEN];   // drums L
+static float DRAM_ATTR WORD_ALIGNED_ATTR  drums_buf_r[2][DMA_BUF_LEN];   // drums R
+static float DRAM_ATTR WORD_ALIGNED_ATTR  mix_buf_l[2][DMA_BUF_LEN];     // mix L channel
+static float DRAM_ATTR WORD_ALIGNED_ATTR  mix_buf_r[2][DMA_BUF_LEN];     // mix R channel
 static union {                              // a dirty trick, instead of true converting
-  int16_t _signed[DMA_BUF_LEN * 2];
-  uint16_t _unsigned[DMA_BUF_LEN * 2];
+  int16_t WORD_ALIGNED_ATTR _signed[DMA_BUF_LEN * 2];
+  uint16_t WORD_ALIGNED_ATTR _unsigned[DMA_BUF_LEN * 2];
 } out_buf[2];                               // i2s L+R output buffer
 size_t bytes_written;                       // i2s result
 
