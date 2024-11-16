@@ -40,7 +40,7 @@ typedef struct
 
 class SynthVoice {
 public:
-  static float constexpr MIN_CUTOFF_FREQ = 500.0;
+  static float constexpr MIN_CUTOFF_FREQ = 300.0;
   static float constexpr MAX_CUTOFF_FREQ = 3530.0;
   static float constexpr MIN_CUTOFF_FREQ_MOD = 2740.0;
   static float constexpr MAX_CUTOFF_FREQ_MOD = 19300.0;

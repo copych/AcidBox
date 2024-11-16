@@ -62,7 +62,7 @@ void SynthVoice::Init() {
 inline float SynthVoice::getSample() {
   
     float samp = 0.0f, filtEnv = 0.0f, ampEnv = 0.0f, final_cut = 0.0f;
-    filtEnv = FltEnv.process()*2.0f-0.3f;
+    filtEnv = FltEnv.process();
     
     ampEnv = AmpEnv.process() * _k_acc;
     
@@ -73,18 +73,17 @@ inline float SynthVoice::getSample() {
     } else {
       samp = 0.0f;
     }
-    final_cut = (float)_filter_freq_cut * (0.8f + (_envMod) * (filtEnv - 0.3f) * (_accentation + 0.2f) );
+    final_cut = (float)_filter_freq_cut * (0.8f + (_envMod+0.1f) * (3*filtEnv - 0.3f) * (_accentation + 0.2f) );
     //final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 1.3f * (float)_accentation + 1.0f );
 //    final_cut = filtDeclicker.getSample( final_cut );
-    Filter.SetCutoff( final_cut );
+    Filter.SetCutoff( final_cut );    
 
-    
     
      decimator++;
      if (decimator % 128 == 0 && _index == 0) {
       DEBF("%f\r\n", final_cut);
      }
-     
+    
     samp = highpass1.getSample(samp);         // pre-filter highpass, following open303
     
     samp = allpass.getSample(samp);           // phase correction, following open303
@@ -149,10 +148,10 @@ inline float SynthVoice::getSample() {
 }
 
 
-inline void SynthVoice::SetCutoff(float lvl)  {
-  _cutoff = lvl;
-  _filter_freq = knobMap( lvl, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
-  _filter_freq_mod = knobMap( lvl, MIN_CUTOFF_FREQ_MOD, MAX_CUTOFF_FREQ_MOD);
+inline void SynthVoice::SetCutoff(float normalized_val)  {
+  _cutoff = normalized_val;
+  _filter_freq = knobMap( normalized_val, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
+  _filter_freq_mod = knobMap( normalized_val, MIN_CUTOFF_FREQ_MOD, MAX_CUTOFF_FREQ_MOD);
   _filter_freq_cut = knobMap( _envMod, _filter_freq, _filter_freq_mod);
 #ifdef DEBUG_SYNTH
   DEBF("Synth %d cutoff=%0.3f freq=%0.3f\r\n" , _index, _cutoff, _filter_freq);
@@ -160,9 +159,9 @@ inline void SynthVoice::SetCutoff(float lvl)  {
 }
 
 
-inline void SynthVoice::SetEnvModLevel(float lvl) {
-  _envMod = lvl;
-  _filter_freq_cut = knobMap( _envMod, _filter_freq, _filter_freq_mod);
+inline void SynthVoice::SetEnvModLevel(float normalized_val) {
+  _envMod = normalized_val;
+  _filter_freq_cut = knobMap( normalized_val, _filter_freq, _filter_freq_mod);
 };
 
 
@@ -384,7 +383,7 @@ void  SynthVoice::note_on(uint8_t midiNote, bool slide, bool accent) {
     AmpEnv.retrigger(Adsr::END_NOW);
     FltEnv.retrigger(false);    
   }
-  _k_acc = (1.0f + 0.4f * _accentation);
+  _k_acc = (1.0f + 0.6f * _accentation);
  // DEBF ("ampRelease %f \t ampDecay %f \t \r\n", _ampReleaseMs, _ampDecayMs );
 }
 
