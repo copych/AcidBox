@@ -1,3 +1,7 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+
 #define PROG_NAME       "ESP32 AcidBox"
 #define VERSION         "v.1.3.3"
 
@@ -22,8 +26,8 @@
 //#define DEBUG_TIMING
 //#define DEBUG_MIDI
 
-#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
-//#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
+//#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
+#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
 #define MIDIRX_PIN      4       // this pin is used for input when MIDI_VIA_SERIAL2 defined (note that default pin 17 won't work with PSRAM)
 #define MIDITX_PIN      15      // this pin will be used for output (not implemented yet) when MIDI_VIA_SERIAL2 defined
 
@@ -214,7 +218,7 @@ const float cutoff_reso[16][16] = { // D-weighting curve linear amplitude
 };
 const float cutoff_reso_avg = 5.4167266f;
 */
-
+ 
 const float wfolder_overdrive[16][16] = { // D-weighting curve linear amplitude
 {4.321596, 6.677420, 9.351027, 12.337818, 15.274008, 17.178272, 20.258532, 22.640339, 23.268341, 25.133560, 25.689850, 27.329815, 26.931023, 27.971588, 28.773928, 27.811522},
 {6.072484, 10.221110, 14.169627, 17.745028, 20.698469, 24.349220, 25.056787, 26.135130, 27.644402, 29.212200, 28.163837, 28.859060, 30.591475, 30.274736, 30.926729, 32.161110},
@@ -299,3 +303,5 @@ static const float tuning[128] = {
 
 inline float fast_shape(float x);
 static __attribute__((always_inline)) inline float one_div(float a) ;
+
+#endif

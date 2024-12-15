@@ -72,7 +72,7 @@ inline float SynthVoice::getSample() {
     ampEnv = GetAmpEnv();
     if (_eAmpEnvState != ENV_IDLE) {
       // samp = (float)((1.0f - _waveMix) * lookupTable(*(tables[_waveBase]), _phaze)) + (float)(_waveMix * lookupTable(*(tables[_waveBase+1]), _phaze)) ; // lookup and blend waveforms
-      samp = (float)((1.0f - _waveMix) * lookupTable(exp_square_tbl, _phaze)) + (float)(_waveMix * lookupTable(saw_tbl, _phaze)) ; // lookup and blend waveforms
+      samp = (float)((1.0f - _waveMix) * lookupTable(Tables::exp_square_tbl, _phaze)) + (float)(_waveMix * lookupTable(Tables::saw_tbl, _phaze)) ; // lookup and blend waveforms
     } else {
       samp = 0.0f;
     }
@@ -190,7 +190,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_RESO:
       _reso = cc_value * MIDI_NORM ;
-      _flt_compens = one_div( bilinearLookup(norm1_tbl, _cutoff * 127.0f, cc_value ));
+      _flt_compens = one_div( bilinearLookup(Tables::norm1_tbl, _cutoff * 127.0f, cc_value ));
       SetReso(_reso);
       break;
     case CC_303_DECAY: // Env release
@@ -205,7 +205,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
-      _flt_compens = one_div( bilinearLookup(norm1_tbl, cc_value, _reso * 127.0f));
+      _flt_compens = one_div( bilinearLookup(Tables::norm1_tbl, cc_value, _reso * 127.0f));
       SetCutoff(_cutoff);
       break;
     case CC_303_DELAY_SEND:
@@ -222,12 +222,12 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_DISTORTION:
       _gain = (float)cc_value * MIDI_NORM ;
-      _fx_compens = one_div( bilinearLookup(norm2_tbl, _drive * 127.0f,  cc_value));
+      _fx_compens = one_div( bilinearLookup(Tables::norm2_tbl, _drive * 127.0f,  cc_value));
       SetDistortionLevel(_gain);
       break;
     case CC_303_OVERDRIVE:
       _drive = (float)cc_value * MIDI_NORM ;
-      _fx_compens = one_div( bilinearLookup(norm2_tbl, cc_value, _gain * 127.0f));
+      _fx_compens = one_div( bilinearLookup(Tables::norm2_tbl, cc_value, _gain * 127.0f));
       SetOverdriveLevel(_drive);
       break;
     case CC_303_SATURATOR:
@@ -255,16 +255,16 @@ float SynthVoice::GetAmpEnv() {
         _ampEnvReleaseStep = _msToSteps * one_div(_ampReleaseMs + 0.0001f);
       }
       _eAmpEnvState = ENV_ATTACK;
-      _ampEnvVal = (-exp_tbl[ 0 ] + 1.0f) * 0.5f;
+      _ampEnvVal = (-Tables::exp_tbl[ 0 ] + 1.0f) * 0.5f;
       break;
     case ENV_ATTACK:
       _ampEnvPosition += _ampEnvAttackStep;
       if (_ampEnvPosition >= TABLE_SIZE) {
         _eAmpEnvState = ENV_DECAY;
         _ampEnvPosition = 0;
-        _ampEnvVal = (-exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f * _k_acc;
+        _ampEnvVal = (-Tables::exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f * _k_acc;
       } else {
-        _ampEnvVal = (-lookupTable(exp_tbl, _ampEnvPosition ) + 1.0f) * 0.5f * _k_acc;
+        _ampEnvVal = (-lookupTable(Tables::exp_tbl, _ampEnvPosition ) + 1.0f) * 0.5f * _k_acc;
         if (_pass_val > _ampEnvVal) _ampEnvVal = _pass_val;
       }
       _pass_val = _ampEnvVal;
@@ -276,7 +276,7 @@ float SynthVoice::GetAmpEnv() {
         _ampEnvPosition = 0;
         _ampEnvVal = _sust_level;
       } else {
-        _ampEnvVal = _sust_level + (1.0f - _sust_level) * (lookupTable(exp_tbl, _ampEnvPosition) + 1.0f) * 0.5f * _k_acc;
+        _ampEnvVal = _sust_level + (1.0f - _sust_level) * (lookupTable(Tables::exp_tbl, _ampEnvPosition) + 1.0f) * 0.5f * _k_acc;
       }
       _pass_val = _ampEnvVal;
       break;
@@ -292,7 +292,7 @@ float SynthVoice::GetAmpEnv() {
         _ampEnvVal = 0.0f;
       } else {
         if (_ampEnvPosition <= _ampEnvReleaseStep) _release_lvl = _pass_val;
-        _ampEnvVal = _release_lvl * (lookupTable(exp_tbl, _ampEnvPosition) + 1.0f) * 0.5f * _k_acc;
+        _ampEnvVal = _release_lvl * (lookupTable(Tables::exp_tbl, _ampEnvPosition) + 1.0f) * 0.5f * _k_acc;
       }
       _ampEnvPosition += _ampEnvReleaseStep;
       _pass_val = _ampEnvVal;
@@ -323,15 +323,15 @@ inline float SynthVoice::GetFilterEnv() {
        // _reso += 0.2f;
       } 
       _eFilterEnvState = ENV_ATTACK;
-      _filterEnvVal = (-exp_tbl[ 0 ] + 1.0f) * 0.5f ;
+      _filterEnvVal = (-Tables::exp_tbl[ 0 ] + 1.0f) * 0.5f ;
       break;
     case ENV_ATTACK:
       if (_filterEnvPosition >= (float)TABLE_SIZE) {
         _eFilterEnvState = ENV_DECAY;
         _filterEnvPosition = 0.0f;
-        _filterEnvVal = (-exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f ;
+        _filterEnvVal = (-Tables::exp_tbl[ TABLE_SIZE - 1 ] + 1.0f) * 0.5f ;
       } else {
-        _filterEnvVal = (-lookupTable(exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
+        _filterEnvVal = (-lookupTable(Tables::exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
       }
       _filterEnvPosition += _filterEnvAttackStep;
       break;
@@ -341,7 +341,7 @@ inline float SynthVoice::GetFilterEnv() {
         _filterEnvPosition = 0.0f;
         _filterEnvVal = 0.0f;
       } else {
-        _filterEnvVal =  (lookupTable(exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
+        _filterEnvVal =  (lookupTable(Tables::exp_tbl, _filterEnvPosition) + 1.0f) * 0.5f  ;
       }
       _filterEnvPosition += _filterEnvDecayStep;
       _offset *= _offset_leak;
@@ -467,7 +467,7 @@ void  SynthVoice::note_on(uint8_t midiNote, bool slide, bool accent)
 {
   _accent = accent;
   _slide = slide || _portamento;
-  _targetStep = midi_tbl_steps[midiNote];
+  _targetStep = Tables::midi_tbl_steps[midiNote];
   _effectiveStep = _targetStep * _tuning * _pitchbend;
   if (_slide) {
     _deltaStep = (_effectiveStep - _currentStep) * (1000.0f * DIV_SAMPLE_RATE / _slideMs );
