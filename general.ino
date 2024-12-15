@@ -1,3 +1,5 @@
+#include "tables.h"
+
 static void drums_generate() {
     for (int i=0; i < DMA_BUF_LEN; i++){
       Drums.Process( &drums_buf_l[current_gen_buf][i], &drums_buf_r[current_gen_buf][i] );      
@@ -133,7 +135,7 @@ inline float fast_shape(float x){
     }
 
   //  if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders; tanh(x) ~= x, when |x| < 0.4 
-    return  sign * lookupTable(shaper_tbl, (x*SHAPER_LOOKUP_COEF)); // lookup table contains tanh(x), 0 <= x <= 5
+    return  sign * lookupTable(Tables::shaper_tbl, (x*SHAPER_LOOKUP_COEF)); // lookup table contains tanh(x), 0 <= x <= 5
   // float poly = (2.12f-2.88f*x+4.0f*x*x);
    // return sign * x * (poly * one_div(poly * x + 1.0f)); // very good approximation found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
                                                     // but it uses float division which is not that fast on esp32
@@ -141,13 +143,13 @@ inline float fast_shape(float x){
 
 inline float fast_sin(const float x) {
   const float argument = ((x * ONE_DIV_TWOPI) * TABLE_SIZE);
-  const float res = lookupTable(sin_tbl, CICLE_INDEX(argument)+((float)argument-(int32_t)argument));
+  const float res = lookupTable(Tables::sin_tbl, CICLE_INDEX(argument)+((float)argument-(int32_t)argument));
   return res;
 }
 
 inline float fast_cos(const float x) {  
   const float argument = ((x * ONE_DIV_TWOPI + 0.25f) * TABLE_SIZE);
-  const float res = lookupTable(sin_tbl, CICLE_INDEX(argument)+((float)argument-(int32_t)argument));
+  const float res = lookupTable(Tables::sin_tbl, CICLE_INDEX(argument)+((float)argument-(int32_t)argument));
   return res;
 }
 
@@ -215,5 +217,5 @@ inline float expToLin(float in, float inMin, float inMax, float outMin, float ou
 }
 
 inline float knobMap(float in, float outMin, float outMax) {
-  return outMin + lookupTable(knob_tbl, (int)(in * TABLE_SIZE)) * (outMax - outMin);
+  return outMin + lookupTable(Tables::knob_tbl, (int)(in * TABLE_SIZE)) * (outMax - outMin);
 }

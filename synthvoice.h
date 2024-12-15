@@ -1,6 +1,6 @@
 #ifndef TB303VOICE_H
 #define TB303VOICE_H
-
+#include "tables.h"
 #define FILTER_TYPE 2       // 0 = Moogladder by Victor Lazzarini
                             // 1 = Tim Stilson's model by Aaron Krajeski
 							              // 2 = Open303 filter
