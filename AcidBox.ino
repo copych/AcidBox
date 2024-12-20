@@ -20,6 +20,7 @@
 
 */
 #pragma GCC optimize ("O2")
+#include "tables.h"
 #include "config.h"
 #include "fx_delay.h"
 #ifndef NO_PSRAM
@@ -60,23 +61,6 @@ struct Serial2MIDISettings : public midi::DefaultSettings {
 MIDI_NAMESPACE::SerialMIDI<HardwareSerial> Serial2MIDI2(Serial2);
 MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2MIDISettings>> MIDI2((MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2MIDISettings>&)Serial2MIDI2);
 #endif
-
-
-// lookuptables
-static float DRAM_ATTR WORD_ALIGNED_ATTR midi_pitches[128];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  midi_phase_steps[128];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  midi_tbl_steps[128];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  exp_square_tbl[TABLE_SIZE+1];
-//static float square_tbl[TABLE_SIZE+1];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  saw_tbl[TABLE_SIZE+1];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  exp_tbl[TABLE_SIZE+1];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  knob_tbl[TABLE_SIZE+1]; // exp-like curve
-static float DRAM_ATTR WORD_ALIGNED_ATTR  shaper_tbl[TABLE_SIZE+1]; // illinear tanh()-like curve
-static float DRAM_ATTR WORD_ALIGNED_ATTR  lim_tbl[TABLE_SIZE+1]; // diode soft clipping at about 1.0
-static float DRAM_ATTR WORD_ALIGNED_ATTR  sin_tbl[TABLE_SIZE+1];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  norm1_tbl[16][16]; // cutoff-reso pair gain compensation
-static float DRAM_ATTR WORD_ALIGNED_ATTR  norm2_tbl[16][16]; // wavefolder-overdrive gain compensation
-//static float (*tables[])[TABLE_SIZE+1] = {&exp_square_tbl, &square_tbl, &saw_tbl, &exp_tbl};
 
 // service variables and arrays
 volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT, art, arT, c0t, c0T, c1t, c1T; // debug timing: if we use less vars, compiler optimizes them

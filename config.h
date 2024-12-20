@@ -1,4 +1,6 @@
 #pragma once
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #define PROG_NAME       "ESP32 AcidBox"
 #define VERSION         "v.1.3.6 S3"
@@ -323,3 +325,5 @@ static void IRAM_ATTR drums_generate();
 static void IRAM_ATTR synth1_generate();
 static void IRAM_ATTR synth2_generate();
 static void IRAM_ATTR mixer();
+
+#endif

@@ -1,4 +1,6 @@
 
+#include "tables.h"
+
 inline float bilinearLookup(float (&table)[16][16], float x, float y) {
   float const kmap = 0.1181f; // map from 0-127 to 0-14.99
   int32_t i,j;
@@ -53,7 +55,7 @@ inline float IRAM_ATTR fast_shape(float x){
     }
 
   //  if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders; tanh(x) ~= x, when |x| < 0.4 
-    float res = lookupTable(shaper_tbl, (x*SHAPER_LOOKUP_COEF)); // lookup table contains tanh(x), 0 <= x <= 5
+    float res = lookupTable(Tables::shaper_tbl, (x*SHAPER_LOOKUP_COEF)); // lookup table contains tanh(x), 0 <= x <= 5
     return sign<0 ? -res : res;
   // float poly = (2.12f-2.88f*x+4.0f*x*x);
    // return sign * x * (poly * one_div(poly * x + 1.0f)); // very good approximation found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
@@ -70,7 +72,7 @@ void IRAM_ATTR fast_sincos(float x, float* sinRes, float* cosRes){
   index = x * NORM_RADIANS  ;
   i = CYCLE_INDEX((int)index);
   f = ((float)index - (int)index);
-  res = f * (sin_tbl[i+1] - sin_tbl[i]) + sin_tbl[i];
+  res = f * (Tables::sin_tbl[i+1] - Tables::sin_tbl[i]) + Tables::sin_tbl[i];
   *sinRes =  sign ? -res : res;
 
   x = xc + PI_DIV_TWO;
@@ -78,7 +80,7 @@ void IRAM_ATTR fast_sincos(float x, float* sinRes, float* cosRes){
   x = sign ? -x : x;
   index = x * NORM_RADIANS ;
   i = CYCLE_INDEX((int)index);
-  res = f * (sin_tbl[i+1] - sin_tbl[i]) + sin_tbl[i];
+  res = f * (Tables::sin_tbl[i+1] - Tables::sin_tbl[i]) + Tables::sin_tbl[i];
   *cosRes = sign ? -res : res;
 }
 
@@ -90,7 +92,7 @@ float IRAM_ATTR fast_sin(float x) { // 8.798 MOP/S full period lookup table. Wit
   float index = (float)x * NORM_RADIANS  ;
   i = CYCLE_INDEX((int)index);
   f = ((float)index - (int)index);
-  res = f * (sin_tbl[i+1] - sin_tbl[i]) + sin_tbl[i];
+  res = f * (Tables::sin_tbl[i+1] - Tables::sin_tbl[i]) + Tables::sin_tbl[i];
   return  sign ? -res : res;
 }
 
@@ -103,7 +105,7 @@ inline float IRAM_ATTR fast_cos(float x) { // 7.666 MOP/S full period lookup tab
   index = x * NORM_RADIANS ;
   i = CYCLE_INDEX((int)index);
   f = (index - (int)index);
-  res = f * (sin_tbl[i+1] - sin_tbl[i]) + sin_tbl[i];
+  res = f * (Tables::sin_tbl[i+1] - Tables::sin_tbl[i]) + Tables::sin_tbl[i];
   return  sign ? -res : res;
 }
 
@@ -166,5 +168,5 @@ float expToLin(float in, float inMin, float inMax, float outMin, float outMax){
 }
 
 float knobMap(float in, float outMin, float outMax) {
-  return outMin + lookupTable(knob_tbl, (int)(in * TABLE_SIZE)) * (outMax - outMin);
+  return outMin + lookupTable(Tables::knob_tbl, (int)(in * TABLE_SIZE)) * (outMax - outMin);
 }

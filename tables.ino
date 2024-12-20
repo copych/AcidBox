@@ -1,3 +1,4 @@
+#include "tables.h"
 
 float noteToFreq(int note) {
     return (440.0f / 32.0f) * pow(2, ((float)(note - 9) / 12.0));
@@ -47,7 +48,7 @@ float sin_fill(uint16_t i) {
 float expSquare_fill(uint16_t i) { // requires exp() table
   uint16_t j = i + 0.5f*TABLE_SIZE;
   if (j>=TABLE_SIZE) j = j - TABLE_SIZE;
-  float res = 0.66f * (saw_tbl[i]-saw_tbl[j]);
+  float res = 0.66f * (Tables::saw_tbl[i]-Tables::saw_tbl[j]);
   return res;
 }
 
@@ -57,29 +58,27 @@ float freqToPhaseInc(float freq, uint16_t sampleSize, uint16_t sampleRate) {
 
 void buildTables() {
   for (int i = 0 ; i<128; ++i) {
-    midi_pitches[i] = noteToFreq(i);
-    midi_phase_steps[i] = noteToFreq(i) * PI * 2.0f * (float)DIV_SAMPLE_RATE;
-    midi_tbl_steps[i] = noteToFreq(i) * (float)TABLE_SIZE * (float)DIV_SAMPLE_RATE;
+    Tables::midi_tbl_steps[i] = noteToFreq(i) * (float)TABLE_SIZE * (float)DIV_SAMPLE_RATE;
   }
 
   for (int i = 0; i <= TABLE_SIZE; i++) {
-    exp_tbl[i] = exp_fill(i);
-    saw_tbl[i] = expSaw_fill(i);
+    Tables::exp_tbl[i] = exp_fill(i);
+    Tables::saw_tbl[i] = expSaw_fill(i);
   }
 
   for (int i = 0; i <= TABLE_SIZE; i++) {
-    exp_square_tbl[i] = expSquare_fill(i);
-    shaper_tbl[i] = shaper_fill(i); 
-    lim_tbl[i] = lim_fill(i);
-    knob_tbl[i] = knob_fill(i);
-	  sin_tbl[i]  = sin_fill(i);
+    Tables::exp_square_tbl[i] = expSquare_fill(i);
+    Tables::shaper_tbl[i] = shaper_fill(i); 
+    Tables::lim_tbl[i] = lim_fill(i);
+    Tables::knob_tbl[i] = knob_fill(i);
+	  Tables::sin_tbl[i]  = sin_fill(i);
   //  saw_tbl[i] = 1.0f - 2.0f * (float)i * (float)DIV_TABLE_SIZE;
   //  square_tbl[i] = (i>TABLE_SIZE/2) ? 1.0f : -1.0f; 
   }
   for (int i = 0; i < 16; i++) {
     for (int j = 0; j < 16; j++){
-      norm1_tbl[i][j] = cutoff_reso_avg + (cutoff_reso[i][j] - cutoff_reso_avg) * NORM1_DEPTH;
-      norm2_tbl[i][j] = wfolder_overdrive_avg + (wfolder_overdrive[i][j] - wfolder_overdrive_avg) * NORM2_DEPTH;
+      Tables::norm1_tbl[i][j] = cutoff_reso_avg + (cutoff_reso[i][j] - cutoff_reso_avg) * NORM1_DEPTH;
+      Tables::norm2_tbl[i][j] = wfolder_overdrive_avg + (wfolder_overdrive[i][j] - wfolder_overdrive_avg) * NORM2_DEPTH;
     }
   }
 }

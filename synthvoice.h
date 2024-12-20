@@ -1,4 +1,8 @@
 #pragma once
+#ifndef SYNTHVOICE_H
+#define SYNTHVOICE_H
+
+#include "tables.h"
 #include "adsr.h"
 #include "ad.h"
 
@@ -183,3 +187,5 @@ private:
   
   Overdrive         Drive;
 };
+
+#endif
