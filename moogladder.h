@@ -1,7 +1,8 @@
 #pragma once
 #ifndef DSY_MOOGLADDER_H
 #define DSY_MOOGLADDER_H
- 
+#include "tables.h"
+
 /** Moog ladder filter module
 
 Ported from soundpipe

@@ -68,7 +68,7 @@ inline float SynthVoice::getSample() {
     
     if (AmpEnv.isRunning()) {
       // samp = (float)((1.0f - _waveMix) * lookupTable(*(tables[_waveBase]), _phaze)) + (float)(_waveMix * lookupTable(*(tables[_waveBase+1]), _phaze)) ; // lookup and blend waveforms
-       samp = (float)((1.0f - _waveMix) * lookupTable(exp_square_tbl, _phaze)) + (float)(_waveMix * lookupTable(saw_tbl, _phaze)) ; // lookup and blend waveforms
+       samp = (float)((1.0f - _waveMix) * lookupTable(Tables::exp_square_tbl, _phaze)) + (float)(_waveMix * lookupTable(Tables::saw_tbl, _phaze)) ; // lookup and blend waveforms
       // samp = _phaze < HALF_TABLE ? 2 * _waveMix * _phaze * DIV_TABLE_SIZE - 1.0f   :    2 * _waveMix * (_phaze * DIV_TABLE_SIZE - 1.0f) + 1.0f; 
     } else {
       samp = 0.0f;
@@ -199,7 +199,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_RESO:
       _reso = cc_value * MIDI_NORM ;
-      _flt_compens = one_div( bilinearLookup(norm1_tbl, _cutoff * 127.0f, cc_value ));
+      _flt_compens = one_div( bilinearLookup(Tables::norm1_tbl, _cutoff * 127.0f, cc_value ));
       SetReso(_reso);
       break;
     case CC_303_DECAY: // Env release
@@ -214,7 +214,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
-      _flt_compens = one_div( bilinearLookup(norm1_tbl, cc_value, _reso * 127.0f));
+      _flt_compens = one_div( bilinearLookup(Tables::norm1_tbl, cc_value, _reso * 127.0f));
       SetCutoff(_cutoff);
       break;
     case CC_303_DELAY_SEND:
@@ -231,12 +231,12 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_DISTORTION:
       _gain = (float)cc_value * MIDI_NORM ;
-      _fx_compens = one_div( bilinearLookup(norm2_tbl, _drive * 127.0f,  cc_value));
+      _fx_compens = one_div( bilinearLookup(Tables::norm2_tbl, _drive * 127.0f,  cc_value));
       SetDistortionLevel(_gain);
       break;
     case CC_303_OVERDRIVE:
       _drive = (float)cc_value * MIDI_NORM ;
-      _fx_compens = one_div( bilinearLookup(norm2_tbl, cc_value, _gain * 127.0f));
+      _fx_compens = one_div( bilinearLookup(Tables::norm2_tbl, cc_value, _gain * 127.0f));
       SetOverdriveLevel(_drive);
       break;
     case CC_303_SATURATOR:
@@ -357,7 +357,7 @@ void SynthVoice::mva_reset(mva_data *p) {
 void  SynthVoice::note_on(uint8_t midiNote, bool slide, bool accent) {
   _accent = accent;
   _slide = slide || _portamento;
-  _targetStep = midi_tbl_steps[midiNote];
+  _targetStep = Tables::midi_tbl_steps[midiNote];
   _effectiveStep = _targetStep * _tuning * _pitchbend;
   if (mva1.n == 1) {
     if (_accent) {

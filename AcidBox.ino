@@ -20,6 +20,7 @@
 
 */
 #pragma GCC optimize ("O2")
+#include "tables.h"
 #include "config.h"
 #include "fx_delay.h"
 #ifndef NO_PSRAM
@@ -29,6 +30,9 @@
 #include "synthvoice.h"
 #include "sampler.h"
 #include <Wire.h>
+#ifdef DEBUG_TIMING
+#include "debug_timing.h"
+#endif
 
 
 // =============================================================== MIDI interfaces ===============================================================
@@ -61,29 +65,9 @@ MIDI_NAMESPACE::SerialMIDI<HardwareSerial> Serial2MIDI2(Serial2);
 MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2MIDISettings>> MIDI2((MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2MIDISettings>&)Serial2MIDI2);
 #endif
 
-
-// lookuptables
-static float DRAM_ATTR WORD_ALIGNED_ATTR midi_pitches[128];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  midi_phase_steps[128];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  midi_tbl_steps[128];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  exp_square_tbl[TABLE_SIZE+1];
-//static float square_tbl[TABLE_SIZE+1];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  saw_tbl[TABLE_SIZE+1];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  exp_tbl[TABLE_SIZE+1];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  knob_tbl[TABLE_SIZE+1]; // exp-like curve
-static float DRAM_ATTR WORD_ALIGNED_ATTR  shaper_tbl[TABLE_SIZE+1]; // illinear tanh()-like curve
-static float DRAM_ATTR WORD_ALIGNED_ATTR  lim_tbl[TABLE_SIZE+1]; // diode soft clipping at about 1.0
-static float DRAM_ATTR WORD_ALIGNED_ATTR  sin_tbl[TABLE_SIZE+1];
-static float DRAM_ATTR WORD_ALIGNED_ATTR  norm1_tbl[16][16]; // cutoff-reso pair gain compensation
-static float DRAM_ATTR WORD_ALIGNED_ATTR  norm2_tbl[16][16]; // wavefolder-overdrive gain compensation
-//static float (*tables[])[TABLE_SIZE+1] = {&exp_square_tbl, &square_tbl, &saw_tbl, &exp_tbl};
-
 // service variables and arrays
-volatile uint32_t s1t, s2t, drt, fxt, s1T, s2T, drT, fxT, art, arT, c0t, c0T, c1t, c1T; // debug timing: if we use less vars, compiler optimizes them
-volatile uint32_t prescaler;
 static  uint32_t  last_reset = 0;
 static  float     param[POT_NUM];
-static int    ctrl_hold_notes;
 
 // Audio buffers of all kinds
 volatile int current_gen_buf = 0; // set of buffers for generation
@@ -100,7 +84,6 @@ static union {                              // a dirty trick, instead of true co
 } out_buf[2];                               // i2s L+R output buffer
 size_t bytes_written;                       // i2s result
 
-volatile boolean processing = false;
 #ifndef NO_PSRAM
 volatile float rvb_k1, rvb_k2, rvb_k3;
 #endif
@@ -157,7 +140,10 @@ static void IRAM_ATTR audio_task1(void *userData) {
   while (true) {
     taskYIELD(); 
 //    if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // we need all the generators to fill the buffers here, so we wait
-      c0t = micros();
+
+#ifdef DEBUG_TIMING
+      Debug::c0t = micros();
+#endif
       
 //      taskYIELD(); 
       
@@ -166,25 +152,36 @@ static void IRAM_ATTR audio_task1(void *userData) {
       
     //  xTaskNotifyGive(SynthTask2);            // if we are here, then we've already received a notification from task2
       
-      s1t = micros();
+#ifdef DEBUG_TIMING
+      RECORD_TIME(Debug::s1t, synth1_generate())  
+#else
       synth1_generate();
-      s1T = micros() - s1t;
-      
-      s2t = micros();
+#endif
+
+#ifdef DEBUG_TIMING
+      RECORD_TIME(Debug::s2t, synth2_generate())  
+#else
       synth2_generate();
-      s2T = micros() - s2t;
-      
+#endif
+
   //    taskYIELD(); 
 
-      drt = micros();
+#ifdef DEBUG_TIMING
+      RECORD_TIME(Debug::drt, drums_generate())  
+#else
       drums_generate();
-      drT = micros() - drt;
-      
-      c1t = micros();
-      fxt = micros();
+#endif
+
+
+
+#ifdef DEBUG_TIMING      
+      Debug::c1t = micros();
+      Debug::fxt = micros();
+#endif      
       mixer(); 
-      fxT = micros() - fxt;
-      
+#ifdef DEBUG_TIMING      
+      Debug::fxT = micros() - Debug::fxt;
+#endif            
       i2s_output();
 
  //   }
@@ -192,8 +189,9 @@ static void IRAM_ATTR audio_task1(void *userData) {
    // taskYIELD();
 
     taskYIELD();
-
-    c0T = micros() - c0t;
+#ifdef DEBUG_TIMING 
+    Debug::c0T = micros() - Debug::c0t;
+#endif   
   }
 }
 
@@ -212,9 +210,10 @@ static void IRAM_ATTR audio_task2(void *userData) {
       xTaskNotifyGive(SynthTask1); 
     }    
  */
-    c1T = micros() - c1t;
-
-    art = micros();
+#ifdef DEBUG_TIMING
+    Debug::c1T = micros() - Debug::c1t;
+    Debug::art = micros();
+#endif
     
     if (timer2_fired) {
       timer2_fired = false;
@@ -223,14 +222,17 @@ static void IRAM_ATTR audio_task2(void *userData) {
 #endif
        
 #ifdef DEBUG_TIMING
-        DEBF ("CORE micros: synt1, synt2, drums, mixer, DMA_LEN\t%d\t%d\t%d\t%d\t%d\r\n" , s1T, s2T, drT, fxT, DMA_BUF_TIME);
-        //    DEBF ("TaskCore0=%dus TaskCore1=%dus DMA_BUF=%dus\r\n" , c0T , c1T , DMA_BUF_TIME);
-        //    DEBF ("AllTheRestCore1=%dus\r\n" , arT);
+        DEBF ("CORE micros: synt1, synt2, drums, mixer, DMA_LEN\t%d\t%d\t%d\t%d\t%d\r\n" , Debug::s1T, Debug::s2T, Debug::drT, Debug::fxT, DMA_BUF_TIME);
+        //    DEBF ("TaskCore0=%dus TaskCore1=%dus DMA_BUF=%dus\r\n" , Debug::c0T , Debug::c1T , DMA_BUF_TIME);
+        //    DEBF ("AllTheRestCore1=%dus\r\n" , Debug::arT);
 #endif
     }    
     
 //    taskYIELD();
-    arT = micros() - art;
+
+#ifdef DEBUG_TIMING
+    Debug::arT = micros() - Debug::art;
+#endif
   }
 }
 
@@ -295,7 +297,6 @@ delay(200);
   // somehow we should allow tasks to run
   xTaskNotifyGive(SynthTask1);
   //  xTaskNotifyGive(SynthTask2);
-  processing = true;
 
 #if ESP_ARDUINO_VERSION_MAJOR < 3 
   // timer interrupt

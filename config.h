@@ -1,4 +1,6 @@
 #pragma once
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #define PROG_NAME       "ESP32 AcidBox"
 #define VERSION         "v.1.3.6 S3"
@@ -16,7 +18,7 @@
 //#define FLASH_LED               // flash built-in LED
 //#define LOLIN_RGB               // Flashes the LOLIN S3 built-in RGB-LED
 
-#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
+//#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
 //#define DEBUG_SYNTH
@@ -323,3 +325,5 @@ static void IRAM_ATTR drums_generate();
 static void IRAM_ATTR synth1_generate();
 static void IRAM_ATTR synth2_generate();
 static void IRAM_ATTR mixer();
+
+#endif
