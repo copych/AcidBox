@@ -47,7 +47,7 @@ void Overdrive::SetDrive(float drive)
     //midBoost1.setBandwidth(20.0f - 15.0f * drive);
     //midBoost2.setBandwidth(20.0f - 15.0f * drive);
     drive = 0.125f + (float)drive * (0.875f);
-    //drive  = fclamp(drive, 0.f, 1.f);
+    //drive  = General::fclamp(drive, 0.f, 1.f);
     _drive = 1.999f * (float)drive;
 
      float drive2    = (float)_drive * _drive;

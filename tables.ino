@@ -66,7 +66,7 @@ float shaper_fill(uint16_t i) {
   float res = tanh( x ); 
 #endif
 #ifdef SHAPER_USE_CUBIC
-  x = fclamp(x, -1.4142, 1.4142);
+  x = General::fclamp(x, -1.4142, 1.4142);
   float res = x - (x * x * x / 6.8283);
 #endif
   return res;

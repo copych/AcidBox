@@ -129,14 +129,7 @@ class TeeBeeFilter
 
     /** Implements the waveshaping nonlinearity between the stages. */
     inline float shape(float x);
-
-    /** Implements limitting of a given value */
-    inline float fclamp(float in, float min, float max){
-      if (in>max) return max;
-      if (in<min) return min;
-      return in;
-    };
-
+    
     /** Resets the internal state variables. */
     void Init();
 

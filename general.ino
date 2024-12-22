@@ -1,5 +1,12 @@
 
 #include "tables.h"
+#include "general.h"
+
+float IRAM_ATTR General::fclamp(float in, float min, float max) {
+  if (in>max) return max;
+  if (in<min) return min;
+  return in;
+}
 
 inline float IRAM_ATTR fast_shape(float x){
     int sign = 1;

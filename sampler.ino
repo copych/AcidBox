@@ -17,6 +17,7 @@
 
 #include "sampler.h"
 #include "samples.h"
+#include "general.h"
 
 /* You only need to format LittleFS the first time you run a
    test or else use the LittleFS plugin to create a partition
@@ -56,12 +57,6 @@ void Sampler::WriteFile(fs::FS &fs, const String fname, size_t fsize, const uint
   }
   DEBF("[sampler]: %s written %d bytes to flash\r\n", fname, fsize);
   f.close();
-}
-
-float IRAM_ATTR Sampler::fclamp(float in, float min, float max) {
-  if (in>max) return max;
-  if (in<min) return min;
-  return in;
 }
 
 void Sampler::ScanContents(fs::FS &fs, const char *dirname, uint8_t levels) {
@@ -662,8 +657,8 @@ inline void Sampler::Process( float *left, float *right ) {
   Effects.Process( &signal_l, &signal_r );
  // *left  = signal_l * _volume;
  // *right =  signal_r * _volume;
-   *left  = fclamp(signal_l * _volume, -1.0f, 1.0f);
-   *right = fclamp(signal_r * _volume, -1.0f, 1.0f);
+   *left  = General::fclamp(signal_l * _volume, -1.0f, 1.0f);
+   *right = General::fclamp(signal_r * _volume, -1.0f, 1.0f);
   // *left  = fast_shape(signal_l * _volume);
   // *right = fast_shape(signal_r * _volume);
 }
