@@ -307,8 +307,6 @@ static const float tuning[128] = {
 
 // =========================== forward declarations ================================================
 // =========================== someday I refactor this *** =========================================
-static float IRAM_ATTR bilinearLookup(float (&table)[16][16], float x, float y);
-static float IRAM_ATTR lookupTable(float (&table)[TABLE_SIZE+1], float index );
 static float IRAM_ATTR fclamp(float in, float minv, float maxv) ;
 static float IRAM_ATTR fast_shape(float x);
 static void  IRAM_ATTR fast_sincos(float x, float* sinRes, float* cosRes);

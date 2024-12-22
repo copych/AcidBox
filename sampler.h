@@ -48,6 +48,9 @@ DEBF("Select note: %d\r\n", note);
   private:
     void CreateDefaultSamples(fs::FS &fs);
     void WriteFile(fs::FS &fs, const String fname, size_t fsize, const uint8_t bytearray[] );
+
+    static float fclamp(float in, float min, float max) __attribute__((noinline));
+
     boolean is_muted[17]={ false, false,false,false,false ,false,false,false,false ,false,false,false,false ,false,false,false,false };
                   
     uint8_t volume_midi[17]     = { 127, 127,127,127,127, 127,127,127,127, 127,127,127,127, 127,127,127,127 };

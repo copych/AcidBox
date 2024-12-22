@@ -1,48 +1,6 @@
 
 #include "tables.h"
 
-inline float bilinearLookup(float (&table)[16][16], float x, float y) {
-  float const kmap = 0.1181f; // map from 0-127 to 0-14.99
-  int32_t i,j;
-  float fi,fj;
-  float v1,v2,v3,v4;
-  float res1,res2,res3;
-  x *= kmap;
-  y *= kmap;
-  i = (int32_t)x;
-  j = (int32_t)y;
-  fi = (float)x - i;
-  fj = (float)y - j;
-  v1 = table[i][j];
-  v2 = table[i+1][j];
-  v3 = table[i][j+1];
-  v4 = table[i+1][j+1];  
-  res1 = (float)fi * (float)(v2-v1) + v1;
-  res2 = (float)fi * (float)(v4-v3) + v3;
-  res3 = (float)fj * (float)(res2-res1) + res1;
-  return res3;
-}
-
-inline float  lookupTable(float (&table)[TABLE_SIZE+1], float index ) { // lookup value in a table by float index, using linear interpolation
-  float v1, v2, res;
-  int32_t i;
-  float f;
- // if (index >= TABLE_SIZE) return table[TABLE_SIZE];
-  i = (int32_t)index;
-  f = (float)index - i;
-  v1 = (table)[i];
-  v2 = (table)[i+1];
-  res = (float)f * (float)(v2-v1) + v1;
- // DEBF("i %0.6f mantissa %0.6f v1 %0.6f v2 %0.6f \r\n" , index , f , v1, v2  );
-  return res;
-}
-
-inline float IRAM_ATTR fclamp(float in, float min, float max){
-    if (in>max) return max;
-    if (in<min) return min;
-    return in;
-}
-
 inline float IRAM_ATTR fast_shape(float x){
     int sign = 1;
     if (x<0) {
@@ -55,7 +13,7 @@ inline float IRAM_ATTR fast_shape(float x){
     }
 
   //  if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders; tanh(x) ~= x, when |x| < 0.4 
-    float res = lookupTable(Tables::shaper_tbl, (x*SHAPER_LOOKUP_COEF)); // lookup table contains tanh(x), 0 <= x <= 5
+    float res = Tables::lookupTable(Tables::shaper_tbl, (x*SHAPER_LOOKUP_COEF)); // lookup table contains tanh(x), 0 <= x <= 5
     return sign<0 ? -res : res;
   // float poly = (2.12f-2.88f*x+4.0f*x*x);
    // return sign * x * (poly * one_div(poly * x + 1.0f)); // very good approximation found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
@@ -168,5 +126,5 @@ float expToLin(float in, float inMin, float inMax, float outMin, float outMax){
 }
 
 float knobMap(float in, float outMin, float outMax) {
-  return outMin + lookupTable(Tables::knob_tbl, (int)(in * TABLE_SIZE)) * (outMax - outMin);
+  return outMin + Tables::lookupTable(Tables::knob_tbl, (int)(in * TABLE_SIZE)) * (outMax - outMin);
 }

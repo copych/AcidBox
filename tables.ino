@@ -1,5 +1,43 @@
 #include "tables.h"
 
+float IRAM_ATTR Tables::bilinearLookup(float (&table)[16][16], float x, float y) {
+  float const kmap = 0.1181f; // map from 0-127 to 0-14.99
+  int32_t i,j;
+  float fi,fj;
+  float v1,v2,v3,v4;
+  float res1,res2,res3;
+  x *= kmap;
+  y *= kmap;
+  i = (int32_t)x;
+  j = (int32_t)y;
+  fi = (float)x - i;
+  fj = (float)y - j;
+  v1 = table[i][j];
+  v2 = table[i+1][j];
+  v3 = table[i][j+1];
+  v4 = table[i+1][j+1];  
+  res1 = (float)fi * (float)(v2-v1) + v1;
+  res2 = (float)fi * (float)(v4-v3) + v3;
+  res3 = (float)fj * (float)(res2-res1) + res1;
+  return res3;
+  }
+
+float IRAM_ATTR Tables::lookupTable(float (&table)[TABLE_SIZE+1], float index ) { // lookup value in a table by float index, using linear interpolation
+  float v1, v2, res;
+  int32_t i;
+  float f;
+  // if (index >= TABLE_SIZE) return table[TABLE_SIZE];
+  i = (int32_t)index;
+  f = (float)index - i;
+  v1 = (table)[i];
+  v2 = (table)[i+1];
+  res = (float)f * (float)(v2-v1) + v1;
+  // DEBF("i %0.6f mantissa %0.6f v1 %0.6f v2 %0.6f \r\n" , index , f , v1, v2  );
+  return res;
+}  
+
+
+
 float noteToFreq(int note) {
     return (440.0f / 32.0f) * pow(2, ((float)(note - 9) / 12.0));
 }

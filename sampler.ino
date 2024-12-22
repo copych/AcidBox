@@ -58,6 +58,12 @@ void Sampler::WriteFile(fs::FS &fs, const String fname, size_t fsize, const uint
   f.close();
 }
 
+float IRAM_ATTR Sampler::fclamp(float in, float min, float max) {
+  if (in>max) return max;
+  if (in<min) return min;
+  return in;
+}
+
 void Sampler::ScanContents(fs::FS &fs, const char *dirname, uint8_t levels) {
   String str;
 #ifdef DEBUG_SAMPLER
