@@ -153,13 +153,13 @@ static void IRAM_ATTR audio_task1(void *userData) {
     //  xTaskNotifyGive(SynthTask2);            // if we are here, then we've already received a notification from task2
       
 #ifdef DEBUG_TIMING
-      RECORD_TIME(Debug::s1t, synth1_generate())  
+      RECORD_TIME(Debug::s1t, synth1_generate(), Debug::s1T)  
 #else
       synth1_generate();
 #endif
 
 #ifdef DEBUG_TIMING
-      RECORD_TIME(Debug::s2t, synth2_generate())  
+      RECORD_TIME(Debug::s2t, synth2_generate(), Debug::s2T)  
 #else
       synth2_generate();
 #endif
@@ -167,7 +167,7 @@ static void IRAM_ATTR audio_task1(void *userData) {
   //    taskYIELD(); 
 
 #ifdef DEBUG_TIMING
-      RECORD_TIME(Debug::drt, drums_generate())  
+      RECORD_TIME(Debug::drt, drums_generate(), Debug::drT)  
 #else
       drums_generate();
 #endif

@@ -81,7 +81,8 @@ inline float SynthVoice::getSample() {
     
      decimator++;
      if (decimator % 128 == 0 && _index == 0) {
-      DEBF("%f\r\n", final_cut);
+      // TODO, check what this is, this sends load of data when turning debug on
+      //DEBF("%f\r\n", final_cut);
      }
     
     samp = highpass1.getSample(samp);         // pre-filter highpass, following open303
