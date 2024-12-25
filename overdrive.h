@@ -1,5 +1,5 @@
 #pragma once
-
+#include "general.h"
 
 class Overdrive
 {
@@ -36,14 +36,14 @@ float Overdrive::Process(float in)
 {
    // in = midBoost1.getSample(in)*4.0f;
     float pre = (float)(_pre_gain * in * 2.0f);
-    float out = (float)(fast_shape(pre) * _post_gain) ; 
+    float out = (float)(General::fast_shape(pre) * _post_gain) ; 
  //   out = midBoost2.getSample(out)*4.0f;
     return out;
 }
 
 void Overdrive::SetDrive(float drive)
 {
- //   compens_ = fast_shape(0.09f - 3.05f * drive) * 0.77f + 1.0f ;
+ //   compens_ = General::fast_shape(0.09f - 3.05f * drive) * 0.77f + 1.0f ;
     //midBoost1.setBandwidth(20.0f - 15.0f * drive);
     //midBoost2.setBandwidth(20.0f - 15.0f * drive);
     drive = 0.125f + (float)drive * (0.875f);
@@ -56,7 +56,7 @@ void Overdrive::SetDrive(float drive)
     _pre_gain              = (float)pregain_a + (float)(pregain_b - pregain_a) * drive2;
 
      float _drivesquashed = _drive * (2.0f - _drive);
-     _post_gain =   one_div( fast_shape((float)(0.33f + _drivesquashed * (float)(_pre_gain - 0.33f))));
+     _post_gain =   General::one_div( General::fast_shape((float)(0.33f + _drivesquashed * (float)(_pre_gain - 0.33f))));
 #ifdef DEBUG_FX    
     DEBF("pre %0.4f post %0.4f drive %0.4f\r\n", _pre_gain, _post_gain, _drive);
 #endif

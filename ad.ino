@@ -25,7 +25,7 @@ void AD_env::retrigger(bool hard) {
       attackTarget_ = peakLevel_ + 0.1f;
   } else {
       D0_ = attackD0_;
-      peakLevel_ = 1.0f + (fast_shape( x_ ));
+      peakLevel_ = 1.0f + (General::fast_shape( x_ ));
       attackTarget_ = peakLevel_ + 0.1f ;
   }
 }

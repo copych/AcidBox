@@ -110,9 +110,9 @@ void Adsr::setTimeConstant(float timeInS, float& time, float& coeff, float targe
     time = timeInS;
     if (time > 0 ) {
       if (target > 0 ) {
-        coeff = target * one_div(time * sample_rate_);
+        coeff = target * General::one_div(time * sample_rate_);
       } else {        
-        coeff = 10.0f * one_div(time * sample_rate_);
+        coeff = 10.0f * General::one_div(time * sample_rate_);
       }
     } else
       coeff = 1.f;  // instant change
@@ -166,7 +166,7 @@ void Adsr::setSemiFastReleaseTimeMs(float timeInMs) {
 
 
 void Adsr::calcLogRanges() {
-  float dd = one_div(delta_);
+  float dd = General::one_div(delta_);
   wholeRange_ = logf((1.0f + delta_) * dd);
   upperRange_ = logf((1.0f - sus_level_ + delta_) * dd);
   lowerRange_ = logf((sus_level_ + delta_) * dd); 

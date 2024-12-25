@@ -98,7 +98,7 @@ inline void TeeBeeFilter::SetCutoff(float newCutoff, bool updateCoefficients)
 inline void TeeBeeFilter::SetResonance(float newResonance, bool updateCoefficients)
 {
   resonanceRaw    =  newResonance;
-//  compens = 1.8f * (resonanceRaw + 0.25f) * one_div((resonanceRaw + 0.25f) * 0.75f + 0.113f); // gain compensation; one_div(x) = 1/x
+//  compens = 1.8f * (resonanceRaw + 0.25f) * General::one_div((resonanceRaw + 0.25f) * 0.75f + 0.113f); // gain compensation; General::one_div(x) = 1/x
   resonanceSkewed = 1.02f * (1.0f - exp(-3.0f * resonanceRaw)) / (1.0f - exp(-3.0f));
 //  DEBF("%f\r\n",resonanceSkewed);
   if ( updateCoefficients == true )
@@ -120,12 +120,12 @@ inline void TeeBeeFilter::calculateCoefficientsExact()
   float wc = twoPiOverSampleRate * cutoff;
   float s, c;
   //sinCos(wc, &s, &c);             // c = cos(wc); s = sin(wc);
-  fast_sincos(wc, &s, &c);             // c = cos(wc); s = sin(wc);
+  General::fast_sincos(wc, &s, &c);             // c = cos(wc); s = sin(wc);
   float t  = tan(0.25f * (wc - PI));
   float r  = resonanceSkewed;
 
   // calculate filter a1-coefficient tuned such the resonance frequency is just right:
-  float a1_fullRes = t * one_div(s - c * t);
+  float a1_fullRes = t * General::one_div(s - c * t);
 
   // calculate filter a1-coefficient as if there were no resonance:
   float x        = exp(-wc);
@@ -139,8 +139,8 @@ inline void TeeBeeFilter::calculateCoefficientsExact()
 
   // calculate feedback factor by dividing the resonance parameter by the magnitude at the
   // resonant frequency:
-  float gsq = b0 * b0 * one_div(1.0f + a1 * a1 + 2.0f * a1 * c);
-  k          = r * one_div(gsq * gsq);
+  float gsq = b0 * b0 * General::one_div(1.0f + a1 * a1 + 2.0f * a1 * c);
+  k          = r * General::one_div(gsq * gsq);
 
   if ( mode == TB_303 )
     k *= (4.25f);
@@ -199,7 +199,7 @@ inline void TeeBeeFilter::calculateCoefficientsApprox4()
   if ( mode == TB_303 )
   {
     float fx = wc * ONE_DIV_SQRT2 * ONE_DIV_TWOPI;
-    b0 = (0.00045522346f + 6.1922189f * fx) * one_div(1.0f + 12.358354f * fx + 4.4156345f * (fx * fx));
+    b0 = (0.00045522346f + 6.1922189f * fx) * General::one_div(1.0f + 12.358354f * fx + 4.4156345f * (fx * fx));
     k  = fx * (fx * (fx * (fx * (fx * (fx + 7198.6997f) - 5837.7917f) - 476.47308f) + 614.95611f) + 213.87126f) + 16.998792f;
     g  = k * 0.05882352f; // 17 reciprocal
     g  = (g - 1.0f) * r + 1.0f;                     // r is 0 to 1.0
@@ -266,7 +266,7 @@ inline float TeeBeeFilter::shape(float x)
   //  return x - r6*x*x*x;
 
     //return clip(x, -1.0, 1.0);
-    return fast_shape(x*2.0f);
+    return General::fast_shape(x*2.0f);
   }
 
 

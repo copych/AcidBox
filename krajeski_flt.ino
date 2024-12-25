@@ -24,7 +24,7 @@ Modified by Copych 2023: added fclamp because sometimes nan, -inf, +inf appears 
 
   float KrajeskiMoog::Process(float sample) 
   {
-      state[0] = fast_shape(drive * (sample - 4.0f * gRes * (state[4] - gComp * sample)));
+      state[0] = General::fast_shape(drive * (sample - 4.0f * gRes * (state[4] - gComp * sample)));
       
       for(int i = 0; i < 4; i++)
       {

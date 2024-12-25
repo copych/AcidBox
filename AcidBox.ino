@@ -22,6 +22,7 @@
 #pragma GCC optimize ("O2")
 #include "config.h"
 #include "tables.h"
+#include "general.h"
 #include "fx_delay.h"
 #ifndef NO_PSRAM
 #include "fx_reverb.h"
@@ -482,8 +483,8 @@ void IRAM_ATTR mixer() { // sum buffers
 #endif
   //    mix_buf_l[current_out_buf][i] = General::fclamp(mix_buf_l[current_out_buf][i] , -1.0f, 1.0f); // clipper
   //    mix_buf_r[current_out_buf][i] = General::fclamp(mix_buf_r[current_out_buf][i] , -1.0f, 1.0f);
-     mix_buf_l[current_out_buf][i] = fast_shape( mix_buf_l[current_out_buf][i]); // soft limitter/saturator
-     mix_buf_r[current_out_buf][i] = fast_shape( mix_buf_r[current_out_buf][i]);
+     mix_buf_l[current_out_buf][i] = General::fast_shape( mix_buf_l[current_out_buf][i]); // soft limitter/saturator
+     mix_buf_r[current_out_buf][i] = General::fast_shape( mix_buf_r[current_out_buf][i]);
    }
 #ifdef DEBUG_MASTER_OUT
   meter *= 0.95f;

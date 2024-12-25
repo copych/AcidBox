@@ -8,7 +8,7 @@ float IRAM_ATTR General::fclamp(float in, float min, float max) {
   return in;
 }
 
-inline float IRAM_ATTR fast_shape(float x){
+float IRAM_ATTR General::fast_shape(float x) {
     int sign = 1;
     if (x<0) {
       x = -x;
@@ -28,7 +28,7 @@ inline float IRAM_ATTR fast_shape(float x){
 }
 
 
-void IRAM_ATTR fast_sincos(float x, float* sinRes, float* cosRes){
+void IRAM_ATTR General::fast_sincos(float x, float* sinRes, float* cosRes) {
   float xc, f, res, index;
   int i, sign;
   sign = x < 0.0;
@@ -49,34 +49,8 @@ void IRAM_ATTR fast_sincos(float x, float* sinRes, float* cosRes){
   *cosRes = sign ? -res : res;
 }
 
-float IRAM_ATTR fast_sin(float x) { // 8.798 MOP/S full period lookup table. With table size = 32+1, max error is about 0.5% 
-  float f, res;
-  int i;
-  int sign = x < 0.0;
-  x = sign ? -x : x;
-  float index = (float)x * NORM_RADIANS  ;
-  i = CYCLE_INDEX((int)index);
-  f = ((float)index - (int)index);
-  res = f * (Tables::sin_tbl[i+1] - Tables::sin_tbl[i]) + Tables::sin_tbl[i];
-  return  sign ? -res : res;
-}
-
-inline float IRAM_ATTR fast_cos(float x) { // 7.666 MOP/S full period lookup table. With table size = 32+1, max error is about 0.5% 
-  float f, res, index;
-  int i;
-  x += PI_DIV_TWO;
-  int sign = x < 0.0;
-  x = sign ? -x : x;
-  index = x * NORM_RADIANS ;
-  i = CYCLE_INDEX((int)index);
-  f = (index - (int)index);
-  res = f * (Tables::sin_tbl[i+1] - Tables::sin_tbl[i]) + Tables::sin_tbl[i];
-  return  sign ? -res : res;
-}
-
-
 // reciprocal asm injection for xtensa LX6 FPU
-static inline float __attribute__((always_inline)) one_div(float a) {
+float General::one_div(float a) {
     float result;
     asm volatile (
         "wfr f1, %1"          "\n\t"
@@ -95,6 +69,33 @@ static inline float __attribute__((always_inline)) one_div(float a) {
     return result;
 }
 
+// TODO, not used
+// float IRAM_ATTR General::fast_sin(float x) { // 8.798 MOP/S full period lookup table. With table size = 32+1, max error is about 0.5% 
+//   float f, res;
+//   int i;
+//   int sign = x < 0.0;
+//   x = sign ? -x : x;
+//   float index = (float)x * NORM_RADIANS  ;
+//   i = CYCLE_INDEX((int)index);
+//   f = ((float)index - (int)index);
+//   res = f * (Tables::sin_tbl[i+1] - Tables::sin_tbl[i]) + Tables::sin_tbl[i];
+//   return  sign ? -res : res;
+// }
+
+// TODO, not used
+// inline float IRAM_ATTR General::fast_cos(float x) { // 7.666 MOP/S full period lookup table. With table size = 32+1, max error is about 0.5% 
+//   float f, res, index;
+//   int i;
+//   x += PI_DIV_TWO;
+//   int sign = x < 0.0;
+//   x = sign ? -x : x;
+//   index = x * NORM_RADIANS ;
+//   i = CYCLE_INDEX((int)index);
+//   f = (index - (int)index);
+//   res = f * (Tables::sin_tbl[i+1] - Tables::sin_tbl[i]) + Tables::sin_tbl[i];
+//   return  sign ? -res : res;
+// }
+
 float dB2amp(float dB){
   return expf(dB * 0.11512925464970228420089957273422f);
   //return pow(10.0, (0.05*dB)); // naive, inefficient version
@@ -107,7 +108,7 @@ float amp2dB(float amp){
 
 float linToLin(float in, float inMin, float inMax, float outMin, float outMax){
   // map input to the range 0.0...1.0:
-  float tmp = (in-inMin) * one_div(inMax-inMin);
+  float tmp = (in-inMin) * General::one_div(inMax-inMin);
 
   // map the tmp-value to the range outMin...outMax:
   tmp *= (outMax-outMin);
@@ -118,17 +119,17 @@ float linToLin(float in, float inMin, float inMax, float outMin, float outMax){
 
 inline float linToExp(float in, float inMin, float inMax, float outMin, float outMax){
   // map input to the range 0.0...1.0:
-  float tmp = (in-inMin) * one_div(inMax-inMin);
+  float tmp = (in-inMin) * General::one_div(inMax-inMin);
 
   // map the tmp-value exponentially to the range outMin...outMax:
   //tmp = outMin * exp( tmp*(log(outMax)-log(outMin)) );
-  return outMin * expf( tmp*(logf(outMax * one_div(outMin))) );
+  return outMin * expf( tmp*(logf(outMax * General::one_div(outMin))) );
 }
 
 
 
 float expToLin(float in, float inMin, float inMax, float outMin, float outMax){
-  float tmp = logf(in * one_div(inMin)) * one_div( logf(inMax * one_div(inMin)));
+  float tmp = logf(in * General::one_div(inMin)) * General::one_div( logf(inMax * General::one_div(inMin)));
   return outMin + tmp * (outMax-outMin);
 }
 

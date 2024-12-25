@@ -659,6 +659,6 @@ inline void Sampler::Process( float *left, float *right ) {
  // *right =  signal_r * _volume;
    *left  = General::fclamp(signal_l * _volume, -1.0f, 1.0f);
    *right = General::fclamp(signal_r * _volume, -1.0f, 1.0f);
-  // *left  = fast_shape(signal_l * _volume);
-  // *right = fast_shape(signal_r * _volume);
+  // *left  = General::fast_shape(signal_l * _volume);
+  // *right = General::fast_shape(signal_r * _volume);
 }

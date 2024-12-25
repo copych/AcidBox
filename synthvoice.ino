@@ -144,7 +144,7 @@ inline float SynthVoice::getSample() {
       DEBF("%0.5f\r\n", _phaze);
     }*/
     
-    //synth_buf[_index][i] = fast_shape(samp); // mono limitter
+    //synth_buf[_index][i] = General::fast_shape(samp); // mono limitter
     return  samp;  
 }
 
@@ -200,7 +200,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_RESO:
       _reso = cc_value * MIDI_NORM ;
-      _flt_compens = one_div( Tables::bilinearLookup(Tables::norm1_tbl, _cutoff * 127.0f, cc_value ));
+      _flt_compens = General::one_div( Tables::bilinearLookup(Tables::norm1_tbl, _cutoff * 127.0f, cc_value ));
       SetReso(_reso);
       break;
     case CC_303_DECAY: // Env release
@@ -215,7 +215,7 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
-      _flt_compens = one_div( Tables::bilinearLookup(Tables::norm1_tbl, cc_value, _reso * 127.0f));
+      _flt_compens = General::one_div( Tables::bilinearLookup(Tables::norm1_tbl, cc_value, _reso * 127.0f));
       SetCutoff(_cutoff);
       break;
     case CC_303_DELAY_SEND:
@@ -232,12 +232,12 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_DISTORTION:
       _gain = (float)cc_value * MIDI_NORM ;
-      _fx_compens = one_div( Tables::bilinearLookup(Tables::norm2_tbl, _drive * 127.0f,  cc_value));
+      _fx_compens = General::one_div( Tables::bilinearLookup(Tables::norm2_tbl, _drive * 127.0f,  cc_value));
       SetDistortionLevel(_gain);
       break;
     case CC_303_OVERDRIVE:
       _drive = (float)cc_value * MIDI_NORM ;
-      _fx_compens = one_div( Tables::bilinearLookup(Tables::norm2_tbl, cc_value, _gain * 127.0f));
+      _fx_compens = General::one_div( Tables::bilinearLookup(Tables::norm2_tbl, cc_value, _gain * 127.0f));
       SetOverdriveLevel(_drive);
       break;
     case CC_303_SATURATOR:
