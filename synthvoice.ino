@@ -4,7 +4,7 @@ void SynthVoice::Init() {
   _envMod = 0.5f;
   _accentLevel = 0.5f;
   _cutoff = 0.2f; // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically doubles this range
-  _filter_freq = linToExp(_cutoff, 0.0f, 1.0f, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
+  _filter_freq = General::linToExp(_cutoff, 0.0f, 1.0f, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
   _reso = 0.4f;
   _gain = 0.0f; // values >1 will distort sound
   _drive = 0.0f;
@@ -151,9 +151,9 @@ inline float SynthVoice::getSample() {
 
 inline void SynthVoice::SetCutoff(float normalized_val)  {
   _cutoff = normalized_val;
-  _filter_freq = knobMap( normalized_val, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
-  _filter_freq_mod = knobMap( normalized_val, MIN_CUTOFF_FREQ_MOD, MAX_CUTOFF_FREQ_MOD);
-  _filter_freq_cut = knobMap( _envMod, _filter_freq, _filter_freq_mod);
+  _filter_freq = General::knobMap( normalized_val, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
+  _filter_freq_mod = General::knobMap( normalized_val, MIN_CUTOFF_FREQ_MOD, MAX_CUTOFF_FREQ_MOD);
+  _filter_freq_cut = General::knobMap( _envMod, _filter_freq, _filter_freq_mod);
 #ifdef DEBUG_SYNTH
   DEBF("Synth %d cutoff=%0.3f freq=%0.3f\r\n" , _index, _cutoff, _filter_freq);
 #endif
@@ -162,7 +162,7 @@ inline void SynthVoice::SetCutoff(float normalized_val)  {
 
 inline void SynthVoice::SetEnvModLevel(float normalized_val) {
   _envMod = normalized_val;
-  _filter_freq_cut = knobMap( normalized_val, _filter_freq, _filter_freq_mod);
+  _filter_freq_cut = General::knobMap( normalized_val, _filter_freq, _filter_freq_mod);
 };
 
 
@@ -205,13 +205,13 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_DECAY: // Env release
       tmp = (float)cc_value * MIDI_NORM;
-      _filterDecayMs = knobMap(tmp, 200.0f, 2000.0f);
-      //_ampDecayMs = knobMap(tmp, 15.0f, 7500.0f);
+      _filterDecayMs = General::knobMap(tmp, 200.0f, 2000.0f);
+      //_ampDecayMs = General::knobMap(tmp, 15.0f, 7500.0f);
       break;
     case CC_303_ATTACK: // Env attack
       tmp = (float)cc_value * MIDI_NORM;
-      _filterAttackMs = knobMap(tmp, 3.0f, 100.0f);
-      _ampAttackMs =  knobMap(tmp, 0.1f, 500.0f);
+      _filterAttackMs = General::knobMap(tmp, 3.0f, 100.0f);
+      _ampAttackMs =  General::knobMap(tmp, 0.1f, 500.0f);
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;

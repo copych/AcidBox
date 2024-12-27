@@ -305,15 +305,4 @@ static const float tuning[128] = {
   1.887749f, 1.887749f, 1.887749f, 2.000000f, 2.000000f, 2.000000f, 2.000000f, 2.000000f
 };
 
-// =========================== forward declarations ================================================
-// =========================== someday I refactor this *** =========================================
-float linToLin(float in, float inMin, float inMax, float outMin, float outMax);
-float linToExp(float in, float inMin, float inMax, float outMin, float outMax);
-float expToLin(float in, float inMin, float inMax, float outMin, float outMax);
-float knobMap(float in, float outMin, float outMax);
-static void IRAM_ATTR drums_generate();
-static void IRAM_ATTR synth1_generate();
-static void IRAM_ATTR synth2_generate();
-static void IRAM_ATTR mixer();
-
 #endif
