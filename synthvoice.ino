@@ -48,10 +48,10 @@ void SynthVoice::Init() {
   allpass.setMode(OnePoleFilter::ALLPASS);
   allpass.setCutoff(14.008f);
   ampDeclicker.setMode(BiquadFilter::LOWPASS12);
-  ampDeclicker.setGain( amp2dB(sqrt(0.5f)) );
+  ampDeclicker.setGain(General::amp2dB(sqrt(0.5f)) );
   ampDeclicker.setFrequency(200.0f);
   filtDeclicker.setMode(BiquadFilter::LOWPASS12);
-  filtDeclicker.setGain( amp2dB(sqrt(0.5f)) );
+  filtDeclicker.setGain(General::amp2dB(sqrt(0.5f)) );
   filtDeclicker.setFrequency(200.0f);
   notch.setMode(BiquadFilter::BANDREJECT);
   notch.setFrequency(7.5164f);

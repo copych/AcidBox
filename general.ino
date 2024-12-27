@@ -69,6 +69,16 @@ float General::one_div(float a) {
     return result;
 }
 
+float General::dB2amp(float dB){
+  return expf(dB * 0.11512925464970228420089957273422f);
+  //return pow(10.0, (0.05*dB)); // naive, inefficient version
+}
+
+float General::amp2dB(float amp){
+  return 8.6858896380650365530225783783321f * logf(amp);
+  //return 20*log10(amp); // naive version
+}
+
 // TODO, not used
 // float IRAM_ATTR General::fast_sin(float x) { // 8.798 MOP/S full period lookup table. With table size = 32+1, max error is about 0.5% 
 //   float f, res;
@@ -95,16 +105,6 @@ float General::one_div(float a) {
 //   res = f * (Tables::sin_tbl[i+1] - Tables::sin_tbl[i]) + Tables::sin_tbl[i];
 //   return  sign ? -res : res;
 // }
-
-float dB2amp(float dB){
-  return expf(dB * 0.11512925464970228420089957273422f);
-  //return pow(10.0, (0.05*dB)); // naive, inefficient version
-}
-
-float amp2dB(float amp){
-  return 8.6858896380650365530225783783321f * logf(amp);
-  //return 20*log10(amp); // naive version
-}
 
 float linToLin(float in, float inMin, float inMax, float outMin, float outMax){
   // map input to the range 0.0...1.0:

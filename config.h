@@ -18,13 +18,13 @@
 //#define FLASH_LED               // flash built-in LED
 //#define LOLIN_RGB               // Flashes the LOLIN S3 built-in RGB-LED
 
-//#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
+#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
 //#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
-//#define DEBUG_TIMING
+#define DEBUG_TIMING
 //#define DEBUG_MIDI
 
 //#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
@@ -307,13 +307,6 @@ static const float tuning[128] = {
 
 // =========================== forward declarations ================================================
 // =========================== someday I refactor this *** =========================================
-static float IRAM_ATTR fast_shape(float x);
-static void  IRAM_ATTR fast_sincos(float x, float* sinRes, float* cosRes);
-static float IRAM_ATTR fast_sin(float x);
-static float IRAM_ATTR fast_cos(float x);
-static float __attribute__((always_inline)) inline one_div(float);
-float dB2amp(float dB);
-float amp2dB(float amp);
 float linToLin(float in, float inMin, float inMax, float outMin, float outMax);
 float linToExp(float in, float inMin, float inMax, float outMin, float outMax);
 float expToLin(float in, float inMin, float inMax, float outMin, float outMax);

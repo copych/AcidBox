@@ -72,7 +72,7 @@ void BiquadFilter::calcCoeffs()
     {
       // formula from Robert Bristow Johnson's biquad cookbook:
       General::fast_sincos(w, &s, &c);
-      float q     = dB2amp(gain);
+      float q     = General::dB2amp(gain);
       float alpha = s/(2.0f*q);
       float scale = 1.0f/(1.0f+alpha);
       a1 = 2.0f*c       * scale;
@@ -97,7 +97,7 @@ void BiquadFilter::calcCoeffs()
     {
       // formula from Robert Bristow Johnson's biquad cookbook:
       General::fast_sincos(w, &s, &c);
-      float q     = dB2amp(gain);
+      float q     = General::dB2amp(gain);
       float alpha = s/(2.0f*q);
       float scale = 1.0f/(1.0f+alpha);
       a1 = 2.0f*c       * scale;
@@ -138,7 +138,7 @@ void BiquadFilter::calcCoeffs()
       // formula from Robert Bristow Johnson's biquad cookbook:
       General::fast_sincos(w, &s, &c);
       float alpha = s * sinh( 0.5f*log(2.0f) * bandwidth * w / s );
-      float A     = dB2amp(gain);
+      float A     = General::dB2amp(gain);
       float scale = 1.0f/(1.0f+alpha/A);
       a1 = 2.0f*c             * scale;
       a2 = ((alpha/A) - 1.0) * scale;
@@ -151,7 +151,7 @@ void BiquadFilter::calcCoeffs()
     {
       // formula from Robert Bristow Johnson's biquad cookbook:
       General::fast_sincos(w, &s, &c);
-      float A     = dB2amp(0.5f*gain);
+      float A     = General::dB2amp(0.5f*gain);
       float q     = 1.0f / (2.0f*sinh( 0.5f*log(2.0f) * bandwidth ));
       float beta  = sqrt(A) / q;
       float scale = 1.0f / ( (A+1.0f) + (A-1.0f)*c + beta*s);
@@ -166,7 +166,7 @@ void BiquadFilter::calcCoeffs()
     {
       // formula from Robert Bristow Johnson's biquad cookbook:
       General::fast_sincos(w, &s, &c);
-      float A     = dB2amp(0.5f*gain);
+      float A     = General::dB2amp(0.5f*gain);
       float q     = 1.0f / (2.0f*sinh( 0.5f*log(2.0f) * bandwidth ));
       float beta  = sqrt(A) / q;
       float scale = 1.0f / ( (A+1.0f) + (A-1.0f)*c + beta*s);
@@ -183,7 +183,7 @@ void BiquadFilter::calcCoeffs()
     {
       General::fast_sincos(w, &s, &c);
       float alpha = s * sinh( 0.5f*log(2.0f) * bandwidth * w / s );
-      float A     = dB2amp(gain);
+      float A     = General::dB2amp(gain);
       float scale = 1.0f/(1.0f+alpha/A);
 
       a1 = (  2 * c) * scale;
