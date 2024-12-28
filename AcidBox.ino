@@ -30,6 +30,7 @@
 #include "compressor.h"
 #include "synthvoice.h"
 #include "sampler.h"
+#include "mixer.h"
 #include <Wire.h>
 #ifdef DEBUG_TIMING
 #include "debug_timing.h"
@@ -77,8 +78,8 @@ volatile int current_out_buf = 1 - 0; // set of buffers for output
 // static float DRAM_ATTR WORD_ALIGNED_ATTR  synth2_buf[2][DMA_BUF_LEN];    // synth2 mono
 // static float DRAM_ATTR WORD_ALIGNED_ATTR  drums_buf_l[2][DMA_BUF_LEN];   // drums L
 // static float DRAM_ATTR WORD_ALIGNED_ATTR  drums_buf_r[2][DMA_BUF_LEN];   // drums R
-static float DRAM_ATTR WORD_ALIGNED_ATTR  mix_buf_l[2][DMA_BUF_LEN];     // mix L channel
-static float DRAM_ATTR WORD_ALIGNED_ATTR  mix_buf_r[2][DMA_BUF_LEN];     // mix R channel
+// static float DRAM_ATTR WORD_ALIGNED_ATTR  mix_buf_l[2][DMA_BUF_LEN];     // mix L channel
+// static float DRAM_ATTR WORD_ALIGNED_ATTR  mix_buf_r[2][DMA_BUF_LEN];     // mix R channel
 static union {                              // a dirty trick, instead of true converting
   int16_t WORD_ALIGNED_ATTR _signed[DMA_BUF_LEN * 2];
   uint16_t WORD_ALIGNED_ATTR _unsigned[DMA_BUF_LEN * 2];
@@ -100,6 +101,9 @@ SynthVoice Synth2(1);
 
 // 808-like drums
 Sampler Drums( DEFAULT_DRUMKIT ); // argument: starting drumset [0 .. total-1]
+
+// Mixer
+Mixer mixer(&Synth1, &Synth2, &Drums);
 
 // Global effects
 FxDelay Delay;
@@ -179,7 +183,7 @@ static void IRAM_ATTR audio_task1(void *userData) {
       Debug::c1t = micros();
       Debug::fxt = micros();
 #endif      
-      General::mixer(); 
+      mixer.mix(); 
 #ifdef DEBUG_TIMING      
       Debug::fxT = micros() - Debug::fxt;
 #endif            
@@ -283,8 +287,8 @@ delay(200);
     // synth2_buf[current_gen_buf][i] = 0.0f ;
     out_buf[current_out_buf]._signed[i * 2] = 0 ;
     out_buf[current_out_buf]._signed[i * 2 + 1] = 0 ;
-    mix_buf_l[current_out_buf][i] = 0.0f;
-    mix_buf_r[current_out_buf][i] = 0.0f;
+    // // mix_buf_l[current_out_buf][i] = 0.0f;
+    // // mix_buf_r[current_out_buf][i] = 0.0f;
   }
 
   i2sInit();

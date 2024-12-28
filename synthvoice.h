@@ -51,7 +51,7 @@ public:
   size_t      decimator = 0; // debugging only needs!
   Adsr        AmpEnv;
   AD_env      FltEnv;
-  SynthVoice();
+  SynthVoice() {};
   SynthVoice(uint8_t ind) {_index = ind;};
   void Init();
   void generate() __attribute__((noinline)); 
