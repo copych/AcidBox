@@ -11,6 +11,9 @@ class Sampler {
     Sampler(){}
     Sampler(uint8_t progNow) { program_tmp = progNow; progNumber = progNow; };
     void Init();
+    void generate() __attribute__((noinline)); 
+    float WORD_ALIGNED_ATTR  drums_buf_l[2][DMA_BUF_LEN]  = {0.0f};
+    float WORD_ALIGNED_ATTR  drums_buf_r[2][DMA_BUF_LEN]  = {0.0f};
     void ScanContents(fs::FS &fs, const char *dirname, uint8_t levels);
     inline void SelectNote( uint8_t note ){
       if(sampleInfoCount>0) selectedNote = note % repeat; else  selectedNote = note;

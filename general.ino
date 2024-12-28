@@ -92,27 +92,6 @@ float General::knobMap(float in, float outMin, float outMax) {
   return outMin + Tables::lookupTable(Tables::knob_tbl, (int)(in * TABLE_SIZE)) * (outMax - outMin);
 }
 
-// TODO, drums generate, synths generate and mixer are now relying on globals, this need to be reworked
-// It makes more sense to put the generate functions in the components itself and to encapsulate buffers
-// in the component itself.
-void IRAM_ATTR General::drums_generate() {
-    for (int i=0; i < DMA_BUF_LEN; i++){
-      Drums.Process( &drums_buf_l[current_gen_buf][i], &drums_buf_r[current_gen_buf][i] );      
-    } 
-}
-
-void IRAM_ATTR General::synth1_generate() {
-    for (int i=0; i < DMA_BUF_LEN; i++){
-      synth1_buf[current_gen_buf][i] = Synth1.getSample() ;      
-    } 
-}
-
-void IRAM_ATTR General::synth2_generate() {
-    for (int i=0; i < DMA_BUF_LEN; i++){
-      synth2_buf[current_gen_buf][i] = Synth2.getSample() ;      
-    } 
-}
-
 void IRAM_ATTR General::mixer() { // sum buffers 
 #ifdef DEBUG_MASTER_OUT
   static float meter = 0.0f;
@@ -129,13 +108,13 @@ void IRAM_ATTR General::mixer() { // sum buffers
     rvb_k3 = Drums._sendReverb;
 #endif
     for (int i=0; i < DMA_BUF_LEN; i++) { 
-      drums_out_l = drums_buf_l[current_out_buf][i];
-      drums_out_r = drums_buf_r[current_out_buf][i];
+      drums_out_l = Drums.drums_buf_l[current_out_buf][i];
+      drums_out_r = Drums.drums_buf_r[current_out_buf][i];
 
-      synth1_out_l = Synth1.GetPan() * synth1_buf[current_out_buf][i];
-      synth1_out_r = (1.0f - Synth1.GetPan()) * synth1_buf[current_out_buf][i];
-      synth2_out_l = Synth2.GetPan() * synth2_buf[current_out_buf][i];
-      synth2_out_r = (1.0f - Synth2.GetPan()) * synth2_buf[current_out_buf][i];
+      synth1_out_l = Synth1.GetPan() * Synth1.synth_buf[current_out_buf][i];
+      synth1_out_r = (1.0f - Synth1.GetPan()) * Synth1.synth_buf[current_out_buf][i];
+      synth2_out_l = Synth2.GetPan() * Synth2.synth_buf[current_out_buf][i];
+      synth2_out_r = (1.0f - Synth2.GetPan()) * Synth2.synth_buf[current_out_buf][i];
 
       
       dly_l = dly_k1 * synth1_out_l + dly_k2 * synth2_out_l + dly_k3 * drums_out_l; // delay bus

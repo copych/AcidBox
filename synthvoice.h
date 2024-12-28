@@ -54,6 +54,8 @@ public:
   SynthVoice();
   SynthVoice(uint8_t ind) {_index = ind;};
   void Init();
+  void generate() __attribute__((noinline)); 
+  float WORD_ALIGNED_ATTR  synth_buf[2][DMA_BUF_LEN]  = {0.0f};
   inline void on_midi_noteON(uint8_t note, uint8_t velocity);
   inline void on_midi_noteOFF(uint8_t note, uint8_t velocity);
   inline void StopSound();

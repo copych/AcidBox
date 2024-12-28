@@ -108,7 +108,6 @@ void Sampler::ScanContents(fs::FS &fs, const char *dirname, uint8_t levels) {
   }
 }
 
-
 void Sampler::Init() {
  // samplePlayer = (samplePlayerS*)heap_caps_malloc( SAMPLECNT * sizeof( *samplePlayer), MALLOC_CAP_8BIT);
   
@@ -258,6 +257,12 @@ void Sampler::Init() {
       samplePlayer[i].pitch = 1.0f / SAMPLE_RATE * samplePlayer[i].sampleRate;
     }
   };
+}
+
+void IRAM_ATTR Sampler::generate() {
+    for (int i=0; i < DMA_BUF_LEN; i++){
+      Process( &drums_buf_l[current_gen_buf][i], &drums_buf_r[current_gen_buf][i] );      
+    } 
 }
 
 inline void Sampler::SetNoteVolume_Midi( uint8_t data1) {

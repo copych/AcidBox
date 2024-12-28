@@ -58,6 +58,11 @@ void SynthVoice::Init() {
   notch.setBandwidth(4.7f);
 }
 
+void IRAM_ATTR SynthVoice::generate() {
+    for (int i=0; i < DMA_BUF_LEN; i++){
+      synth_buf[current_gen_buf][i] = getSample();      
+    } 
+}
 
 inline float SynthVoice::getSample() {
   

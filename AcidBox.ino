@@ -73,10 +73,10 @@ static  float     param[POT_NUM];
 // Audio buffers of all kinds
 volatile int current_gen_buf = 0; // set of buffers for generation
 volatile int current_out_buf = 1 - 0; // set of buffers for output
-static float DRAM_ATTR WORD_ALIGNED_ATTR  synth1_buf[2][DMA_BUF_LEN];    // synth1 mono
-static float DRAM_ATTR WORD_ALIGNED_ATTR  synth2_buf[2][DMA_BUF_LEN];    // synth2 mono
-static float DRAM_ATTR WORD_ALIGNED_ATTR  drums_buf_l[2][DMA_BUF_LEN];   // drums L
-static float DRAM_ATTR WORD_ALIGNED_ATTR  drums_buf_r[2][DMA_BUF_LEN];   // drums R
+// static float DRAM_ATTR WORD_ALIGNED_ATTR  synth1_buf[2][DMA_BUF_LEN];    // synth1 mono
+// static float DRAM_ATTR WORD_ALIGNED_ATTR  synth2_buf[2][DMA_BUF_LEN];    // synth2 mono
+// static float DRAM_ATTR WORD_ALIGNED_ATTR  drums_buf_l[2][DMA_BUF_LEN];   // drums L
+// static float DRAM_ATTR WORD_ALIGNED_ATTR  drums_buf_r[2][DMA_BUF_LEN];   // drums R
 static float DRAM_ATTR WORD_ALIGNED_ATTR  mix_buf_l[2][DMA_BUF_LEN];     // mix L channel
 static float DRAM_ATTR WORD_ALIGNED_ATTR  mix_buf_r[2][DMA_BUF_LEN];     // mix R channel
 static union {                              // a dirty trick, instead of true converting
@@ -154,23 +154,23 @@ static void IRAM_ATTR audio_task1(void *userData) {
     //  xTaskNotifyGive(SynthTask2);            // if we are here, then we've already received a notification from task2
       
 #ifdef DEBUG_TIMING
-      RECORD_TIME(Debug::s1t, General::synth1_generate(), Debug::s1T)  
+      RECORD_TIME(Debug::s1t, Synth1.generate(), Debug::s1T)  
 #else
-      synth1_generate();
+      Synth1.generate();
 #endif
 
 #ifdef DEBUG_TIMING
-      RECORD_TIME(Debug::s2t, General::synth2_generate(), Debug::s2T)  
+      RECORD_TIME(Debug::s2t, Synth2.generate(), Debug::s2T)  
 #else
-      synth2_generate();
+      Synth2.generate();
 #endif
 
   //    taskYIELD(); 
 
 #ifdef DEBUG_TIMING
-      RECORD_TIME(Debug::drt, General::drums_generate(), Debug::drT)  
+      RECORD_TIME(Debug::drt, Drums.generate(), Debug::drT)  
 #else
-      drums_generate();
+      Drums.generate();
 #endif
 
 
@@ -277,10 +277,10 @@ delay(200);
 
   // silence while we haven't loaded anything reasonable
   for (int i = 0; i < DMA_BUF_LEN; i++) {
-    drums_buf_l[current_gen_buf][i] = 0.0f ;
-    drums_buf_r[current_gen_buf][i] = 0.0f ;
-    synth1_buf[current_gen_buf][i] = 0.0f ;
-    synth2_buf[current_gen_buf][i] = 0.0f ;
+    // drums_buf_l[current_gen_buf][i] = 0.0f ;
+    // drums_buf_r[current_gen_buf][i] = 0.0f ;
+    // synth1_buf[current_gen_buf][i] = 0.0f ;
+    // synth2_buf[current_gen_buf][i] = 0.0f ;
     out_buf[current_out_buf]._signed[i * 2] = 0 ;
     out_buf[current_out_buf]._signed[i * 2 + 1] = 0 ;
     mix_buf_l[current_out_buf][i] = 0.0f;

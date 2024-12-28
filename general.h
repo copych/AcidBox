@@ -8,10 +8,6 @@ class General {
     static float fast_shape(float x) __attribute__((noinline));
     static void fast_sincos(float x, float* sinRes, float* cosRes) __attribute__((noinline));
     static float one_div(float a) __attribute__((always_inline));
-    static void drums_generate() __attribute__((noinline));
-    
-    static void synth1_generate() __attribute__((noinline));
-    static void synth2_generate() __attribute__((noinline));
     static void mixer() __attribute__((noinline));
 
     // TODO was not optimized in config.h with IRAM or other attributes
