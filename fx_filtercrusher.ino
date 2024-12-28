@@ -11,7 +11,7 @@ void FxFilterCrusher::SetCutoff( float value ) {
 
 void FxFilterCrusher::SetResonance( float value ) {
   filtReso =  0.5f + 10 * value * value * value; /* min q is 0.5 here */
-  div_2_reso = one_div(2.0f * filtReso);
+  div_2_reso = General::one_div(2.0f * filtReso);
 #ifdef DEBUG_FX
   DEBF("main filter reso: %0.3f\n", filtReso);
 #endif
@@ -20,7 +20,7 @@ void FxFilterCrusher::SetResonance( float value ) {
 
 void FxFilterCrusher::SetBitCrusher( float value ) {
   bitCrusher = pow(2, -32.0f * value);
-  div_bitCrusher = 1.0f * one_div(bitCrusher);
+  div_bitCrusher = 1.0f * General::one_div(bitCrusher);
 #ifdef DEBUG_FX
   DEBF("main filter bitCrusher: %0.3f\n", bitCrusher);
 #endif
@@ -89,7 +89,7 @@ inline void FxFilterCrusher::Filter_CalculateTP(float c, float one_div_2_reso, s
   cosOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega + (float)((1ULL << 30) - 1)))];
   sinOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega))];
 */
-  fast_sincos(omega , &sinOmega, &cosOmega);
+  General::fast_sincos(omega , &sinOmega, &cosOmega);
   alpha = sinOmega * one_div_2_reso;
   b[0] = (1 - cosOmega) * 0.5f;
   b[1] = 1 - cosOmega;
@@ -99,7 +99,7 @@ inline void FxFilterCrusher::Filter_CalculateTP(float c, float one_div_2_reso, s
   a[2] = 1 - alpha;
 
   // Normalize filter coefficients
-  float factor = one_div(a[0]);
+  float factor = General::one_div(a[0]);
 
   aNorm[0] = a[1] * factor;
   aNorm[1] = a[2] * factor;
@@ -134,7 +134,7 @@ inline void FxFilterCrusher::Filter_CalculateHP(float c, float one_div_2_reso, s
   sinOmega = sine[WAVEFORM_I((uint32_t)((float)((1ULL << 31) - 1) * omega))];
 */
 
-  fast_sincos(omega , &sinOmega, &cosOmega);
+  General::fast_sincos(omega , &sinOmega, &cosOmega);
   alpha = sinOmega * one_div_2_reso;
   b[0] = (1 + cosOmega) * 0.5f;
   b[1] = -(1 + cosOmega);
@@ -144,7 +144,7 @@ inline void FxFilterCrusher::Filter_CalculateHP(float c, float one_div_2_reso, s
   a[2] = 1 - alpha;
 
   // Normalize filter coefficients
-  float factor = one_div(a[0]) ;
+  float factor = General::one_div(a[0]) ;
 
   aNorm[0] = a[1] * factor;
   aNorm[1] = a[2] * factor;

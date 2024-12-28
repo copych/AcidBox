@@ -4,7 +4,7 @@ void SynthVoice::Init() {
   _envMod = 0.5f;
   _accentLevel = 0.5f;
   _cutoff = 0.2f; // 0..1 normalized freq range. Keep in mind that EnvMod set to max practically doubles this range
-  _filter_freq = linToExp(_cutoff, 0.0f, 1.0f, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
+  _filter_freq = General::linToExp(_cutoff, 0.0f, 1.0f, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
   _reso = 0.4f;
   _gain = 0.0f; // values >1 will distort sound
   _drive = 0.0f;
@@ -48,16 +48,21 @@ void SynthVoice::Init() {
   allpass.setMode(OnePoleFilter::ALLPASS);
   allpass.setCutoff(14.008f);
   ampDeclicker.setMode(BiquadFilter::LOWPASS12);
-  ampDeclicker.setGain( amp2dB(sqrt(0.5f)) );
+  ampDeclicker.setGain(General::amp2dB(sqrt(0.5f)) );
   ampDeclicker.setFrequency(200.0f);
   filtDeclicker.setMode(BiquadFilter::LOWPASS12);
-  filtDeclicker.setGain( amp2dB(sqrt(0.5f)) );
+  filtDeclicker.setGain(General::amp2dB(sqrt(0.5f)) );
   filtDeclicker.setFrequency(200.0f);
   notch.setMode(BiquadFilter::BANDREJECT);
   notch.setFrequency(7.5164f);
   notch.setBandwidth(4.7f);
 }
 
+void IRAM_ATTR SynthVoice::generate() {
+    for (int i=0; i < DMA_BUF_LEN; i++){
+      synth_buf[current_gen_buf][i] = getSample();      
+    } 
+}
 
 inline float SynthVoice::getSample() {
   
@@ -67,8 +72,8 @@ inline float SynthVoice::getSample() {
     ampEnv = AmpEnv.process() * _k_acc;
     
     if (AmpEnv.isRunning()) {
-      // samp = (float)((1.0f - _waveMix) * lookupTable(*(tables[_waveBase]), _phaze)) + (float)(_waveMix * lookupTable(*(tables[_waveBase+1]), _phaze)) ; // lookup and blend waveforms
-       samp = (float)((1.0f - _waveMix) * lookupTable(Tables::exp_square_tbl, _phaze)) + (float)(_waveMix * lookupTable(Tables::saw_tbl, _phaze)) ; // lookup and blend waveforms
+      // samp = (float)((1.0f - _waveMix) *Tables::lookupTable (*(tables[_waveBase]), _phaze)) + (float)(_waveMix * Tables::lookupTable(*(tables[_waveBase+1]), _phaze)) ; // lookup and blend waveforms
+       samp = (float)((1.0f - _waveMix) * Tables::lookupTable(Tables::exp_square_tbl, _phaze)) + (float)(_waveMix * Tables::lookupTable(Tables::saw_tbl, _phaze)) ; // lookup and blend waveforms
       // samp = _phaze < HALF_TABLE ? 2 * _waveMix * _phaze * DIV_TABLE_SIZE - 1.0f   :    2 * _waveMix * (_phaze * DIV_TABLE_SIZE - 1.0f) + 1.0f; 
     } else {
       samp = 0.0f;
@@ -81,7 +86,8 @@ inline float SynthVoice::getSample() {
     
      decimator++;
      if (decimator % 128 == 0 && _index == 0) {
-      DEBF("%f\r\n", final_cut);
+      // TODO, check what this is, this sends load of data when turning debug on
+      //DEBF("%f\r\n", final_cut);
      }
     
     samp = highpass1.getSample(samp);         // pre-filter highpass, following open303
@@ -143,16 +149,16 @@ inline float SynthVoice::getSample() {
       DEBF("%0.5f\r\n", _phaze);
     }*/
     
-    //synth_buf[_index][i] = fast_shape(samp); // mono limitter
+    //synth_buf[_index][i] = General::fast_shape(samp); // mono limitter
     return  samp;  
 }
 
 
 inline void SynthVoice::SetCutoff(float normalized_val)  {
   _cutoff = normalized_val;
-  _filter_freq = knobMap( normalized_val, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
-  _filter_freq_mod = knobMap( normalized_val, MIN_CUTOFF_FREQ_MOD, MAX_CUTOFF_FREQ_MOD);
-  _filter_freq_cut = knobMap( _envMod, _filter_freq, _filter_freq_mod);
+  _filter_freq = General::knobMap( normalized_val, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
+  _filter_freq_mod = General::knobMap( normalized_val, MIN_CUTOFF_FREQ_MOD, MAX_CUTOFF_FREQ_MOD);
+  _filter_freq_cut = General::knobMap( _envMod, _filter_freq, _filter_freq_mod);
 #ifdef DEBUG_SYNTH
   DEBF("Synth %d cutoff=%0.3f freq=%0.3f\r\n" , _index, _cutoff, _filter_freq);
 #endif
@@ -161,7 +167,7 @@ inline void SynthVoice::SetCutoff(float normalized_val)  {
 
 inline void SynthVoice::SetEnvModLevel(float normalized_val) {
   _envMod = normalized_val;
-  _filter_freq_cut = knobMap( normalized_val, _filter_freq, _filter_freq_mod);
+  _filter_freq_cut = General::knobMap( normalized_val, _filter_freq, _filter_freq_mod);
 };
 
 
@@ -199,22 +205,22 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_RESO:
       _reso = cc_value * MIDI_NORM ;
-      _flt_compens = one_div( bilinearLookup(Tables::norm1_tbl, _cutoff * 127.0f, cc_value ));
+      _flt_compens = General::one_div( Tables::bilinearLookup(Tables::norm1_tbl, _cutoff * 127.0f, cc_value ));
       SetReso(_reso);
       break;
     case CC_303_DECAY: // Env release
       tmp = (float)cc_value * MIDI_NORM;
-      _filterDecayMs = knobMap(tmp, 200.0f, 2000.0f);
-      //_ampDecayMs = knobMap(tmp, 15.0f, 7500.0f);
+      _filterDecayMs = General::knobMap(tmp, 200.0f, 2000.0f);
+      //_ampDecayMs = General::knobMap(tmp, 15.0f, 7500.0f);
       break;
     case CC_303_ATTACK: // Env attack
       tmp = (float)cc_value * MIDI_NORM;
-      _filterAttackMs = knobMap(tmp, 3.0f, 100.0f);
-      _ampAttackMs =  knobMap(tmp, 0.1f, 500.0f);
+      _filterAttackMs = General::knobMap(tmp, 3.0f, 100.0f);
+      _ampAttackMs =  General::knobMap(tmp, 0.1f, 500.0f);
       break;
     case CC_303_CUTOFF:
       _cutoff = (float)cc_value * MIDI_NORM;
-      _flt_compens = one_div( bilinearLookup(Tables::norm1_tbl, cc_value, _reso * 127.0f));
+      _flt_compens = General::one_div( Tables::bilinearLookup(Tables::norm1_tbl, cc_value, _reso * 127.0f));
       SetCutoff(_cutoff);
       break;
     case CC_303_DELAY_SEND:
@@ -231,12 +237,12 @@ inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
       break;
     case CC_303_DISTORTION:
       _gain = (float)cc_value * MIDI_NORM ;
-      _fx_compens = one_div( bilinearLookup(Tables::norm2_tbl, _drive * 127.0f,  cc_value));
+      _fx_compens = General::one_div( Tables::bilinearLookup(Tables::norm2_tbl, _drive * 127.0f,  cc_value));
       SetDistortionLevel(_gain);
       break;
     case CC_303_OVERDRIVE:
       _drive = (float)cc_value * MIDI_NORM ;
-      _fx_compens = one_div( bilinearLookup(Tables::norm2_tbl, cc_value, _gain * 127.0f));
+      _fx_compens = General::one_div( Tables::bilinearLookup(Tables::norm2_tbl, cc_value, _gain * 127.0f));
       SetOverdriveLevel(_drive);
       break;
     case CC_303_SATURATOR:

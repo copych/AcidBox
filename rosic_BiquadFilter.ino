@@ -71,8 +71,8 @@ void BiquadFilter::calcCoeffs()
   case LOWPASS12: 
     {
       // formula from Robert Bristow Johnson's biquad cookbook:
-      fast_sincos(w, &s, &c);
-      float q     = dB2amp(gain);
+      General::fast_sincos(w, &s, &c);
+      float q     = General::dB2amp(gain);
       float alpha = s/(2.0f*q);
       float scale = 1.0f/(1.0f+alpha);
       a1 = 2.0f*c       * scale;
@@ -96,8 +96,8 @@ void BiquadFilter::calcCoeffs()
   case HIGHPASS12: 
     {
       // formula from Robert Bristow Johnson's biquad cookbook:
-      fast_sincos(w, &s, &c);
-      float q     = dB2amp(gain);
+      General::fast_sincos(w, &s, &c);
+      float q     = General::dB2amp(gain);
       float alpha = s/(2.0f*q);
       float scale = 1.0f/(1.0f+alpha);
       a1 = 2.0f*c       * scale;
@@ -110,7 +110,7 @@ void BiquadFilter::calcCoeffs()
   case BANDPASS: 
     {
       // formula from Robert Bristow Johnson's biquad cookbook:      
-      fast_sincos(w, &s, &c);
+      General::fast_sincos(w, &s, &c);
       float alpha = s * sinh( 0.5f*log(2.0f) * bandwidth * w / s );
       float scale = 1.0f/(1.0f+alpha);
       a1 = 2.0f*c       * scale;
@@ -123,7 +123,7 @@ void BiquadFilter::calcCoeffs()
   case BANDREJECT: 
     {
       // formula from Robert Bristow Johnson's biquad cookbook:
-      fast_sincos(w, &s, &c);
+      General::fast_sincos(w, &s, &c);
       float alpha = s * sinh( 0.5f*log(2.0f) * bandwidth * w / s );
       float scale = 1.0f/(1.0f+alpha);
       a1 = 2.0f*c       * scale;
@@ -136,9 +136,9 @@ void BiquadFilter::calcCoeffs()
   case PEAK: 
     {
       // formula from Robert Bristow Johnson's biquad cookbook:
-      fast_sincos(w, &s, &c);
+      General::fast_sincos(w, &s, &c);
       float alpha = s * sinh( 0.5f*log(2.0f) * bandwidth * w / s );
-      float A     = dB2amp(gain);
+      float A     = General::dB2amp(gain);
       float scale = 1.0f/(1.0f+alpha/A);
       a1 = 2.0f*c             * scale;
       a2 = ((alpha/A) - 1.0) * scale;
@@ -150,8 +150,8 @@ void BiquadFilter::calcCoeffs()
   case LOW_SHELF: 
     {
       // formula from Robert Bristow Johnson's biquad cookbook:
-      fast_sincos(w, &s, &c);
-      float A     = dB2amp(0.5f*gain);
+      General::fast_sincos(w, &s, &c);
+      float A     = General::dB2amp(0.5f*gain);
       float q     = 1.0f / (2.0f*sinh( 0.5f*log(2.0f) * bandwidth ));
       float beta  = sqrt(A) / q;
       float scale = 1.0f / ( (A+1.0f) + (A-1.0f)*c + beta*s);
@@ -165,8 +165,8 @@ void BiquadFilter::calcCoeffs()
   case HIGH_SHELF: 
     {
       // formula from Robert Bristow Johnson's biquad cookbook:
-      fast_sincos(w, &s, &c);
-      float A     = dB2amp(0.5f*gain);
+      General::fast_sincos(w, &s, &c);
+      float A     = General::dB2amp(0.5f*gain);
       float q     = 1.0f / (2.0f*sinh( 0.5f*log(2.0f) * bandwidth ));
       float beta  = sqrt(A) / q;
       float scale = 1.0f / ( (A+1.0f) + (A-1.0f)*c + beta*s);
@@ -181,9 +181,9 @@ void BiquadFilter::calcCoeffs()
 
   case ALLPASS:
     {
-      fast_sincos(w, &s, &c);
+      General::fast_sincos(w, &s, &c);
       float alpha = s * sinh( 0.5f*log(2.0f) * bandwidth * w / s );
-      float A     = dB2amp(gain);
+      float A     = General::dB2amp(gain);
       float scale = 1.0f/(1.0f+alpha/A);
 
       a1 = (  2 * c) * scale;

@@ -17,6 +17,7 @@
 
 #include "sampler.h"
 #include "samples.h"
+#include "general.h"
 
 /* You only need to format LittleFS the first time you run a
    test or else use the LittleFS plugin to create a partition
@@ -106,7 +107,6 @@ void Sampler::ScanContents(fs::FS &fs, const char *dirname, uint8_t levels) {
     file = root.openNextFile();
   }
 }
-
 
 void Sampler::Init() {
  // samplePlayer = (samplePlayerS*)heap_caps_malloc( SAMPLECNT * sizeof( *samplePlayer), MALLOC_CAP_8BIT);
@@ -257,6 +257,12 @@ void Sampler::Init() {
       samplePlayer[i].pitch = 1.0f / SAMPLE_RATE * samplePlayer[i].sampleRate;
     }
   };
+}
+
+void IRAM_ATTR Sampler::generate() {
+    for (int i=0; i < DMA_BUF_LEN; i++){
+      Process( &drums_buf_l[current_gen_buf][i], &drums_buf_r[current_gen_buf][i] );      
+    } 
 }
 
 inline void Sampler::SetNoteVolume_Midi( uint8_t data1) {
@@ -656,8 +662,8 @@ inline void Sampler::Process( float *left, float *right ) {
   Effects.Process( &signal_l, &signal_r );
  // *left  = signal_l * _volume;
  // *right =  signal_r * _volume;
-   *left  = fclamp(signal_l * _volume, -1.0f, 1.0f);
-   *right = fclamp(signal_r * _volume, -1.0f, 1.0f);
-  // *left  = fast_shape(signal_l * _volume);
-  // *right = fast_shape(signal_r * _volume);
+   *left  = General::fclamp(signal_l * _volume, -1.0f, 1.0f);
+   *right = General::fclamp(signal_r * _volume, -1.0f, 1.0f);
+  // *left  = General::fast_shape(signal_l * _volume);
+  // *right = General::fast_shape(signal_r * _volume);
 }

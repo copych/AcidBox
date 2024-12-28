@@ -68,8 +68,8 @@ inline void i2s_output () {
 //  if (processing) {
   #ifdef USE_INTERNAL_DAC
     for (int i=0; i < DMA_BUF_LEN; i++) {      
-      out_buf[current_out_buf]._unsigned[i*2] = (uint16_t)(127.0f * ( fast_shape( mix_buf_l[current_out_buf][i]) + 1.0f)) << 8U; // 256 output levels is way to little
-      out_buf[current_out_buf]._unsigned[i*2+1] = (uint16_t)(127.0f * ( fast_shape( mix_buf_r[current_out_buf][i]) + 1.0f)) << 8U ; // maybe you'll be lucky to fully use this range
+      out_buf[current_out_buf]._unsigned[i*2] = (uint16_t)(127.0f * ( General::fast_shape( mix_buf_l[current_out_buf][i]) + 1.0f)) << 8U; // 256 output levels is way to little
+      out_buf[current_out_buf]._unsigned[i*2+1] = (uint16_t)(127.0f * ( General::fast_shape( mix_buf_r[current_out_buf][i]) + 1.0f)) << 8U ; // maybe you'll be lucky to fully use this range
     }
     i2s_write(i2s_num, out_buf[current_out_buf]._unsigned, sizeof(out_buf[current_out_buf]._unsigned), &bytes_written, portMAX_DELAY);
   #else
@@ -107,8 +107,8 @@ void i2sDeinit() {
 static inline void i2s_output () {
 // now out_buf is ready, output
   for (int i=0; i < DMA_BUF_LEN; i++) {
-      out_buf[current_out_buf]._signed[i*2] = 0x7fff * (float)(( mix_buf_l[current_out_buf][i])) ; 
-      out_buf[current_out_buf]._signed[i*2+1] = 0x7fff * (float)(( mix_buf_r[current_out_buf][i])) ;
+      out_buf[current_out_buf]._signed[i*2] = 0x7fff * (float)(( mixer.mix_buf_l[current_out_buf][i])) ; 
+      out_buf[current_out_buf]._signed[i*2+1] = 0x7fff * (float)(( mixer.mix_buf_r[current_out_buf][i])) ;
    // if (i%4==0) DEBUG(out_buf[out_buf_id][i*2]);
    
    //if (out_buf[out_buf_id][i*2]) DEBF(" %d\r\n ", out_buf[out_buf_id][i*2]);
