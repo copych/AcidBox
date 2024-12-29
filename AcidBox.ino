@@ -102,15 +102,17 @@ SynthVoice Synth2(1);
 // 808-like drums
 Sampler Drums( DEFAULT_DRUMKIT ); // argument: starting drumset [0 .. total-1]
 
-// Mixer
-Mixer mixer(&Synth1, &Synth2, &Drums);
-
 // Global effects
 FxDelay Delay;
 #ifndef NO_PSRAM
 FxReverb Reverb;
+#else
+FxReverb Reverb = nullptr;
 #endif
 Compressor Comp;
+
+// Mixer
+Mixer mixer(&Synth1, &Synth2, &Drums, &Delay, &Comp, &Reverb);
 
 hw_timer_t * timer1 = NULL;            // Timer variables
 hw_timer_t * timer2 = NULL;            // Timer variables

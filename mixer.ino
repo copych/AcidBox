@@ -1,9 +1,12 @@
 #include "mixer.h"
 
-Mixer::Mixer(SynthVoice *synth1, SynthVoice *synth2, Sampler *drums) {
+Mixer::Mixer(SynthVoice *synth1, SynthVoice *synth2, Sampler *drums, FxDelay *delay, Compressor *compressor, FxReverb *reverb) {
     _synth1 = synth1;
     _synth2 = synth2;
     _drums = drums;
+    _delay = delay;
+    _compressor = compressor;
+    _reverb = reverb;
 }
 
 void IRAM_ATTR Mixer::mix() {
@@ -32,11 +35,11 @@ void IRAM_ATTR Mixer::mix() {
 
         dly_l = dly_k1 * synth1_out_l + dly_k2 * synth2_out_l + dly_k3 * drums_out_l; // delay bus
         dly_r = dly_k1 * synth1_out_r + dly_k2 * synth2_out_r + dly_k3 * drums_out_r;
-        Delay.Process( &dly_l, &dly_r );
+        _delay->Process( &dly_l, &dly_r );
     #ifndef NO_PSRAM
         rvb_l = rvb_k1 * synth1_out_l + rvb_k2 * synth2_out_l + rvb_k3 * drums_out_l; // reverb bus
         rvb_r = rvb_k1 * synth1_out_r + rvb_k2 * synth2_out_r + rvb_k3 * drums_out_r;
-        Reverb.Process( &rvb_l, &rvb_r );
+        _reverb->Process( &rvb_l, &rvb_r );
 
         mix_buf_l[current_out_buf][i] = (synth1_out_l + synth2_out_l + drums_out_l + dly_l + rvb_l);
         mix_buf_r[current_out_buf][i] = (synth1_out_r + synth2_out_r + drums_out_r + dly_r + rvb_r);
@@ -45,13 +48,13 @@ void IRAM_ATTR Mixer::mix() {
         mix_buf_r[current_out_buf][i] = (synth1_out_r + synth2_out_r + drums_out_r + dly_r);
     #endif
         mono_mix = 0.5f * (mix_buf_l[current_out_buf][i] + mix_buf_r[current_out_buf][i]);
-    //    Comp.Process(mono_mix);     // calculate gain based on a mono mix
+    //    _compressor.Process(mono_mix);     // calculate gain based on a mono mix
 
-        Comp.Process(drums_out_l*0.25f);  // calc compressor gain, side-chain driven by drums
+        _compressor->Process(drums_out_l*0.25f);  // calc compressor gain, side-chain driven by drums
 
 
-        mix_buf_l[current_out_buf][i] = (Comp.Apply( 0.25f * mix_buf_l[current_out_buf][i]));
-        mix_buf_r[current_out_buf][i] = (Comp.Apply( 0.25f * mix_buf_r[current_out_buf][i]));
+        mix_buf_l[current_out_buf][i] = (_compressor->Apply( 0.25f * mix_buf_l[current_out_buf][i]));
+        mix_buf_r[current_out_buf][i] = (_compressor->Apply( 0.25f * mix_buf_r[current_out_buf][i]));
 
         
     #ifdef DEBUG_MASTER_OUT
