@@ -104,15 +104,17 @@ Sampler Drums( DEFAULT_DRUMKIT ); // argument: starting drumset [0 .. total-1]
 
 // Global effects
 FxDelay Delay;
+Compressor Comp;
 #ifndef NO_PSRAM
 FxReverb Reverb;
-#else
-FxReverb Reverb = nullptr;
 #endif
-Compressor Comp;
 
 // Mixer
+#ifndef NO_PSRAM
 Mixer mixer(&Synth1, &Synth2, &Drums, &Delay, &Comp, &Reverb);
+#else
+Mixer mixer(&Synth1, &Synth2, &Drums, &Delay, &Comp);
+#endif
 
 hw_timer_t * timer1 = NULL;            // Timer variables
 hw_timer_t * timer2 = NULL;            // Timer variables

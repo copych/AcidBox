@@ -1,11 +1,14 @@
 #include "mixer.h"
 
-Mixer::Mixer(SynthVoice *synth1, SynthVoice *synth2, Sampler *drums, FxDelay *delay, Compressor *compressor, FxReverb *reverb) {
+Mixer::Mixer(SynthVoice *synth1, SynthVoice *synth2, Sampler *drums, FxDelay *delay, Compressor *compressor) {
     _synth1 = synth1;
     _synth2 = synth2;
     _drums = drums;
     _delay = delay;
     _compressor = compressor;
+}
+
+Mixer::Mixer(SynthVoice *synth1, SynthVoice *synth2, Sampler *drums, FxDelay *delay, Compressor *compressor, FxReverb *reverb) : Mixer(synth1, synth2, drums, delay, compressor) {
     _reverb = reverb;
 }
 
