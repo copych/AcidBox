@@ -74,22 +74,12 @@ static  float     param[POT_NUM];
 // Audio buffers of all kinds
 volatile int current_gen_buf = 0; // set of buffers for generation
 volatile int current_out_buf = 1 - 0; // set of buffers for output
-// static float DRAM_ATTR WORD_ALIGNED_ATTR  synth1_buf[2][DMA_BUF_LEN];    // synth1 mono
-// static float DRAM_ATTR WORD_ALIGNED_ATTR  synth2_buf[2][DMA_BUF_LEN];    // synth2 mono
-// static float DRAM_ATTR WORD_ALIGNED_ATTR  drums_buf_l[2][DMA_BUF_LEN];   // drums L
-// static float DRAM_ATTR WORD_ALIGNED_ATTR  drums_buf_r[2][DMA_BUF_LEN];   // drums R
-// static float DRAM_ATTR WORD_ALIGNED_ATTR  mix_buf_l[2][DMA_BUF_LEN];     // mix L channel
-// static float DRAM_ATTR WORD_ALIGNED_ATTR  mix_buf_r[2][DMA_BUF_LEN];     // mix R channel
+
 static union {                              // a dirty trick, instead of true converting
   int16_t WORD_ALIGNED_ATTR _signed[DMA_BUF_LEN * 2];
   uint16_t WORD_ALIGNED_ATTR _unsigned[DMA_BUF_LEN * 2];
 } out_buf[2];                               // i2s L+R output buffer
 size_t bytes_written;                       // i2s result
-
-#ifndef NO_PSRAM
-volatile float rvb_k1, rvb_k2, rvb_k3;
-#endif
-volatile float dly_k1, dly_k2, dly_k3;
 
 // tasks for Core0 and Core1
 TaskHandle_t SynthTask1;
@@ -102,15 +92,19 @@ SynthVoice Synth2(1);
 // 808-like drums
 Sampler Drums( DEFAULT_DRUMKIT ); // argument: starting drumset [0 .. total-1]
 
-// Mixer
-Mixer mixer(&Synth1, &Synth2, &Drums);
-
 // Global effects
 FxDelay Delay;
+Compressor Comp;
 #ifndef NO_PSRAM
 FxReverb Reverb;
 #endif
-Compressor Comp;
+
+// Mixer
+#ifndef NO_PSRAM
+Mixer mixer(&Synth1, &Synth2, &Drums, &Delay, &Comp, &Reverb);
+#else
+Mixer mixer(&Synth1, &Synth2, &Drums, &Delay, &Comp);
+#endif
 
 hw_timer_t * timer1 = NULL;            // Timer variables
 hw_timer_t * timer2 = NULL;            // Timer variables
@@ -281,14 +275,8 @@ delay(200);
 
   // silence while we haven't loaded anything reasonable
   for (int i = 0; i < DMA_BUF_LEN; i++) {
-    // drums_buf_l[current_gen_buf][i] = 0.0f ;
-    // drums_buf_r[current_gen_buf][i] = 0.0f ;
-    // synth1_buf[current_gen_buf][i] = 0.0f ;
-    // synth2_buf[current_gen_buf][i] = 0.0f ;
-    out_buf[current_out_buf]._signed[i * 2] = 0 ;
-    out_buf[current_out_buf]._signed[i * 2 + 1] = 0 ;
-    // // mix_buf_l[current_out_buf][i] = 0.0f;
-    // // mix_buf_r[current_out_buf][i] = 0.0f;
+    out_buf[current_out_buf]._signed[i * 2] = 0;
+    out_buf[current_out_buf]._signed[i * 2 + 1] = 0;
   }
 
   i2sInit();
