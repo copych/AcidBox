@@ -31,10 +31,10 @@ class FxDelay {
 		FxDelay() {}
 		void Init(void);
 		void Reset(void);
-		inline void Process(float *signal_l, float *signal_r) __attribute__((always_inline));
-		inline void SetFeedback(float value) __attribute__((always_inline));
-		inline void SetLevel( float value ) __attribute__((always_inline));
-		inline void SetLength( float value ) __attribute__((always_inline));
+		void Process(float *signal_l, float *signal_r) __attribute__((always_inline));
+		void SetFeedback(float value) __attribute__((always_inline));
+		void SetLevel( float value ) __attribute__((always_inline));
+		void SetLength( float value ) __attribute__((always_inline));
 
 	private:
 		//  module variables
