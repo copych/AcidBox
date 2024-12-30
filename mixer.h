@@ -21,5 +21,9 @@ class Mixer {
     FxDelay *_delay;
     Compressor *_compressor;
     FxReverb *_reverb;
+    volatile float rvb_k1, rvb_k2, rvb_k3;
+    volatile float dly_k1, dly_k2, dly_k3;
+
+
 };
 #endif
