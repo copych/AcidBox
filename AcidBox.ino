@@ -275,14 +275,8 @@ delay(200);
 
   // silence while we haven't loaded anything reasonable
   for (int i = 0; i < DMA_BUF_LEN; i++) {
-    // drums_buf_l[current_gen_buf][i] = 0.0f ;
-    // drums_buf_r[current_gen_buf][i] = 0.0f ;
-    // synth1_buf[current_gen_buf][i] = 0.0f ;
-    // synth2_buf[current_gen_buf][i] = 0.0f ;
-    out_buf[current_out_buf]._signed[i * 2] = 0 ;
-    out_buf[current_out_buf]._signed[i * 2 + 1] = 0 ;
-    // // mix_buf_l[current_out_buf][i] = 0.0f;
-    // // mix_buf_r[current_out_buf][i] = 0.0f;
+    out_buf[current_out_buf]._signed[i * 2] = 0;
+    out_buf[current_out_buf]._signed[i * 2 + 1] = 0;
   }
 
   i2sInit();
