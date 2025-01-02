@@ -5,7 +5,7 @@ void Wavefolder::Init() {
     SetOffset(0.0f);
 }
 
-inline void Wavefolder::SetDrive(float gain) { 
+void Wavefolder::SetDrive(float gain) { 
   gain_ = 10.0f * gain + 1.0f;
   compens_ = General::fast_shape(0.09f - 3.05f * gain) * 0.77f + 1.0f ;
 }
