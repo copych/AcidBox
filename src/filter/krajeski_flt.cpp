@@ -21,17 +21,3 @@ Source: http://song-swap.com/MUMT618/aaron/Presentation/demo.html
 Modified by Copych 2023: added fclamp because sometimes nan, -inf, +inf appears in state[] of Process()
 
 */
-
-  float KrajeskiMoog::Process(float sample) 
-  {
-      state[0] = General::fast_shape(drive * (sample - 4.0f * gRes * (state[4] - gComp * sample)));
-      
-      for(int i = 0; i < 4; i++)
-      {
-        state[i+1] = General::fclamp(g * ( 0.2307692f * state[i] + 0.7692307f * delay[i] - state[i + 1]) + state[i + 1], -1e30, 1e30 );
-        delay[i] = state[i];
-
-      }
-      return state[4];
-  }
-  

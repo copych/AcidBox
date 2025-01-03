@@ -64,16 +64,6 @@ void Adsr::end(eEnd_t hardness) {
   }
 }
 
-
-inline Adsr::eSegment_t Adsr::getCurrentSegment() {
-  Adsr::eSegment_t ret = mode_;
-  if (gate_ && (x_ == sus_level_)) {
-    ret = ADSR_SEG_SUSTAIN;
-  }
-  return ret;
-}
-
-
 void Adsr::setTime(int seg, float time) {
   switch (seg) {
     case ADSR_SEG_ATTACK:

@@ -1,34 +1,5 @@
 #include "moogladder.h"
 
-inline float MoogLadder::my_tanh(float x)
-{
-  //return tanh(x);
-    float sign = 1.0f;
-    float poly;
-    if (x<0.0f) {
-        sign=-1.0f;
-        x= -x;
-    }
-    if (x>=4.95f) {
-      return sign;
-    }
-    if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders    
-    return  sign * Tables::lookupTable(Tables::shaper_tbl,(x*SHAPER_LOOKUP_COEF)); // lookup table, 5 is max argument value 
- //  poly = (2.12-2.88*x+4.0*x*x);
- //  return sign * x * (poly / (poly * x + 1.0f)); // very good approximation found here https://www.musicdsp.org/en/latest/Other/178-reasonably-accurate-fastish-tanh-approximation.html
-                                                    // but it uses float division which is not that fast on esp32
-  //  return sign * tanh(x);  // this version uses native tanh() which makes it slow in some cases
-}
-
-/*
-inline float MoogLadder::my_tanh(float x)
-  {
-    float a = fabs(2*x);
-    float b = 24+a*(12+a*(6+a));
-    return 2*(x*b)/(a*b+48);
-  }
-*/
-
 void MoogLadder::Init(float sample_rate) {
     sample_rate_  = sample_rate;
     one_sr_       = 1.0 / sample_rate;

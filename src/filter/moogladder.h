@@ -50,5 +50,21 @@ class MoogLadder
         sample_rate_, acr, old_acr_, old_tune_, drive_, compens_;
     inline float my_tanh(float x);
 };
-//#endif
+
+inline float MoogLadder::my_tanh(float x)
+{
+  //return tanh(x);
+    float sign = 1.0f;
+    float poly;
+    if (x<0.0f) {
+        sign=-1.0f;
+        x= -x;
+    }
+    if (x>=4.95f) {
+      return sign;
+    }
+    if (x<=0.4f) return float(x*sign) * 0.9498724f; // smooth region borders    
+    return  sign * Tables::lookupTable(Tables::shaper_tbl,(x*SHAPER_LOOKUP_COEF)); // lookup table, 5 is max argument value 
+}
+
 #endif

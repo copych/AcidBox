@@ -45,13 +45,6 @@ void AD_env::end(bool hard) {
   }
 }
 
-
-inline AD_env::eSegment_t AD_env::getCurrentSegment() {
-  AD_env::eSegment_t ret = mode_;
-  return ret;
-}
-
-
 void AD_env::setTime(int seg, float time) {
   switch (seg) {
     case AD_SEG_ATTACK:
@@ -78,7 +71,6 @@ void AD_env::setAttackTime(float timeInS) {
   }
 }
 
-
 void AD_env::setDecayTime(float timeInS) {  
   if (timeInS != decayTime_) {
     decayTime_ = timeInS;
@@ -88,7 +80,6 @@ void AD_env::setDecayTime(float timeInS) {
       decayD0_ = 1.f;  // instant change
   }
 }
-
 
 void AD_env::setTimeMs(int seg, float timeInMs) {setTime(seg, 0.001f*timeInMs); }
 

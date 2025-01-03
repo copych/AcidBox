@@ -81,23 +81,22 @@ class Adsr
     /** Sustain level
         \param sus_level - sets sustain level, 0...1.0
     */
-    inline void setSustainLevel(float sus_level)
-    {
-        sus_level_ = sus_level;
-        calcLogRanges();
-    }
+    inline void setSustainLevel(float sus_level);
+
     /** get the current envelope segment
         \return the segment of the envelope that the phase is currently located in.
     */
-    inline eSegment_t getCurrentSegment() ;
+    inline eSegment_t getCurrentSegment();
+    
     /** Tells whether envelope is active
         \return true if the envelope is currently in any stage apart from idle.
     */
-    inline bool isRunning() const { return mode_ != ADSR_SEG_IDLE; }
+    inline bool isRunning() const;
+
     /** Tells whether envelope is active
         \return true if the envelope is currently in any stage apart from idle.
     */
-    inline bool isIdle() const { return mode_ == ADSR_SEG_IDLE; }
+    inline bool isIdle() const;
 
   private:
     float   sus_level_{0.f};
@@ -124,5 +123,26 @@ class Adsr
     volatile eSegment_t mode_{ADSR_SEG_IDLE};
     bool    gate_{false};
 };
+
+inline void Adsr::setSustainLevel(float sus_level) {
+    sus_level_ = sus_level;
+    calcLogRanges();
+}
+
+inline bool Adsr::isRunning() const { 
+  return mode_ != ADSR_SEG_IDLE; 
+}
+
+inline bool Adsr::isIdle() const { 
+  return mode_ == ADSR_SEG_IDLE; 
+}
+
+inline Adsr::eSegment_t Adsr::getCurrentSegment() {
+  Adsr::eSegment_t ret = mode_;
+  if (gate_ && (x_ == sus_level_)) {
+    ret = ADSR_SEG_SUSTAIN;
+  }
+  return ret;
+}
 
 #endif

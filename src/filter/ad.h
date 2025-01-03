@@ -39,7 +39,7 @@ enum eSegment_t { AD_SEG_IDLE, AD_SEG_ATTACK, AD_SEG_DECAY };
      \function setPeakLevel sets the peak level of the envelope, it's the target level for the attack segment.
        \param peak set to 1.0 by default, in most cases you don't have to change it
     */
-    inline void setPeakLevel(float peak) { attackTarget_ = peak; }
+    inline void setPeakLevel(float peak);
 	
     /** Sets time
         Set time per segment in seconds
@@ -56,15 +56,17 @@ enum eSegment_t { AD_SEG_IDLE, AD_SEG_ATTACK, AD_SEG_DECAY };
     /** get the current envelope segment
         \return the segment of the envelope that the phase is currently located in.
     */
-    inline eSegment_t getCurrentSegment() ;
+    inline eSegment_t getCurrentSegment();
+
     /** Tells whether envelope is active
         \return true if the envelope is currently in any stage apart from idle.
     */
-    inline bool isRunning() const { return mode_ != AD_SEG_IDLE; }
+    inline bool isRunning() const;
+
     /** Tells whether envelope is active
         \return true if the envelope is currently in any stage apart from idle.
     */
-    inline bool isIdle() const { return mode_ == AD_SEG_IDLE; }
+    inline bool isIdle() const;
 
   private:
     float   sus_level_{0.f};
@@ -83,3 +85,20 @@ enum eSegment_t { AD_SEG_IDLE, AD_SEG_ATTACK, AD_SEG_DECAY };
 };
 
 #endif
+
+inline void AD_env::setPeakLevel(float peak) { 
+  attackTarget_ = peak; 
+}
+
+inline AD_env::eSegment_t AD_env::getCurrentSegment() {
+  AD_env::eSegment_t ret = mode_;
+  return ret;
+}
+
+inline bool AD_env::isRunning() const { 
+  return mode_ != AD_SEG_IDLE; 
+}
+
+inline bool AD_env::isIdle() const { 
+  return mode_ == AD_SEG_IDLE; 
+}
