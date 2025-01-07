@@ -58,31 +58,28 @@ public:
   float WORD_ALIGNED_ATTR  synth_buf[2][DMA_BUF_LEN]  = {0.0f};
 
   // inline //
-  void on_midi_noteON(uint8_t note, uint8_t velocity);
-  void on_midi_noteOFF(uint8_t note, uint8_t velocity);
-  void StopSound();
-  void SetSlideOn()                {_slide=true;};
-  void SetSlideOff()               {_slide=false;};
-  void SetVolume(float val)      {_volume = val;};
-  void SetPan(float pan)         {_pan = pan;};
-  void SetDelaySend(float lvl)   {_sendDelay = lvl;};
-  void SetReverbSend(float lvl)  {_sendReverb = lvl;};
-  void SetDistortionLevel(float lvl) {_gain = lvl; Distortion.SetDrive(_gain ); };
-  void SetOverdriveLevel(float lvl) {_drive = lvl;  Drive.SetDrive(_drive ); };
-  void SetCutoff(float lvl);
-  void SetReso(float lvl)        {_reso = constrain(lvl, 0.0f, 1.0f); Filter.SetResonance(_reso); };
-  void SetEnvModLevel(float lvl);
-  void SetAccentLevel(float lvl) {_accentLevel = lvl;};
-  void SetTempo(float tempo)     {_tempo = tempo;};
-  void SetIndex(uint8_t ind)       {_index = ind;};
-  void ParseCC(uint8_t cc_number, uint8_t cc_value);
-  void PitchBend(int number);
-  void allNotesOff()               {mva1.n=0;  AmpEnv.end(Adsr::END_FAST); FltEnv.end(false);};
-  float GetAmpEnv();                // call once per sample
-  float GetFilterEnv();             // call once per sample
-  float GetPan()                 {return _pan;}
-  float GetVolume()              {return _volume;}
-  float getSample();
+  inline void on_midi_noteON(uint8_t note, uint8_t velocity);
+  inline void on_midi_noteOFF(uint8_t note, uint8_t velocity);
+  inline void SetSlideOn();
+  inline void SetSlideOff();
+  inline void SetVolume(float val);
+  inline void SetPan(float pan);
+  inline void SetDelaySend(float lvl);
+  inline void SetReverbSend(float lvl);
+  inline void SetDistortionLevel(float lvl);
+  inline void SetOverdriveLevel(float lvl);
+  inline void SetCutoff(float lvl);
+  inline void SetReso(float lvl);
+  inline void SetEnvModLevel(float lvl);
+  inline void SetAccentLevel(float lvl);
+  inline void SetTempo(float tempo);
+  inline void SetIndex(uint8_t ind);
+  inline void ParseCC(uint8_t cc_number, uint8_t cc_value);
+  inline void PitchBend(int number) ;
+  inline void allNotesOff();
+  inline float GetPan();
+  inline float GetVolume();
+  inline float getSample();
 
 // inline //
 
@@ -198,5 +195,300 @@ private:
   
   Overdrive         Drive;
 };
+
+// The following code initially written by Anton Savov,
+// is taken from http://antonsavov.net/cms/projects/303andmidi.html
+// Monophonic Voice Allocator (with Accent, suitable for the 303)
+// "Newest" note-priority rule
+// Modified version, allows multiple Notes with the same pitch
+
+inline void SynthVoice::on_midi_noteON(uint8_t note, uint8_t velocity)
+{
+  mva_note_on(&mva1, note, (velocity >= 80));
+
+  bool slide = (mva1.n > 1);
+  bool accent = (mva1.accents[0]);
+  note = mva1.notes[0] ;
+  note_on(note, slide, accent);
+}
+
+inline void SynthVoice::on_midi_noteOFF(uint8_t note, uint8_t velocity)
+{
+  if (mva1.n == 0) {
+    return;
+  }
+  uint8_t tmp_note = mva1.notes[0];
+  uint8_t tmp_accent = mva1.accents[0];
+  mva_note_off(&mva1, note);
+
+  if (mva1.n > 0)
+  {
+    if (mva1.notes[0] != tmp_note)
+    {
+      bool accent = (mva1.accents[0] );
+      bool slide = 1;
+      note = mva1.notes[0];
+
+      note_on(note, slide, accent);
+    }
+  }
+  else {
+    note_off();
+  }
+}
+
+inline void SynthVoice::SetSlideOn() {
+  _slide=true;
+};
+
+inline void SynthVoice::SetSlideOff() {
+  _slide=false;
+};
+
+inline void SynthVoice::SetVolume(float val) {
+  _volume = val;
+};
+
+inline void SynthVoice::SetPan(float pan) {
+  _pan = pan;
+};
+
+inline void SynthVoice::SetDelaySend(float lvl) {
+  _sendDelay = lvl;
+};
+
+inline void SynthVoice::SetReverbSend(float lvl)  {
+  _sendReverb = lvl;
+};
+
+inline void SynthVoice::SetDistortionLevel(float lvl) {
+  _gain = lvl;
+  Distortion.SetDrive(_gain );
+};
+
+inline void SynthVoice::SetOverdriveLevel(float lvl) {
+  _drive = lvl;  
+  Drive.SetDrive(_drive ); 
+};
+
+inline void SynthVoice::SetCutoff(float normalized_val)  {
+  _cutoff = normalized_val;
+  _filter_freq = General::knobMap( normalized_val, MIN_CUTOFF_FREQ, MAX_CUTOFF_FREQ);
+  _filter_freq_mod = General::knobMap( normalized_val, MIN_CUTOFF_FREQ_MOD, MAX_CUTOFF_FREQ_MOD);
+  _filter_freq_cut = General::knobMap( _envMod, _filter_freq, _filter_freq_mod);
+#ifdef DEBUG_SYNTH
+  DEBF("Synth %d cutoff=%0.3f freq=%0.3f\r\n" , _index, _cutoff, _filter_freq);
+#endif
+}
+
+inline void SynthVoice::SetReso(float lvl) {
+    _reso = constrain(lvl, 0.0f, 1.0f);
+    Filter.SetResonance(_reso); 
+};
+
+inline void SynthVoice::SetEnvModLevel(float normalized_val) {
+  _envMod = normalized_val;
+  _filter_freq_cut = General::knobMap( normalized_val, _filter_freq, _filter_freq_mod);
+};
+
+inline void SynthVoice::SetAccentLevel(float lvl) {
+  _accentLevel = lvl;
+};
+
+inline void SynthVoice::SetTempo(float tempo) {
+  _tempo = tempo;
+};
+
+inline void SynthVoice::SetIndex(uint8_t ind) {
+  _index = ind;
+};
+
+inline void SynthVoice::ParseCC(uint8_t cc_number , uint8_t cc_value) {
+  float tmp = 0.0f;
+  switch (cc_number) {
+
+    case CC_303_PORTATIME:
+      _slideMs = (float)cc_value;
+      break;
+    case CC_303_VOLUME:
+      _volume = (float)cc_value * MIDI_NORM;
+      break;
+    case CC_303_PAN:
+      _pan = (float)cc_value * MIDI_NORM;
+      break;
+    case CC_303_PORTAMENTO:
+      _portamento = (cc_value >= 64);
+      break;
+    case CC_303_WAVEFORM:
+      /*
+       // actually we can gradually switch between several waveforms, basing on the CC value, blending neighbour two waveforms
+        _waveBase = (uint8_t)(((float)cc_value * 2.99999f * MIDI_NORM)) ; // 0, 1, 2 range
+        DEBF("base %d\r\n", _waveBase );
+        _waveMix = ((float)cc_value - (float)(_waveBase*42.33333f)) * MIDI_NORM * 3.0f;
+        DEBF("mix %0.5f\r\n", _waveMix );*/
+      _waveMix = (float)cc_value * MIDI_NORM;
+      break;
+    case CC_303_RESO:
+      _reso = cc_value * MIDI_NORM ;
+      _flt_compens = General::one_div( Tables::bilinearLookup(Tables::norm1_tbl, _cutoff * 127.0f, cc_value ));
+      SetReso(_reso);
+      break;
+    case CC_303_DECAY: // Env release
+      tmp = (float)cc_value * MIDI_NORM;
+      _filterDecayMs = General::knobMap(tmp, 200.0f, 2000.0f);
+      //_ampDecayMs = General::knobMap(tmp, 15.0f, 7500.0f);
+      break;
+    case CC_303_ATTACK: // Env attack
+      tmp = (float)cc_value * MIDI_NORM;
+      _filterAttackMs = General::knobMap(tmp, 3.0f, 100.0f);
+      _ampAttackMs =  General::knobMap(tmp, 0.1f, 500.0f);
+      break;
+    case CC_303_CUTOFF:
+      _cutoff = (float)cc_value * MIDI_NORM;
+      _flt_compens = General::one_div( Tables::bilinearLookup(Tables::norm1_tbl, cc_value, _reso * 127.0f));
+      SetCutoff(_cutoff);
+      break;
+    case CC_303_DELAY_SEND:
+      _sendDelay = (float)cc_value * MIDI_NORM;
+      break;
+    case CC_303_REVERB_SEND:
+      _sendReverb = (float)cc_value * MIDI_NORM;
+      break;
+    case CC_303_ENVMOD_LVL:
+      SetEnvModLevel ( (float)cc_value * MIDI_NORM ) ;
+      break;
+    case CC_303_ACCENT_LVL:
+      _accentLevel = (float)cc_value * MIDI_NORM;
+      break;
+    case CC_303_DISTORTION:
+      _gain = (float)cc_value * MIDI_NORM ;
+      _fx_compens = General::one_div( Tables::bilinearLookup(Tables::norm2_tbl, _drive * 127.0f,  cc_value));
+      SetDistortionLevel(_gain);
+      break;
+    case CC_303_OVERDRIVE:
+      _drive = (float)cc_value * MIDI_NORM ;
+      _fx_compens = General::one_div( Tables::bilinearLookup(Tables::norm2_tbl, cc_value, _gain * 127.0f));
+      SetOverdriveLevel(_drive);
+      break;
+    case CC_303_SATURATOR:
+      _saturator = (float)cc_value * MIDI_NORM;
+      Filter.SetDrive(_saturator);
+      break;
+    case CC_303_TUNING:
+      _tuning = tuning[cc_value];
+      _effectiveStep = _targetStep * _tuning * _pitchbend;
+      break;
+  }
+}
+
+inline void SynthVoice::PitchBend(int number) {
+  //
+  float semi = ((((float)number + 8191.5f) * (float)TWO_DIV_16383 ) - 1.0f ) * 12.0f;
+  _pitchbend = powf(1.059463f, semi);
+  _effectiveStep = _targetStep * _tuning * _pitchbend;
+}
+
+inline void SynthVoice::allNotesOff() {
+  mva1.n=0;
+  AmpEnv.end(Adsr::END_FAST);
+  FltEnv.end(false);
+};
+
+inline float SynthVoice::GetPan() {
+  return _pan;
+}
+
+inline float SynthVoice::GetVolume() {
+  return _volume;
+}
+
+inline float SynthVoice::getSample() {
+  
+    float samp = 0.0f, filtEnv = 0.0f, ampEnv = 0.0f, final_cut = 0.0f;
+    filtEnv = FltEnv.process();
+    
+    ampEnv = AmpEnv.process() * _k_acc;
+    
+    if (AmpEnv.isRunning()) {
+      // samp = (float)((1.0f - _waveMix) *Tables::lookupTable (*(tables[_waveBase]), _phaze)) + (float)(_waveMix * Tables::lookupTable(*(tables[_waveBase+1]), _phaze)) ; // lookup and blend waveforms
+       samp = (float)((1.0f - _waveMix) * Tables::lookupTable(Tables::exp_square_tbl, _phaze)) + (float)(_waveMix * Tables::lookupTable(Tables::saw_tbl, _phaze)) ; // lookup and blend waveforms
+      // samp = _phaze < HALF_TABLE ? 2 * _waveMix * _phaze * DIV_TABLE_SIZE - 1.0f   :    2 * _waveMix * (_phaze * DIV_TABLE_SIZE - 1.0f) + 1.0f; 
+    } else {
+      samp = 0.0f;
+    }
+    final_cut = (float)_filter_freq_cut * (0.8f + (_envMod+0.1f) * (3*filtEnv - 0.3f) * (_accentation + 0.2f) );
+    //final_cut = (float)_filter_freq * ( (float)_envMod * ((float)filtEnv - 0.2f) + 1.3f * (float)_accentation + 1.0f );
+//    final_cut = filtDeclicker.getSample( final_cut );
+    Filter.SetCutoff( final_cut );    
+
+    
+     decimator++;
+     if (decimator % 128 == 0 && _index == 0) {
+      // TODO, check what this is, this sends load of data when turning debug on
+      //DEBF("%f\r\n", final_cut);
+     }
+    
+    samp = highpass1.getSample(samp);         // pre-filter highpass, following open303
+    
+    samp = allpass.getSample(samp);           // phase correction, following open303
+   
+    samp = Filter.Process(samp);              // main filter
+    
+    samp = highpass2.getSample(samp);         // post-filtering, following open303
+    
+    samp = notch.getSample(samp);             // post-filtering, following open303
+    
+    samp = Drive.Process(samp);               // overdrive
+    
+    samp = Distortion.Process(samp);          // distortion
+    
+    samp *= ampEnv;                           // amp envelope
+
+
+    _compens = _volume * 8.0f * _fx_compens ; // * _flt_compens;
+
+    _compens = ampDeclicker.getSample(_compens);
+   
+    samp *=  _compens;
+
+    if ((_slide || _portamento) && _deltaStep != 0.0f) {     // portamento / slide processing
+      if (fabs(_effectiveStep - _currentStep) >= fabs(_deltaStep)) {
+        _currentStep += _deltaStep;
+      } else {
+        _currentStep = _effectiveStep;
+        _deltaStep = 0.0f;
+      }
+    }
+
+    // Increment and wrap phase
+    _phaze += _currentStep;
+    /* 
+     *  // this is more accurate classical approach, but it gives quite early audible aliasing when not using band-limited samples
+    if ( _phaze >= TABLE_SIZE) {
+       _phaze -= TABLE_SIZE ;
+    */
+
+
+    // this is less accurate in terms of pitch, especially at higher notes, but at this price you have quite no aliasing, as phase reset produces no moire
+    if ( _phaze >= TABLE_SIZE) {
+      if (_wave_cnt == 3) { // we drop the phase every 4 periods
+        _wave_cnt = 0; 
+        _phaze = 0.0f; // we reset the phase, so aliasing will be present in the form of lower octave tones which is less annoying
+      } else {
+        _wave_cnt++;
+        _phaze -= TABLE_SIZE ;
+      } 
+    }
+    
+    /*
+    // this is less accurate in terms of pitch, especially at higher notes, but at this price you have quite no aliasing, as phase reset produces no moire
+    if ( _phaze >= TABLE_SIZE) {
+      _phaze = 2.0f * (float)( (int)(0.5f * (_phaze - (float)TABLE_SIZE)) ); 
+      DEBF("%0.5f\r\n", _phaze);
+    }*/
+    
+    //synth_buf[_index][i] = General::fast_shape(samp); // mono limitter
+    return  samp;  
+}
 
 #endif
