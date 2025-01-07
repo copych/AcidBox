@@ -14,22 +14,17 @@ class Sampler {
     float WORD_ALIGNED_ATTR  drums_buf_l[2][DMA_BUF_LEN]  = {0.0f};
     float WORD_ALIGNED_ATTR  drums_buf_r[2][DMA_BUF_LEN]  = {0.0f};
     void ScanContents(fs::FS &fs, const char *dirname, uint8_t levels);
-    void SelectNote( uint8_t note ){
-      if(sampleInfoCount>0) selectedNote = note % repeat; else  selectedNote = note;
-#ifdef DEBUG_SAMPLER
-DEBF("Select note: %d\r\n", note);
-#endif
-    };
 
     // Inline
-    void SetNotePan_Midi( uint8_t data1);
-    void SetNoteOffset_Midi( uint8_t data1 );
-    void SetNoteDecay_Midi( uint8_t data1); 
-    void SetNoteVolume_Midi( uint8_t data1);
-    void SetSoundPitch_Midi( uint8_t data1);
-    void SetSoundPitch(float value);   
-    void SetDelaySend(uint8_t lvl)   {_sendDelay = (float)lvl;};
-    void SetReverbSend(uint8_t lvl)  {_sendReverb = (float)lvl;};
+    inline void SelectNote(uint8_t note);
+    inline void SetNotePan_Midi( uint8_t data1);
+    inline void SetNoteOffset_Midi(uint8_t data1);
+    inline void SetNoteDecay_Midi(uint8_t data1); 
+    inline void SetNoteVolume_Midi(uint8_t data1);
+    inline void SetSoundPitch_Midi(uint8_t data1);
+    inline void SetSoundPitch(float value);   
+    inline void SetDelaySend(uint8_t lvl);
+    inline void SetReverbSend(uint8_t lvl);
     // Inline
     
     
@@ -145,5 +140,91 @@ DEBF("Select note: %d\r\n", note);
 
     FxFilterCrusher Effects;
 };
+
+inline void Sampler::SelectNote( uint8_t note ) {
+      if(sampleInfoCount>0) selectedNote = note % repeat; else  selectedNote = note;
+#ifdef DEBUG_SAMPLER
+DEBF("Select note: %d\r\n", note);
+#endif
+};
+
+inline void Sampler::SetNotePan_Midi( uint8_t data1) {
+  /*
+    samplePlayer[ selectedNote ].pan_midi = data1;
+    float value = MIDI_NORM * (float)data1;
+    samplePlayer[ selectedNote ].pan =  value;
+    #ifdef DEBUG_SAMPLER
+    DEBF("Sampler - Note[%d].pan: %0.2f\n",  selectedNote, samplePlayer[ selectedNote ].pan );
+    #endif
+  */
+  pan_midi[ selectedNote + 1 ] = data1;
+#ifdef DEBUG_MIDI
+  DEBF("Sampler - Note[%d].midi_pan: %d\n",  selectedNote, data1 );
+#endif
+}
+
+inline void Sampler::SetNoteOffset_Midi( uint8_t data1) {
+  /*
+    samplePlayer[ selectedNote ].offset_midi = data1;
+    #ifdef DEBUG_SAMPLER
+    DEBF("Sampler - Note[%d].offset: %0.2f\n",  selectedNote, samplePlayer[ selectedNote ].offset_midi);
+    #endif
+  */
+
+#ifdef DEBUG_MIDI
+  DEBF("Sampler - Note[%d].offset_midi: %d\n",  selectedNote, data1);
+#endif
+  offset_midi[ selectedNote + 1 ] = data1;
+}
+
+inline void Sampler::SetNoteDecay_Midi( uint8_t data1) {
+  /*
+    samplePlayer[ selectedNote ].decay_midi = data1;
+    float value = MIDI_NORM * (float)data1;
+    // samplePlayer[ selectedNote ].decay = 1.0f - (0.000005f * pow( 5000.0f, 1.0f - value) );
+    samplePlayer[ selectedNote ].decay = 1.0f -  value * 0.05 ;
+    #ifdef DEBUG_SAMPLER
+    DEBF("Sampler - Note[%d].decay: %0.2f\n",  selectedNote, samplePlayer[ selectedNote ].decay);
+    #endif
+  */
+
+#ifdef DEBUG_MIDI
+  DEBF("Sampler - Note[%d].decay_midi: %d\n",  selectedNote, data1);
+#endif
+  decay_midi[ selectedNote + 1 ] = data1;
+}
+
+inline void Sampler::SetNoteVolume_Midi(uint8_t data1) {
+  volume_midi[ selectedNote + 1 ] = data1;
+#ifdef DEBUG_MIDI
+  DEBF("Sampler - Note[%d].midi_vol: %d\n",  selectedNote, data1 );
+#endif
+}
+
+inline void Sampler::SetSoundPitch_Midi( uint8_t data1) {
+  /*
+    samplePlayer[ selectedNote ].pitch_midi = data1;
+    SetSoundPitch( MIDI_NORM * data1 );
+  */
+#ifdef DEBUG_MIDI
+  DEBF("Sampler - Note[%d].pitch_midi: %d\n",  selectedNote, data1);
+#endif
+  pitch_midi[ selectedNote + 1 ] = data1;
+}
+
+inline void Sampler::SetSoundPitch(float value) {
+  samplePlayer[ selectedNote ].pitch = pow( 2.0f, 4.0f * ( value - 0.5f ) );
+#ifdef DEBUG_MIDI
+  DEBF("Sampler - Note[%d] pitch: %0.3f\n",  selectedNote, samplePlayer[ selectedNote ].pitch );
+#endif
+}
+
+inline void Sampler::SetDelaySend(uint8_t lvl) {
+  _sendDelay = (float)lvl;
+};
+
+inline void Sampler::SetReverbSend(uint8_t lvl) {
+  _sendReverb = (float)lvl;
+}
 
 #endif

@@ -50,7 +50,7 @@ class FxReverb {
   public:
     FxReverb() {}
     // Included implementation in header to make inlining possible
-    void Process(float *signal_l, float *signal_r) __attribute__((always_inline)) {
+    inline void Process(float *signal_l, float *signal_r) __attribute__((always_inline)) {
       float inSample;
 
       // create mono sample 
@@ -70,7 +70,7 @@ class FxReverb {
       *signal_r += newsample;        
     }
 
-  void Init() __attribute__((always_inline)) { 
+  inline void Init() __attribute__((always_inline)) { 
       combBuf0 = (float*)heap_caps_calloc(1, sizeof(float) * COMB_BUF_LEN_0 , MALLOC_CAP );
       if( combBuf0 == NULL){
           DEBUG("No more RAM for reverb combBuf0!");
@@ -124,7 +124,7 @@ class FxReverb {
       SetTime( 0.5f );
   }
 
-  void SetTime(float value) __attribute__((always_inline)) {
+  inline void SetTime(float value) __attribute__((always_inline)) {
       rev_time = 0.92f * value + 0.02f ;
       cf0_lim = (int)(rev_time * (float)(COMB_BUF_LEN_0));
       cf1_lim = (int)(rev_time * (float)(COMB_BUF_LEN_1));
@@ -175,7 +175,7 @@ class FxReverb {
     float ap2_g = 0.7f;
     
     // Included implementation in header to make inlining possible
-    float Do_Comb0(float inSample) __attribute__((always_inline)) {
+    inline float Do_Comb0(float inSample) __attribute__((always_inline)) {
         float readback = combBuf0[cf0_p];
         float newV = (float)readback * (float)cf0_g + (float)inSample;
         combBuf0[cf0_p] = newV;
@@ -187,7 +187,7 @@ class FxReverb {
     }
 
     // Included implementation in header to make inlining possible
-    float Do_Comb1(float inSample) __attribute__((always_inline)) {
+    inline float Do_Comb1(float inSample) __attribute__((always_inline)) {
         float readback = combBuf1[cf1_p];
         float newV = (float)readback * (float)cf1_g + (float)inSample;
         combBuf1[cf1_p] = newV;
@@ -199,7 +199,7 @@ class FxReverb {
     }
 
     // Included implementation in header to make inlining possible
-    float Do_Comb2(float inSample) __attribute__((always_inline)) {
+    inline float Do_Comb2(float inSample) __attribute__((always_inline)) {
         float readback = combBuf2[cf2_p];
         float newV = (float)readback * (float)cf2_g + (float)inSample;
         combBuf2[cf2_p] = newV;
@@ -211,7 +211,7 @@ class FxReverb {
     }
 
     // Included implementation in header to make inlining possible
-    float Do_Comb3(float inSample) __attribute__((always_inline)) {
+    inline float Do_Comb3(float inSample) __attribute__((always_inline)) {
         float readback = combBuf3[cf3_p];
         float newV = (float)readback * (float)cf3_g + (float)inSample;
         combBuf3[cf3_p] = newV;
@@ -223,7 +223,7 @@ class FxReverb {
     }
 
     // Included implementation in header to make inlining possible
-    float Do_Allpass0(float inSample) __attribute__((always_inline)) {
+    inline float Do_Allpass0(float inSample) __attribute__((always_inline)) {
         float readback = allPassBuf0[ap0_p];
         readback += (float)(-ap0_g) * (float)inSample;
         float newV = (float)readback * (float)ap0_g + (float)inSample;
@@ -236,7 +236,7 @@ class FxReverb {
     }
 
     // Included implementation in header to make inlining possible
-    float Do_Allpass1(float inSample) __attribute__((always_inline)) {
+    inline float Do_Allpass1(float inSample) __attribute__((always_inline)) {
         float readback = allPassBuf1[ap1_p];
         readback += (float)(-ap1_g) * (float)inSample;
         float newV = (float)readback * (float)ap1_g + (float)inSample;
@@ -249,7 +249,7 @@ class FxReverb {
     }
 
     // Included implementation in header to make inlining possible
-    float Do_Allpass2(float inSample) __attribute__((always_inline)) {
+    inline float Do_Allpass2(float inSample) __attribute__((always_inline)) {
         float readback = allPassBuf2[ap2_p];
         readback += (float)(-ap2_g) * (float)inSample;
         float newV = (float)readback * (float)ap2_g + (float)inSample;
