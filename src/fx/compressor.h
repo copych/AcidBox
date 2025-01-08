@@ -186,7 +186,7 @@ class Compressor
     }
 
 
-    inline float pow10f(float f)
+    inline float pow10f(float f) __attribute__((always_inline))
     {
         return expf(2.302585092994046f * f);
     }
@@ -194,7 +194,7 @@ class Compressor
     /* Original code for fastlog2f by Dr. Paul Beckmann from the ARM community forum, adapted from the CMSIS-DSP library
     About 25% performance increase over std::log10f
     */
-    inline float fastlog2f(float f)
+    inline float fastlog2f(float f) __attribute__((always_inline))
     {
         float frac;
         int   exp;
@@ -210,7 +210,7 @@ class Compressor
         return (f);
     }
     
-    inline float fastlog10f(float f)
+    inline float fastlog10f(float f) __attribute__((always_inline))
     {
         return fastlog2f(f) * 0.3010299956639812f;
     }

@@ -81,22 +81,22 @@ class Adsr
     /** Sustain level
         \param sus_level - sets sustain level, 0...1.0
     */
-    inline void setSustainLevel(float sus_level);
+    inline void setSustainLevel(float sus_level) __attribute__((always_inline));
 
     /** get the current envelope segment
         \return the segment of the envelope that the phase is currently located in.
     */
-    inline eSegment_t getCurrentSegment();
+    inline eSegment_t getCurrentSegment() __attribute__((always_inline));
     
     /** Tells whether envelope is active
         \return true if the envelope is currently in any stage apart from idle.
     */
-    inline bool isRunning() const;
+    inline bool isRunning() const __attribute__((always_inline));
 
     /** Tells whether envelope is active
         \return true if the envelope is currently in any stage apart from idle.
     */
-    inline bool isIdle() const;
+    inline bool isIdle() const __attribute__((always_inline));
 
   private:
     float   sus_level_{0.f};

@@ -16,15 +16,15 @@ class Sampler {
     void ScanContents(fs::FS &fs, const char *dirname, uint8_t levels);
 
     // Inline
-    inline void SelectNote(uint8_t note);
-    inline void SetNotePan_Midi( uint8_t data1);
-    inline void SetNoteOffset_Midi(uint8_t data1);
-    inline void SetNoteDecay_Midi(uint8_t data1); 
-    inline void SetNoteVolume_Midi(uint8_t data1);
-    inline void SetSoundPitch_Midi(uint8_t data1);
-    inline void SetSoundPitch(float value);   
-    inline void SetDelaySend(uint8_t lvl);
-    inline void SetReverbSend(uint8_t lvl);
+    inline void SelectNote(uint8_t note) __attribute__((always_inline));
+    inline void SetNotePan_Midi( uint8_t data1) __attribute__((always_inline));
+    inline void SetNoteOffset_Midi(uint8_t data1) __attribute__((always_inline));
+    inline void SetNoteDecay_Midi(uint8_t data1) __attribute__((always_inline)); 
+    inline void SetNoteVolume_Midi(uint8_t data1) __attribute__((always_inline));
+    inline void SetSoundPitch_Midi(uint8_t data1) __attribute__((always_inline));
+    inline void SetSoundPitch(float value) __attribute__((always_inline));   
+    inline void SetDelaySend(uint8_t lvl) __attribute__((always_inline));
+    inline void SetReverbSend(uint8_t lvl) __attribute__((always_inline));
     // Inline
     
     
@@ -37,8 +37,8 @@ class Sampler {
     // Offset   for the Sample-Playback to cut the sample from the left
     
     // Inline
-    inline void NoteOn( uint8_t note, uint8_t vol );
-    inline void NoteOff( uint8_t note );
+    inline void NoteOn(uint8_t note, uint8_t vol) __attribute__((always_inline));
+    inline void NoteOff(uint8_t note) __attribute__((always_inline));
     // Inline
     
     
@@ -46,9 +46,9 @@ class Sampler {
     void SetPlaybackSpeed( float value );
     void SetProgram( uint8_t prog );
     void SetVolume( float value ) { _volume = value; };
-    inline void Process( float *left, float *right );
-    inline void ParseCC(uint8_t cc_number, uint8_t cc_value);
-    inline void PitchBend(int number);
+    inline void Process(float *left, float *right) __attribute__((always_inline));
+    inline void ParseCC(uint8_t cc_number, uint8_t cc_value) __attribute__((always_inline));
+    inline void PitchBend(int number) __attribute__((always_inline));
     float _sendReverb = 0.0f;
     float _sendDelay = 0.0f;
   

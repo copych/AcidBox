@@ -138,7 +138,7 @@ class FxReverb {
   #endif
   }
 
-  void SetLevel(float value) __attribute__((always_inline)) {
+  inline void SetLevel(float value) __attribute__((always_inline)) {
       rev_level = value;
   #ifdef DEBUG_FX
       DEBF("reverb level: %0.3f\n", value);

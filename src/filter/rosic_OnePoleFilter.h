@@ -72,7 +72,7 @@ class OnePoleFilter
     // audio processing:
 
     /** Calculates a single filtered output-sample. */
-    inline float getSample(float in);
+    inline float getSample(float in) __attribute__((always_inline));
 
     //---------------------------------------------------------------------------------------------
     // others:

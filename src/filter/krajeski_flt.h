@@ -41,10 +41,10 @@ public:
 	}
  
 	virtual ~KrajeskiMoog() { }
-	inline float Process(float sample);
- 	inline void Init(float samplerate);
+	inline float Process(float sample) __attribute__((always_inline));
+ 	inline void Init(float samplerate) __attribute__((always_inline));
   
-  	inline void SetResonance(float r);
+  	inline void SetResonance(float r) __attribute__((always_inline));
 	
 	virtual void SetCutoff(float c) 
 	{
@@ -53,7 +53,7 @@ public:
 		g = (float)(0.9892f * wc - 0.4342f * wc*wc + 0.1381f * wc*wc*wc - 0.0202f * wc*wc*wc*wc);
 	}
 
-  	inline void SetDrive(float dr);
+  	inline void SetDrive(float dr) __attribute__((always_inline));
 
 private:
 	float state[5];

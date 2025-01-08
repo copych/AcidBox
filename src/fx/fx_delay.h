@@ -38,7 +38,7 @@ class FxDelay {
 		void Init(void);
 		void Reset(void);
 		// Included implementation in header to make inlining possible
-		void Process(float *signal_l, float *signal_r) __attribute__((always_inline)) {
+		inline void Process(float *signal_l, float *signal_r) __attribute__((always_inline)) {
 			delayLine_l[delayIn] = *signal_l;
 			delayLine_r[delayIn] = *signal_r;
 			delayOut = delayIn + (1 + MAX_DELAY - delayLen);
@@ -55,21 +55,21 @@ class FxDelay {
 			}
 		}
 
-		void SetFeedback(float value) __attribute__((always_inline)) {
+		inline void SetFeedback(float value) __attribute__((always_inline)) {
 			delayFeedback = value;
 		#ifdef DEBUG_FX
 			DEBF("delay feedback: %0.3f\n", value);
 		#endif
 		}
 
-		void SetLevel(float value) __attribute__((always_inline)) {
+		inline void SetLevel(float value) __attribute__((always_inline)) {
 			delayToMix = value;
 		#ifdef DEBUG_FX
 			DEBF("delay level: %0.3f\n", value);
 		#endif
 		}
 
-		void SetLength(float value) __attribute__((always_inline)) {
+		inline void SetLength(float value) __attribute__((always_inline)) {
 			delayLen = (uint32_t)(((float)MAX_DELAY - 1.0f) * value);
 		#ifdef DEBUG_FX
 			DEBF("delay length: %0.3fms\n", delayLen * (1000.0f / ((float)SAMPLE_RATE)));

@@ -62,10 +62,10 @@ class TeeBeeFilter
     /** Sets the cutoff frequency for this filter - the actual coefficient calculation may be
       supressed by passing 'false' as second parameter, in this case, it should be triggered
       manually later by calling calculateCoefficients. */
-    void SetCutoff(float newCutoff, bool updateCoefficients = true);
+    inline void SetCutoff(float newCutoff, bool updateCoefficients = true) __attribute__((always_inline));
 
     /** Sets the resonance in percent where 100% is self oscillation. */
-    void SetResonance(float newResonance, bool updateCoefficients = true);
+    inline void SetResonance(float newResonance, bool updateCoefficients = true) __attribute__((always_inline));
 
     /** Sets the input drive in decibels. */
     void SetDrive(float newDrive);
@@ -110,22 +110,22 @@ class TeeBeeFilter
     // audio processing:
 
     /** Calculates one output sample at a time. */
-    float Process(float in);
+    inline float Process(float in)  __attribute__((always_inline));
 
     //---------------------------------------------------------------------------------------------
     // others:
 
 
     /** Causes the filter to re-calculate the coeffiecients via the exact formulas. */
-    void calculateCoefficientsExact();
+    inline void calculateCoefficientsExact() __attribute__((always_inline));
 
     /** Causes the filter to re-calculate the coeffiecients using an approximation that is valid
       for normalized radian cutoff frequencies up to pi/4. */
-    void calculateCoefficientsApprox4();
+    inline void calculateCoefficientsApprox4() __attribute__((always_inline));
 
     /** Calculates sine and cosine of x - this is more efficient than calling sin(x) and
       cos(x) seperately. */
-    void sinCos(float x, float* sinResult, float* cosResult);
+    inline void sinCos(float x, float* sinResult, float* cosResult) __attribute__((always_inline));
     
     /** Resets the internal state variables. */
     void Init();

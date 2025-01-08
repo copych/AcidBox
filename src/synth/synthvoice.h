@@ -58,28 +58,28 @@ public:
   float WORD_ALIGNED_ATTR  synth_buf[2][DMA_BUF_LEN]  = {0.0f};
 
   // inline //
-  inline void on_midi_noteON(uint8_t note, uint8_t velocity);
-  inline void on_midi_noteOFF(uint8_t note, uint8_t velocity);
-  inline void SetSlideOn();
-  inline void SetSlideOff();
-  inline void SetVolume(float val);
-  inline void SetPan(float pan);
-  inline void SetDelaySend(float lvl);
-  inline void SetReverbSend(float lvl);
-  inline void SetDistortionLevel(float lvl);
-  inline void SetOverdriveLevel(float lvl);
-  inline void SetCutoff(float lvl);
-  inline void SetReso(float lvl);
-  inline void SetEnvModLevel(float lvl);
-  inline void SetAccentLevel(float lvl);
-  inline void SetTempo(float tempo);
-  inline void SetIndex(uint8_t ind);
-  inline void ParseCC(uint8_t cc_number, uint8_t cc_value);
-  inline void PitchBend(int number) ;
-  inline void allNotesOff();
-  inline float GetPan();
-  inline float GetVolume();
-  inline float getSample();
+  inline void on_midi_noteON(uint8_t note, uint8_t velocity)  __attribute__((always_inline));
+  inline void on_midi_noteOFF(uint8_t note, uint8_t velocity) __attribute__((always_inline));
+  inline void SetSlideOn() __attribute__((always_inline));
+  inline void SetSlideOff() __attribute__((always_inline));
+  inline void SetVolume(float val) __attribute__((always_inline));
+  inline void SetPan(float pan) __attribute__((always_inline));
+  inline void SetDelaySend(float lvl) __attribute__((always_inline));
+  inline void SetReverbSend(float lvl) __attribute__((always_inline));
+  inline void SetDistortionLevel(float lvl) __attribute__((always_inline));
+  inline void SetOverdriveLevel(float lvl) __attribute__((always_inline));
+  inline void SetCutoff(float lvl) __attribute__((always_inline));
+  inline void SetReso(float lvl) __attribute__((always_inline));
+  inline void SetEnvModLevel(float lvl) __attribute__((always_inline));
+  inline void SetAccentLevel(float lvl) __attribute__((always_inline));
+  inline void SetTempo(float tempo) __attribute__((always_inline));
+  inline void SetIndex(uint8_t ind) __attribute__((always_inline));
+  inline void ParseCC(uint8_t cc_number, uint8_t cc_value) __attribute__((always_inline));
+  inline void PitchBend(int number) __attribute__((always_inline));
+  inline void allNotesOff() __attribute__((always_inline));
+  inline float GetPan() __attribute__((always_inline));
+  inline float GetVolume() __attribute__((always_inline));
+  inline float getSample() __attribute__((always_inline));
 
 // inline //
 

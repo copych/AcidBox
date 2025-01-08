@@ -38,9 +38,9 @@ class FxFilterCrusher {
       mainFilterR_HP.filterCoeff = &filterGlobalC_HP;
     };
 
-    inline float Process (float sample);
+    inline float Process (float sample) __attribute__((always_inline));
 
-    inline void Process( float* left, float* right );
+    inline void Process(float* left, float* right) __attribute__((always_inline));
 
     void SetCutoff( float value ) ;
 
@@ -81,11 +81,11 @@ class FxFilterCrusher {
 
     // calculate coefficients of the 2nd order IIR filter
 
-    inline void Filter_CalculateTP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC );
+    inline void Filter_CalculateTP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC) __attribute__((always_inline));
 
-    inline void Filter_CalculateHP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC );
+    inline void Filter_CalculateHP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC) __attribute__((always_inline));
 
-    inline void Filter_Process( float *const signal, struct filterProcT *const filterP );
+    inline void Filter_Process(float *const signal, struct filterProcT *const filterP) __attribute__((always_inline));
 };
 
 inline float FxFilterCrusher::Process (float sample) {
@@ -129,7 +129,7 @@ void FxFilterCrusher::Process( float* left, float* right ) {
   }
 }
 
-inline void FxFilterCrusher::Filter_CalculateTP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC ) {
+inline void FxFilterCrusher::Filter_CalculateTP(float c, float one_div_2_reso, struct filterCoeffT *const  filterC) {
   float *aNorm = filterC->aNorm;
   float *bNorm = filterC->bNorm;
 

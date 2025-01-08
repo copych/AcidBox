@@ -104,7 +104,7 @@ void i2sDeinit() {
   I2S.end();
 }
 
-static inline void i2s_output () {
+static inline void i2s_output() {
 // now out_buf is ready, output
   for (int i=0; i < DMA_BUF_LEN; i++) {
       out_buf[current_out_buf]._signed[i*2] = 0x7fff * (float)(( mixer.mix_buf_l[current_out_buf][i])) ; 
