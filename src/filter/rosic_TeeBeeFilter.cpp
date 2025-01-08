@@ -70,6 +70,30 @@ void TeeBeeFilter::SetMode(int newMode)
   calculateCoefficientsApprox4();
 }
 
+void TeeBeeFilter::SetFeedbackHighpassCutoff(float newCutoff) {
+  feedbackHighpass.setCutoff(newCutoff);
+}
+
+float TeeBeeFilter::GetCutoff() const {
+  return cutoff;
+}
+
+float TeeBeeFilter::GetResonance() const {
+  return 100.0 * resonanceRaw;
+}
+
+float TeeBeeFilter::GetDrive() const {
+  return drive;
+}
+
+int TeeBeeFilter::GetMode() const {
+  return mode;
+}
+
+float TeeBeeFilter::GetFeedbackHighpassCutoff() const {
+  return feedbackHighpass.getCutoff();
+}
+
 void TeeBeeFilter::Init() 
 {
   feedbackHighpass.reset();

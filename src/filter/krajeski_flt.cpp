@@ -21,3 +21,26 @@ Source: http://song-swap.com/MUMT618/aaron/Presentation/demo.html
 Modified by Copych 2023: added fclamp because sometimes nan, -inf, +inf appears in state[] of Process()
 
 */
+
+KrajeskiMoog::KrajeskiMoog() {
+}
+
+KrajeskiMoog::KrajeskiMoog(float sampleRate) {
+    for (int i = 0; i < 5; i++) {
+        state[i] = delay[i] = 0;  
+    }
+    gComp = 1.0;
+    SetDrive(0.0f);
+    SetCutoff(1000.0f);
+    SetResonance(0.1f);
+}
+
+KrajeskiMoog::~KrajeskiMoog() {
+}
+
+void KrajeskiMoog::SetCutoff(float c) 
+{
+    cutoff = c;
+    wc = (float)(TWOPI * cutoff * DIV_SAMPLE_RATE);
+    g = (float)(0.9892f * wc - 0.4342f * wc*wc + 0.1381f * wc*wc*wc - 0.0202f * wc*wc*wc*wc);
+}

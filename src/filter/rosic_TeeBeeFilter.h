@@ -74,37 +74,25 @@ class TeeBeeFilter
     void SetMode(int newMode);
 
     /** Sets the cutoff frequency for the highpass filter in the feedback path. */
-    void SetFeedbackHighpassCutoff(float newCutoff) {
-      feedbackHighpass.setCutoff(newCutoff);
-    }
+    void SetFeedbackHighpassCutoff(float newCutoff);
 
     //---------------------------------------------------------------------------------------------
     // inquiry:
 
     /** Returns the cutoff frequency of this filter. */
-    float GetCutoff() const {
-      return cutoff;
-    }
+    float GetCutoff() const;
 
     /** Returns the resonance parameter of this filter. */
-    float GetResonance() const {
-      return 100.0 * resonanceRaw;
-    }
+    float GetResonance() const;
 
     /** Returns the drive parameter in decibels. */
-    float GetDrive() const {
-      return drive;
-    }
+    float GetDrive() const;
 
     /** Returns the slected filter mode. */
-    int GetMode() const {
-      return mode;
-    }
+    int GetMode() const;
 
     /** Returns the cutoff frequency for the highpass filter in the feedback path. */
-    float GetFeedbackHighpassCutoff() const {
-      return feedbackHighpass.getCutoff();
-    }
+    float GetFeedbackHighpassCutoff() const;
 
     //---------------------------------------------------------------------------------------------
     // audio processing:
@@ -114,8 +102,6 @@ class TeeBeeFilter
 
     //---------------------------------------------------------------------------------------------
     // others:
-
-
     /** Causes the filter to re-calculate the coeffiecients via the exact formulas. */
     inline void calculateCoefficientsExact() __attribute__((always_inline));
 

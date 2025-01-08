@@ -103,16 +103,16 @@ int    mode;
 
 inline float BiquadFilter::getSample(float in)
 {
-// calculate the output sample:
-float y = b0*in + b1*x1 + b2*x2 + a1*y1 + a2*y2 + TINY;
+  // calculate the output sample:
+  float y = b0*in + b1*x1 + b2*x2 + a1*y1 + a2*y2 + TINY;
 
-// update the buffer variables:
-x2 = x1;
-x1 = in;
-y2 = y1;
-y1 = y;
+  // update the buffer variables:
+  x2 = x1;
+  x1 = in;
+  y2 = y1;
+  y1 = y;
 
-return y;
+  return y;
 }
 
 

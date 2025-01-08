@@ -42,15 +42,16 @@ void OnePoleFilter::setCutoff(float newCutoff)
   return;
 }
 
+void OnePoleFilter::setLowpassTimeConstant(float newTimeConstant) {
+  setCutoff(1.0 / (2 * PI * newTimeConstant));
+}
+
 void OnePoleFilter::setShelvingGain(float newGain)
 {
   if( newGain > 0.0f )
   {
     shelvingGain = newGain;
     calcCoeffs();
-  }
-  else 
-  {
   }
 }
 
@@ -70,6 +71,10 @@ void OnePoleFilter::setInternalState(float newX1, float newY1)
 {
   x1 = newX1;
   y1 = newY1;
+}
+
+float OnePoleFilter::getCutoff() const {
+  return cutoff;
 }
 
 //-------------------------------------------------------------------------------------------------

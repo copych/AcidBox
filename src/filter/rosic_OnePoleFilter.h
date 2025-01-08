@@ -44,9 +44,7 @@ class OnePoleFilter
     /** This will set the time constant 'tau' for the case, when lowpass mode is chosen. This is
       the time, it takes for the impulse response to die away to 1/e = 0.368... or equivalently, the
       time it takes for the step response to raise to 1-1/e = 0.632... */
-    void setLowpassTimeConstant(float newTimeConstant) {
-      setCutoff(1.0 / (2 * PI * newTimeConstant));
-    }
+    void setLowpassTimeConstant(float newTimeConstant);
 
     /** Sets the gain factor for the shelving modes (this is not in decibels). */
     void setShelvingGain(float newGain);
@@ -64,9 +62,7 @@ class OnePoleFilter
     // inquiry
 
     /** Returns the cutoff-frequency. */
-    float getCutoff() const {
-      return cutoff;
-    }
+    float getCutoff() const;
 
     //---------------------------------------------------------------------------------------------
     // audio processing:

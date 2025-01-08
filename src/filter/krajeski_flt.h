@@ -26,44 +26,26 @@ Source: http://song-swap.com/MUMT618/aaron/Presentation/demo.html
 
 class KrajeskiMoog 
 {
-	
-public:
-  KrajeskiMoog() {}
-  KrajeskiMoog(float sampleRate)  
-	{
-		for (int i = 0; i < 5; i++) {
-			state[i] = delay[i] = 0;  
-		}
-		gComp = 1.0;
-    	SetDrive(0.0f);
-		SetCutoff(1000.0f);
-		SetResonance(0.1f);
-	}
- 
-	virtual ~KrajeskiMoog() { }
+		
+	public:
+	KrajeskiMoog();
+	KrajeskiMoog(float sampleRate);
+	~KrajeskiMoog();
 	inline float Process(float sample) __attribute__((always_inline));
- 	inline void Init(float samplerate) __attribute__((always_inline));
-  
-  	inline void SetResonance(float r) __attribute__((always_inline));
-	
-	virtual void SetCutoff(float c) 
-	{
-		cutoff = c;
-		wc = (float)(TWOPI * cutoff * DIV_SAMPLE_RATE);
-		g = (float)(0.9892f * wc - 0.4342f * wc*wc + 0.1381f * wc*wc*wc - 0.0202f * wc*wc*wc*wc);
-	}
+	inline void Init(float samplerate) __attribute__((always_inline));
+	inline void SetResonance(float r) __attribute__((always_inline));
+	inline void SetDrive(float dr) __attribute__((always_inline));
+	void SetCutoff(float c);
 
-  	inline void SetDrive(float dr) __attribute__((always_inline));
-
-private:
-	float state[5];
-	float delay[5];
-	float wc; // The angular frequency of the cutoff.
-	float g; // A derived parameter for the cutoff frequency
-	float gRes; // A similar derived parameter for resonance.
-	float gComp; // Compensation factor.
-	float drive; // A parameter that controls intensity of nonlinearities.
-	float sampleRate, cutoff, resonance;
+	private:
+		float state[5];
+		float delay[5];
+		float wc; // The angular frequency of the cutoff.
+		float g; // A derived parameter for the cutoff frequency
+		float gRes; // A similar derived parameter for resonance.
+		float gComp; // Compensation factor.
+		float drive; // A parameter that controls intensity of nonlinearities.
+		float sampleRate, cutoff, resonance;
 };
 
 inline void KrajeskiMoog::Init(float samplerate) {
