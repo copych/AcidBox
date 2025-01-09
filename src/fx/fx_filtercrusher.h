@@ -63,19 +63,13 @@ class FxFilterCrusher {
     struct filterCoeffT filterGlobalC_LP, filterGlobalC_HP;
     struct filterProcT mainFilterL_LP, mainFilterR_LP, mainFilterL_HP, mainFilterR_HP;
 
- //   float sine[WAVEFORM_CNT];
-
     float highpassC = 0.0f;
     float lowpassC = 1.0f;
     float filtReso = 1.0f;
-
     float div_2_reso = 0.5f;
-
     float cutoff_hp_slow = 0.0f;
     float cutoff_lp_slow = 1.0f;
-
     uint8_t effect_prescaler = 0;
-
     float bitCrusher = 1.0f;
     float div_bitCrusher = 1.0f;
 
