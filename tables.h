@@ -1,6 +1,6 @@
 #ifndef TABLES_H
 #define TABLES_H
-#include <config.h>
+#include "config.h"
 class Tables {
   public:
   static inline float DRAM_ATTR WORD_ALIGNED_ATTR  midi_tbl_steps[128];

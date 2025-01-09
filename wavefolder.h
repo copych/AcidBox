@@ -26,11 +26,11 @@ class Wavefolder {
         \param gain Set input gain.
         Supports negative values for thru-zero
     */
-    inline void SetDrive(float gain);
+    void SetDrive(float gain);
     /** 
         \param offset Offset odded to input (pre-gain) for asymmetrical folding.
     */
-    inline void SetOffset(float offset) { offset_ = offset; }
+    void SetOffset(float offset) { offset_ = offset; }
 
   private:
     float gain_, offset_, compens_;

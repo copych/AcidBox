@@ -49,26 +49,6 @@ void IRAM_ATTR General::fast_sincos(float x, float* sinRes, float* cosRes) {
   *cosRes = sign ? -res : res;
 }
 
-// reciprocal asm injection for xtensa LX6 FPU
-float General::one_div(float a) {
-    float result;
-    asm volatile (
-        "wfr f1, %1"          "\n\t"
-        "recip0.s f0, f1"     "\n\t"
-        "const.s f2, 1"       "\n\t"
-        "msub.s f2, f1, f0"   "\n\t"
-        "maddn.s f0, f0, f2"  "\n\t"
-        "const.s f2, 1"       "\n\t"
-        "msub.s f2, f1, f0"   "\n\t"
-        "maddn.s f0, f0, f2"  "\n\t"
-        "rfr %0, f0"          "\n\t"
-        : "=r" (result)
-        : "r" (a)
-        : "f0","f1","f2"
-    );
-    return result;
-}
-
 float General::dB2amp(float dB){
   return expf(dB * 0.11512925464970228420089957273422f);
   //return pow(10.0, (0.05*dB)); // naive, inefficient version

@@ -23,14 +23,14 @@
 #include "config.h"
 #include "tables.h"
 #include "general.h"
-#include "fx_delay.h"
+#include "src/fx/fx_delay.h"
 #ifndef NO_PSRAM
-#include "fx_reverb.h"
+#include "src/fx/fx_reverb.h"
 #endif
-#include "compressor.h"
-#include "synthvoice.h"
-#include "sampler.h"
-#include "mixer.h"
+#include "src/fx/compressor.h"
+#include "src/synth/synthvoice.h"
+#include "src/sampler/sampler.h"
+#include "src/mixer/mixer.h"
 #include <Wire.h>
 #ifdef DEBUG_TIMING
 #include "debug_timing.h"
@@ -86,11 +86,11 @@ TaskHandle_t SynthTask1;
 TaskHandle_t SynthTask2;
 
 // 303-like synths
-SynthVoice Synth1(0); 
-SynthVoice Synth2(1); 
+SynthVoice Synth1(0, &current_gen_buf); 
+SynthVoice Synth2(1, &current_gen_buf); 
 
 // 808-like drums
-Sampler Drums( DEFAULT_DRUMKIT ); // argument: starting drumset [0 .. total-1]
+Sampler Drums(DEFAULT_DRUMKIT, &current_gen_buf); // argument: starting drumset [0 .. total-1]
 
 // Global effects
 FxDelay Delay;
@@ -101,9 +101,9 @@ FxReverb Reverb;
 
 // Mixer
 #ifndef NO_PSRAM
-Mixer mixer(&Synth1, &Synth2, &Drums, &Delay, &Comp, &Reverb);
+Mixer mixer(&Synth1, &Synth2, &Drums, &Delay, &Comp, &Reverb, &current_out_buf);
 #else
-Mixer mixer(&Synth1, &Synth2, &Drums, &Delay, &Comp);
+Mixer mixer(&Synth1, &Synth2, &Drums, &Delay, &Comp, &current_out_buf);
 #endif
 
 hw_timer_t * timer1 = NULL;            // Timer variables
