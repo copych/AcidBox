@@ -37,44 +37,10 @@ class FxDelay {
 		FxDelay() {}
 		void Init(void);
 		void Reset(void);
-		// Included implementation in header to make inlining possible
-		inline void Process(float *signal_l, float *signal_r) __attribute__((always_inline)) {
-			delayLine_l[delayIn] = *signal_l;
-			delayLine_r[delayIn] = *signal_r;
-			delayOut = delayIn + (1 + MAX_DELAY - delayLen);
-			if( delayOut >= MAX_DELAY ){
-				delayOut -= MAX_DELAY;
-			}
-			*signal_l += delayLine_l[delayOut] * delayToMix;
-			*signal_r += delayLine_r[delayOut] * delayToMix;
-			delayLine_l[delayIn] += delayLine_l[delayOut] * delayFeedback;
-			delayLine_r[delayIn] += delayLine_r[delayOut] * delayFeedback;
-			delayIn ++;
-			if( delayIn >= MAX_DELAY ){
-				delayIn = 0;
-			}
-		}
-
-		inline void SetFeedback(float value) __attribute__((always_inline)) {
-			delayFeedback = value;
-		#ifdef DEBUG_FX
-			DEBF("delay feedback: %0.3f\n", value);
-		#endif
-		}
-
-		inline void SetLevel(float value) __attribute__((always_inline)) {
-			delayToMix = value;
-		#ifdef DEBUG_FX
-			DEBF("delay level: %0.3f\n", value);
-		#endif
-		}
-
-		inline void SetLength(float value) __attribute__((always_inline)) {
-			delayLen = (uint32_t)(((float)MAX_DELAY - 1.0f) * value);
-		#ifdef DEBUG_FX
-			DEBF("delay length: %0.3fms\n", delayLen * (1000.0f / ((float)SAMPLE_RATE)));
-		#endif
-		}
+		inline void Process(float *signal_l, float *signal_r) __attribute__((always_inline));
+		inline void SetFeedback(float value) __attribute__((always_inline));
+		inline void SetLevel(float value) __attribute__((always_inline));
+		inline void SetLength(float value) __attribute__((always_inline));
 
 	private:
 		//  module variables
@@ -87,4 +53,43 @@ class FxDelay {
 		uint32_t delayIn = 0;
 		uint32_t delayOut = 0;
 };
+
+inline void FxDelay::Process(float *signal_l, float *signal_r) {
+	delayLine_l[delayIn] = *signal_l;
+	delayLine_r[delayIn] = *signal_r;
+	delayOut = delayIn + (1 + MAX_DELAY - delayLen);
+	if( delayOut >= MAX_DELAY ){
+		delayOut -= MAX_DELAY;
+	}
+	*signal_l += delayLine_l[delayOut] * delayToMix;
+	*signal_r += delayLine_r[delayOut] * delayToMix;
+	delayLine_l[delayIn] += delayLine_l[delayOut] * delayFeedback;
+	delayLine_r[delayIn] += delayLine_r[delayOut] * delayFeedback;
+	delayIn ++;
+	if( delayIn >= MAX_DELAY ){
+		delayIn = 0;
+	}
+}
+
+inline void FxDelay::SetFeedback(float value) {
+	delayFeedback = value;
+#ifdef DEBUG_FX
+	DEBF("delay feedback: %0.3f\n", value);
+#endif
+}
+
+inline void FxDelay::SetLevel(float value) {
+	delayToMix = value;
+#ifdef DEBUG_FX
+	DEBF("delay level: %0.3f\n", value);
+#endif
+}
+
+inline void FxDelay::SetLength(float value) {
+	delayLen = (uint32_t)(((float)MAX_DELAY - 1.0f) * value);
+#ifdef DEBUG_FX
+	DEBF("delay length: %0.3fms\n", delayLen * (1000.0f / ((float)SAMPLE_RATE)));
+#endif
+}
+
 #endif
