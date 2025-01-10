@@ -72,27 +72,47 @@ void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float int
   int8_t rnd_vel;
   int8_t rnd_note;
   int8_t cur_note = -1;
-  for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
-    Steps[i].clear();
-    int note_chance = (float)_note_chances[i % 16];
-    if (flip(intensity * note_chance)) {
-      rnd_note = _current_note_set[(random(_current_note_set.size()))] + root_note;
-      if (flip((int)(60 * intensity))) rnd_vel = VEL_ACCENTED; else rnd_vel = VEL_NORMAL;
-      addEvent(i, EVT_NOTE_ON, rnd_note, rnd_vel);
-      cur_note = rnd_note;
-      if (flip((int)(70 * intensity))) {
-        addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_ON);
-      } else {      
-        addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_OFF);
-      }
-    } else {
-      if (cur_note != -1) {
-        if (flip(50)) {
+  switch (style) {
+    case STYLE_TEST_LOAD:
+      for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
+        Steps[i].clear();
+        if (i == 7 || i == 15) {
+          cur_note = root_note+13;
+          rnd_vel = 60;
+          addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_ON);
+        } else {
+          cur_note = root_note;
           addEvent(i, EVT_NOTE_OFF, cur_note, 0);
-          cur_note = -1;
+          if (i==15) rnd_vel = 100;
+          addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_OFF);
+        }
+        addEvent(i, EVT_NOTE_ON, cur_note, rnd_vel);
+          addEvent(i, EVT_NOTE_OFF, cur_note, 0);
+      }
+      break;
+    default:
+      for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
+        Steps[i].clear();
+        int note_chance = (float)_note_chances[i % 16];
+        if (flip(intensity * note_chance)) {
+          rnd_note = _current_note_set[(random(_current_note_set.size()))] + root_note;
+          if (flip((int)(60 * intensity))) rnd_vel = VEL_ACCENTED; else rnd_vel = VEL_NORMAL;
+          addEvent(i, EVT_NOTE_ON, rnd_note, rnd_vel);
+          cur_note = rnd_note;
+          if (flip((int)(70 * intensity))) {
+            addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_ON);
+          } else {      
+            addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_OFF);
+          }
+        } else {
+          if (cur_note != -1) {
+            if (flip(50)) {
+              addEvent(i, EVT_NOTE_OFF, cur_note, 0);
+              cur_note = -1;
+            }
+          }
         }
       }
-    }
   }
 }
 
