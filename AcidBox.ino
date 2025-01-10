@@ -139,6 +139,8 @@ void IRAM_ATTR onTimer2() {
 // Core0 task 
 // static void audio_task1(void *userData) {
 static void IRAM_ATTR audio_task1(void *userData) {
+  DEBUG ("core 0 audio task run");
+  vTaskDelay(20);
   
   while (true) {
     taskYIELD(); 
@@ -201,14 +203,12 @@ static void IRAM_ATTR audio_task1(void *userData) {
 // task for Core1, which tipically runs user's code on ESP32
 // static void IRAM_ATTR audio_task2(void *userData) {
 static void IRAM_ATTR audio_task2(void *userData) {
+  DEBUG ("core 1 control task run");
+  vTaskDelay(20);
   while (true) {
     taskYIELD();
     
-#ifdef JUKEBOX
-//  jukebox_tick();
-
-  Performer.looperTask();
-#endif
+    regular_checks();    
  /*   
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // wait for the notification from the SynthTask1
 
@@ -298,25 +298,45 @@ delay(200);
 
 
  
-  DEBUG(Performer.addTrack(TRACK_MONO, 1));
-  DEBUG(Performer.addTrack(TRACK_MONO, 2));
-  DEBUG(Performer.addTrack(TRACK_DRUMS, 10));
-  DEBUG(Performer.Tracks[0].addPattern());
-  DEBUG(Performer.Tracks[1].addPattern());
-  DEBUG(Performer.Tracks[2].addPattern());
+  DEBF("SEQ: add track: %d \r\n", Performer.addTrack(TRACK_MONO, 1));
+  DEBF("SEQ: add track: %d \r\n", Performer.addTrack(TRACK_MONO, 2));
+  DEBF("SEQ: add track: %d \r\n", Performer.addTrack(TRACK_DRUMS, 10));
+  
+  DEBF("SEQ: Track 0: add pattern: %d \r\n", Performer.Tracks[0].addPattern());
+  DEBF("SEQ: Track 1: add pattern: %d \r\n", Performer.Tracks[1].addPattern());
+  DEBF("SEQ: Track 2: add pattern: %d \r\n", Performer.Tracks[2].addPattern());
+  
   Performer.Tracks[0].Patterns[0].generateNoteSet(0.5, 0.5);
-  Performer.Tracks[0].Patterns[0].generateMelody(28, STYLE_TECHNOPOP, 0.8 , 0.5, 0.5);
+  Performer.Tracks[0].Patterns[0].generateMelody(36, STYLE_TEST_LOAD, 1.0 , 0.0, 1.0);
+  
   Performer.Tracks[1].Patterns[0].generateNoteSet(0.5, 0.5);
-  Performer.Tracks[1].Patterns[0].generateMelody(28, STYLE_TECHNOPOP, 0.8 , 0.5, 0.5);
-  Performer.Tracks[2].Patterns[0].generateDrums( STYLE_STRAIGHT, 0.5 , 0.5);
+  Performer.Tracks[1].Patterns[0].generateMelody(36, STYLE_TEST_LOAD, 1.0 , 0.0, 1.0);
   
-  Performer.Tracks[0].Patterns[0].addEvent(0, EVT_CONTROL_CHANGE, 92, 0);
-  Performer.Tracks[0].Patterns[0].addEvent(0, EVT_CONTROL_CHANGE, 10, 20);
-  
-  Performer.Tracks[1].Patterns[0].addEvent(0, EVT_CONTROL_CHANGE, 92, 20);
-  Performer.Tracks[1].Patterns[0].addEvent(0, EVT_CONTROL_CHANGE, 10, 107);
-  
-  Performer.Tracks[2].Patterns[0].addEvent(0, EVT_CONTROL_CHANGE, 95, 60);
+  Performer.Tracks[2].Patterns[0].generateDrums( STYLE_TEST_LOAD, 1.0 , 0.0);
+
+  Synth1.ParseCC(CC_303_WAVEFORM, 0);
+  Synth1.ParseCC(CC_303_VOLUME, 60);
+  Synth1.ParseCC(CC_303_PAN, 5);
+  Synth1.ParseCC(CC_303_CUTOFF, 15);
+  Synth1.ParseCC(CC_303_RESO, 100);
+  Synth1.ParseCC(CC_303_OVERDRIVE, 50);
+  Synth1.ParseCC(CC_303_DISTORTION, 0);
+  Synth1.ParseCC(CC_303_ENVMOD_LVL, 120);
+  Synth1.ParseCC(CC_303_ACCENT_LVL, 100);
+  Synth1.ParseCC(CC_303_DELAY_SEND, 100);
+  Synth1.ParseCC(CC_303_REVERB_SEND, 30);
+
+  Synth2.ParseCC(CC_303_WAVEFORM, 127);
+  Synth2.ParseCC(CC_303_VOLUME, 60);
+  Synth2.ParseCC(CC_303_PAN, 122);
+  Synth2.ParseCC(CC_303_CUTOFF, 20);
+  Synth2.ParseCC(CC_303_RESO, 100);
+  Synth2.ParseCC(CC_303_OVERDRIVE, 50);
+  Synth2.ParseCC(CC_303_DISTORTION, 0);
+  Synth2.ParseCC(CC_303_ENVMOD_LVL, 120);
+  Synth2.ParseCC(CC_303_ACCENT_LVL, 50);
+  Synth2.ParseCC(CC_303_DELAY_SEND, 100);
+  Synth2.ParseCC(CC_303_REVERB_SEND, 60);
   
   DEBUG( Performer.Tracks[2].Patterns[0].toText());
   
@@ -327,8 +347,8 @@ delay(200);
 
   //xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask1, 0 );
   //xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask2, 1 );
-  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 5000, NULL, 1, &SynthTask1, 0 );
-  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 5000, NULL, 1, &SynthTask2, 1 );
+  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 5000, NULL, 8, &SynthTask1, 0 );
+  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 6000, NULL, 3, &SynthTask2, 1 );
 
   // somehow we should allow tasks to run
   // xTaskNotifyGive(SynthTask1);
@@ -373,7 +393,7 @@ void loop() { // default loopTask running on the Core1
   // or   vTaskDelete(NULL);
   
   // processButtons();
-  regular_checks();    
+ // regular_checks();    
   taskYIELD(); // this can wait
 }
 
@@ -438,6 +458,9 @@ void regular_checks() {
   MIDI2.read();
 #endif
   
-
+#ifdef JUKEBOX
+//  jukebox_tick();
+  Performer.looperTask();
+#endif
 
 }

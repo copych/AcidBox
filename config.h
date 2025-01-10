@@ -19,7 +19,7 @@
 //#define FLASH_LED               // flash built-in LED
 //#define LOLIN_RGB               // Flashes the LOLIN S3 built-in RGB-LED
 
-#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
+#define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoiled in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
 //#define DEBUG_SYNTH
