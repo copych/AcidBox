@@ -31,6 +31,7 @@
 #include "src/synth/synthvoice.h"
 #include "src/sampler/sampler.h"
 #include "src/mixer/mixer.h"
+#include "src/sequencer/looper.h"
 #include <Wire.h>
 #ifdef DEBUG_TIMING
 #include "debug_timing.h"
@@ -112,6 +113,9 @@ portMUX_TYPE timer1Mux = portMUX_INITIALIZER_UNLOCKED;
 portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED; 
 volatile boolean timer1_fired = false;
 volatile boolean timer2_fired = false;
+
+using namespace performer;
+Looper Performer;
 
 /*
  * Timer interrupt handler **********************************************************************************************************************************
@@ -199,6 +203,12 @@ static void IRAM_ATTR audio_task1(void *userData) {
 static void IRAM_ATTR audio_task2(void *userData) {
   while (true) {
     taskYIELD();
+    
+#ifdef JUKEBOX
+//  jukebox_tick();
+
+  Performer.looperTask();
+#endif
  /*   
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // wait for the notification from the SynthTask1
 
@@ -246,10 +256,16 @@ void setup(void) {
   DEBUG_PORT.begin(115200); 
 #endif
 delay(200);
-
-  btStop(); // we don't want bluetooth to consume our precious cpu time 
-
+ randomSeed(esp_random());   // it depends on bluetooth
+  btStop();                   // now we can turn bluetooth off
+  
+  Performer.setPpqn(96);         // pulses per quarter note
+  Performer.setSwing(0.0);       // -1.0 .. 1.0 moving odd 16th notes forward and back. 0.667 is duplets; 0.0 means straight 16th
+  Performer.setBpm(130);         // BPM
+  Performer.setLoopSteps(16);    // Loop length, 16th notes
+  
   MidiInit(); // init midi input and handling of midi events
+ 
 
   /*
     for (int i = 0; i < GPIO_BUTTONS; i++) {
@@ -270,7 +286,7 @@ delay(200);
   Delay.Init();
   Comp.Init(SAMPLE_RATE);
 #ifdef JUKEBOX
-  init_midi(); // AcidBanger function
+  //init_midi(); // AcidBanger function
 #endif
 
   // silence while we haven't loaded anything reasonable
@@ -278,6 +294,33 @@ delay(200);
     out_buf[current_out_buf]._signed[i * 2] = 0;
     out_buf[current_out_buf]._signed[i * 2 + 1] = 0;
   }
+
+
+
+ 
+  DEBUG(Performer.addTrack(TRACK_MONO, 1));
+  DEBUG(Performer.addTrack(TRACK_MONO, 2));
+  DEBUG(Performer.addTrack(TRACK_DRUMS, 10));
+  DEBUG(Performer.Tracks[0].addPattern());
+  DEBUG(Performer.Tracks[1].addPattern());
+  DEBUG(Performer.Tracks[2].addPattern());
+  Performer.Tracks[0].Patterns[0].generateNoteSet(0.5, 0.5);
+  Performer.Tracks[0].Patterns[0].generateMelody(28, STYLE_TECHNOPOP, 0.8 , 0.5, 0.5);
+  Performer.Tracks[1].Patterns[0].generateNoteSet(0.5, 0.5);
+  Performer.Tracks[1].Patterns[0].generateMelody(28, STYLE_TECHNOPOP, 0.8 , 0.5, 0.5);
+  Performer.Tracks[2].Patterns[0].generateDrums( STYLE_STRAIGHT, 0.5 , 0.5);
+  
+  Performer.Tracks[0].Patterns[0].addEvent(0, EVT_CONTROL_CHANGE, 92, 0);
+  Performer.Tracks[0].Patterns[0].addEvent(0, EVT_CONTROL_CHANGE, 10, 20);
+  
+  Performer.Tracks[1].Patterns[0].addEvent(0, EVT_CONTROL_CHANGE, 92, 20);
+  Performer.Tracks[1].Patterns[0].addEvent(0, EVT_CONTROL_CHANGE, 10, 107);
+  
+  Performer.Tracks[2].Patterns[0].addEvent(0, EVT_CONTROL_CHANGE, 95, 60);
+  
+  DEBUG( Performer.Tracks[2].Patterns[0].toText());
+  
+
 
   i2sInit();
   // i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
@@ -288,7 +331,7 @@ delay(200);
   xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 5000, NULL, 1, &SynthTask2, 1 );
 
   // somehow we should allow tasks to run
-  xTaskNotifyGive(SynthTask1);
+  // xTaskNotifyGive(SynthTask1);
   //  xTaskNotifyGive(SynthTask2);
 
 #if ESP_ARDUINO_VERSION_MAJOR < 3 
@@ -309,6 +352,13 @@ delay(200);
   timerAttachInterrupt(timer2, &onTimer2);  // Attach callback
   timerAlarm(timer2, 200000, true, 0);          // 200ms, autoreload
 #endif
+
+
+
+#ifdef JUKEBOX_PLAY_ON_START
+  Performer.play();	            // Start playing from the 0 position
+#endif
+
 DEBUG("setup done");
 }
 
@@ -376,13 +426,6 @@ void paramChange(uint8_t paramNum, float paramVal) {
 }
 
 
-#ifdef JUKEBOX
-void jukebox_tick() {
-  run_tick();
-  myRandomAddEntropy((uint16_t)(micros() & 0x0000FFFF));
-}
-#endif
-
 
 void regular_checks() {
   timer1_fired = false;
@@ -395,7 +438,6 @@ void regular_checks() {
   MIDI2.read();
 #endif
   
-#ifdef JUKEBOX
-  jukebox_tick();
-#endif
+
+
 }

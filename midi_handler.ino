@@ -26,6 +26,14 @@ inline void MidiInit() {
   MIDI2.begin(MIDI_CHANNEL_OMNI);
 #endif
 
+
+  Performer.setMidiControlHandler(handleCC);
+  Performer.setMidiNoteOnHandler(handleNoteOn);
+  Performer.setMidiNoteOffHandler(handleNoteOff);
+  Performer.setMidiPitchBendHandler(handlePitchBend);
+  Performer.setMidiProgramChangeHandler(handleProgramChange);
+  
+
 }
 
 
@@ -65,7 +73,7 @@ inline void handleCC(uint8_t inChannel, uint8_t cc_number, uint8_t cc_value) {
     case CC_ANY_SOUND_OFF:
         if (inChannel == SYNTH1_MIDI_CHAN && millis()-last_reset>1000 ) {
 #ifdef JUKEBOX
-          do_midi_stop();
+//          do_midi_stop();
 #endif
           Synth1.allNotesOff();
           Synth2.allNotesOff();
