@@ -255,7 +255,7 @@ void setup(void) {
 #ifdef DEBUG_ON 
   DEBUG_PORT.begin(115200); 
 #endif
-delay(200);
+delay(1000);
  randomSeed(esp_random());   // it depends on bluetooth
   btStop();                   // now we can turn bluetooth off
   

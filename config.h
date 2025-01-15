@@ -25,7 +25,7 @@
 //#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
-#define DEBUG_TIMING
+//#define DEBUG_TIMING
 //#define DEBUG_MIDI
 
 //#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
