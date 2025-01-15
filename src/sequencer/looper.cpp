@@ -31,7 +31,9 @@ void Looper::setBpm(float new_bpm){
 	_swingPulses = round(_swing * (_q_ppqn / 2) );
 	_swingMicros = _swingPulses * _pulseMicros; 			// microseconds to shift odd 16th notes
  	setGrid();
+#ifdef DEBUG_ON  
   DEBF("_bpm: %f, _pulseMicros: %d, _ppqnL %d, _q_ppqn: %d, _swingPulses: %d, _swingMicros: %d \r\n", _bpm, _pulseMicros, _ppqn, _q_ppqn, _swingPulses, _swingMicros);
+#endif
 }
 
 void Looper::setLoopSteps(size_t new_steps){

@@ -20,6 +20,12 @@ typedef enum {  LOOP_NONE,
                 NUM_LOOP_MODES
 } eLoopMode_t;
 
+typedef struct
+{
+  int note;
+  int length;
+} noteStack;
+
 class Track {
 public:
   Track() {};
@@ -50,6 +56,7 @@ private:
   int           _length           = 1;
   bool          _mute             = false;
   bool          _solo             = false;
+  noteStack	    _noteStack[NOTE_STACK_SIZE];
   
 };
 } // namespace
