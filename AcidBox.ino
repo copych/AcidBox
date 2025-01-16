@@ -32,6 +32,7 @@
 #include "src/sampler/sampler.h"
 #include "src/mixer/mixer.h"
 #include "src/sequencer/looper.h"
+#include "src/controls/controls.h"
 #include <Wire.h>
 #ifdef DEBUG_TIMING
 #include "debug_timing.h"
@@ -70,7 +71,6 @@ MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2
 
 // service variables and arrays
 static  uint32_t  last_reset = 0;
-static  float     param[POT_NUM];
 
 // Audio buffers of all kinds
 volatile int current_gen_buf = 0; // set of buffers for generation
@@ -108,11 +108,8 @@ Mixer mixer(&Synth1, &Synth2, &Drums, &Delay, &Comp, &current_out_buf);
 #endif
 
 hw_timer_t * timer1 = NULL;            // Timer variables
-hw_timer_t * timer2 = NULL;            // Timer variables
 portMUX_TYPE timer1Mux = portMUX_INITIALIZER_UNLOCKED; 
-portMUX_TYPE timer2Mux = portMUX_INITIALIZER_UNLOCKED; 
 volatile boolean timer1_fired = false;
-volatile boolean timer2_fired = false;
 
 using namespace performer;
 Looper Performer;
@@ -126,19 +123,20 @@ void IRAM_ATTR onTimer1() {
    timer1_fired = true;
    portEXIT_CRITICAL_ISR(&timer1Mux);
 }
- 
-void IRAM_ATTR onTimer2() {
-   portENTER_CRITICAL_ISR(&timer2Mux);
-   timer2_fired = true;
-   portEXIT_CRITICAL_ISR(&timer2Mux);
-}
+
+/*
+ * Muxed controls ====================================================================================================================
+*/
+
+UIControls controls;
 
 /* 
+/*
  * Core Tasks ************************************************************************************************************************
 */
 // Core0 task 
-// static void audio_task1(void *userData) {
-static void IRAM_ATTR audio_task1(void *userData) {
+// static void audio_task(void *userData) {
+static void IRAM_ATTR audio_task(void *userData) {
   DEBUG ("core 0 audio task run");
   vTaskDelay(20);
   
@@ -201,8 +199,8 @@ static void IRAM_ATTR audio_task1(void *userData) {
 }
 
 // task for Core1, which tipically runs user's code on ESP32
-// static void IRAM_ATTR audio_task2(void *userData) {
-static void IRAM_ATTR audio_task2(void *userData) {
+// static void IRAM_ATTR control_task(void *userData) {
+static void IRAM_ATTR control_task(void *userData) {
   DEBUG ("core 1 control task run");
   vTaskDelay(20);
   while (true) {
@@ -211,11 +209,7 @@ static void IRAM_ATTR audio_task2(void *userData) {
     regular_checks();    
  /*   
     if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) { // wait for the notification from the SynthTask1
-
-      
       taskYIELD();
-    
-      
       xTaskNotifyGive(SynthTask1); 
     }    
  */
@@ -223,15 +217,12 @@ static void IRAM_ATTR audio_task2(void *userData) {
     Debug::c1T = micros() - Debug::c1t;
     Debug::art = micros();
 #endif
-    
-    if (timer2_fired) {
-      timer2_fired = false;
-#ifdef TEST_POTS      
-       readPots();
-#endif
+
+    if (timer1_fired) {
+      timer1_fired = false;
        
 #ifdef DEBUG_TIMING
-        DEBF ("CORE micros: synt1, synt2, drums, mixer, DMA_LEN\t%d\t%d\t%d\t%d\t%d\r\n" , Debug::s1T, Debug::s2T, Debug::drT, Debug::fxT, DMA_BUF_TIME);
+      DEBF ("CORE micros: synt1, synt2, drums, mixer, DMA_LEN\t%d\t%d\t%d\t%d\t%d\r\n" , Debug::s1T, Debug::s2T, Debug::drT, Debug::fxT, DMA_BUF_TIME);
         //    DEBF ("TaskCore0=%dus TaskCore1=%dus DMA_BUF=%dus\r\n" , Debug::c0T , Debug::c1T , DMA_BUF_TIME);
         //    DEBF ("AllTheRestCore1=%dus\r\n" , Debug::arT);
 #endif
@@ -255,14 +246,9 @@ void setup(void) {
 #ifdef DEBUG_ON 
   DEBUG_PORT.begin(115200); 
 #endif
-delay(200);
- randomSeed(esp_random());   // it depends on bluetooth
+  delay(200);
+  randomSeed(esp_random());   // it depends on bluetooth
   btStop();                   // now we can turn bluetooth off
-  
-  Performer.setPpqn(96);         // pulses per quarter note
-  Performer.setSwing(0.0);       // -1.0 .. 1.0 moving odd 16th notes forward and back. 0.667 is duplets; 0.0 means straight 16th
-  Performer.setBpm(130);         // BPM
-  Performer.setLoopSteps(16);    // Loop length, 16th notes
   
   MidiInit(); // init midi input and handling of midi events
  
@@ -274,8 +260,6 @@ delay(200);
   */
 
   buildTables();
-
-  for (int i = 0; i < POT_NUM; i++) pinMode( POT_PINS[i] , INPUT);
 
   Synth1.Init();
   Synth2.Init();
@@ -296,8 +280,113 @@ delay(200);
   }
 
 
+  // test environment for performance measurements
+  testSetup();
+  
+  // setup encoders and buttons
+  controls.begin();
 
- 
+  i2sInit();
+  // i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
+
+  //xTaskCreatePinnedToCore( audio_task, "SynthTask1", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask1, 0 );
+  //xTaskCreatePinnedToCore( control_task, "SynthTask2", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask2, 1 );
+  xTaskCreatePinnedToCore( audio_task, "SynthTask1", 5000, NULL, 2, &SynthTask1, 0 );
+  xTaskCreatePinnedToCore( control_task, "SynthTask2", 6000, NULL, 1, &SynthTask2, 1 );
+
+  // if we use semaphores and so on
+  //  xTaskNotifyGive(SynthTask1);
+  //  xTaskNotifyGive(SynthTask2);
+
+#if ESP_ARDUINO_VERSION_MAJOR < 3 
+  // timer interrupt
+  timer1 = timerBegin(1, 80, true);               // Setup general purpose timer
+  timerAttachInterrupt(timer1, &onTimer1, true);  // Attach callback
+  timerAlarmWrite(timer1, 200000, true);          // 200ms, autoreload 
+  timerAlarmEnable(timer1);  
+#else 
+  timer1 = timerBegin(1000000);               // Setup general purpose timer at 1MHz
+  timerAttachInterrupt(timer1, &onTimer1);    // Attach callback
+  timerAlarm(timer1, 200000, true, 0);        // 200ms, autoreload
+#endif
+
+#ifdef JUKEBOX_PLAY_ON_START
+  Performer.play();	            // Start playing from the 0 position
+#endif
+
+  DEBUG("setup done");
+}
+
+/* 
+ *  Finally, the LOOP () ***********************************************************************************************************
+*/
+
+void loop() { // default loopTask running on the Core1
+  // you can still place some of your code here
+  // or   vTaskDelete(NULL);
+  
+  controls.polling();
+  
+  taskYIELD(); // this can wait
+}
+
+/* 
+ *  Some debug and service routines *****************************************************************************************************************************
+*/
+
+
+void paramChange(uint8_t paramNum, float paramVal) {
+  // paramVal === param[paramNum];
+  DEBF ("param %d val %0.4f\r\n" , paramNum, paramVal);
+  paramVal *= 127.0;
+  switch (paramNum) {
+    case 0:
+      //set_bpm( 40.0f + (paramVal * 160.0f));
+      Synth2.ParseCC(CC_303_CUTOFF, paramVal);
+      break;
+    case 1:
+      Synth2.ParseCC(CC_303_RESO, paramVal);
+      break;
+    case 2:
+      Synth2.ParseCC(CC_303_OVERDRIVE, paramVal);
+      Synth2.ParseCC(CC_303_DISTORTION, paramVal);
+      break;
+    case 3:
+      Synth2.ParseCC(CC_303_ENVMOD_LVL, paramVal);
+      break;
+    case 4:
+      Synth2.ParseCC(CC_303_ACCENT_LVL, paramVal);
+      break;
+    default:
+      {}
+  }
+}
+
+
+
+void regular_checks() {  
+#ifdef MIDI_VIA_SERIAL
+  MIDI.read();
+#endif
+
+#ifdef MIDI_VIA_SERIAL2
+  MIDI2.read();
+#endif
+  
+#ifdef JUKEBOX
+  Performer.looperTask();
+#endif
+}
+
+
+
+void testSetup() {
+  
+  Performer.setPpqn(96);         // pulses per quarter note
+  Performer.setSwing(0.0);       // -1.0 .. 1.0 moving odd 16th notes forward and back. 0.667 is duplets; 0.0 means straight 16th
+  Performer.setBpm(130);         // BPM
+  Performer.setLoopSteps(16);    // Loop length, 16th notes
+  
   DEBF("SEQ: add track: %d \r\n", Performer.addTrack(TRACK_MONO, 1));
   DEBF("SEQ: add track: %d \r\n", Performer.addTrack(TRACK_MONO, 2));
   DEBF("SEQ: add track: %d \r\n", Performer.addTrack(TRACK_DRUMS, 10));
@@ -340,127 +429,4 @@ delay(200);
   
   DEBUG( Performer.Tracks[2].Patterns[0].toText());
   
-
-
-  i2sInit();
-  // i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
-
-  //xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask1, 0 );
-  //xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 8000, NULL, (1 | portPRIVILEGE_BIT), &SynthTask2, 1 );
-  xTaskCreatePinnedToCore( audio_task1, "SynthTask1", 5000, NULL, 8, &SynthTask1, 0 );
-  xTaskCreatePinnedToCore( audio_task2, "SynthTask2", 6000, NULL, 3, &SynthTask2, 1 );
-
-  // somehow we should allow tasks to run
-  // xTaskNotifyGive(SynthTask1);
-  //  xTaskNotifyGive(SynthTask2);
-
-#if ESP_ARDUINO_VERSION_MAJOR < 3 
-  // timer interrupt
-  /*
-  timer1 = timerBegin(0, 80, true);               // Setup timer for midi
-  timerAttachInterrupt(timer1, &onTimer1, true);  // Attach callback
-  timerAlarmWrite(timer1, 4000, true);            // 4000us, autoreload
-  timerAlarmEnable(timer1);
-  */
-  timer2 = timerBegin(1, 80, true);               // Setup general purpose timer
-  timerAttachInterrupt(timer2, &onTimer2, true);  // Attach callback
-  timerAlarmWrite(timer2, 200000, true);          // 200ms, autoreload 
-  timerAlarmEnable(timer2);
-  
-#else 
-  timer2 = timerBegin(1000000);               // Setup general purpose timer
-  timerAttachInterrupt(timer2, &onTimer2);  // Attach callback
-  timerAlarm(timer2, 200000, true, 0);          // 200ms, autoreload
-#endif
-
-
-
-#ifdef JUKEBOX_PLAY_ON_START
-  Performer.play();	            // Start playing from the 0 position
-#endif
-
-DEBUG("setup done");
-}
-
-static uint32_t last_ms = micros();
-
-/* 
- *  Finally, the LOOP () ***********************************************************************************************************
-*/
-
-void loop() { // default loopTask running on the Core1
-  // you can still place some of your code here
-  // or   vTaskDelete(NULL);
-  
-  // processButtons();
- // regular_checks();    
-  taskYIELD(); // this can wait
-}
-
-/* 
- *  Some debug and service routines *****************************************************************************************************************************
-*/
-
-void readPots() {
-  static const float snap = 0.003f;
-  static int i = 0;
-  float tmp;
-  static const float NORMALIZE_ADC = 1.0f / 4096.0f;
-//read one pot per call
-  tmp = (float)analogRead(POT_PINS[i]) * NORMALIZE_ADC;
-  if (fabs(tmp - param[i]) > snap) {
-    param[i] = tmp;
-  //  paramChange(i, tmp);
-  }
-
-  i++;
-  // if (i >= POT_NUM) i=0;
-  i %= POT_NUM;
-}
-
-void paramChange(uint8_t paramNum, float paramVal) {
-  // paramVal === param[paramNum];
-  DEBF ("param %d val %0.4f\r\n" , paramNum, paramVal);
-  paramVal *= 127.0;
-  switch (paramNum) {
-    case 0:
-      //set_bpm( 40.0f + (paramVal * 160.0f));
-      Synth2.ParseCC(CC_303_CUTOFF, paramVal);
-      break;
-    case 1:
-      Synth2.ParseCC(CC_303_RESO, paramVal);
-      break;
-    case 2:
-      Synth2.ParseCC(CC_303_OVERDRIVE, paramVal);
-      Synth2.ParseCC(CC_303_DISTORTION, paramVal);
-      break;
-    case 3:
-      Synth2.ParseCC(CC_303_ENVMOD_LVL, paramVal);
-      break;
-    case 4:
-      Synth2.ParseCC(CC_303_ACCENT_LVL, paramVal);
-      break;
-    default:
-      {}
-  }
-}
-
-
-
-void regular_checks() {
-  timer1_fired = false;
-  
-#ifdef MIDI_VIA_SERIAL
-  MIDI.read();
-#endif
-
-#ifdef MIDI_VIA_SERIAL2
-  MIDI2.read();
-#endif
-  
-#ifdef JUKEBOX
-//  jukebox_tick();
-  Performer.looperTask();
-#endif
-
 }
