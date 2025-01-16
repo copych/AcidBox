@@ -6,6 +6,15 @@ OledGUI::OledGUI() {
   _block_w = u8g2->getBufferTileWidth();
 }
 
+void OledGUI::begin() {
+  u8g2->begin();
+  u8g2->clearBuffer();
+  u8g2->setFont(u8g2_font_ncenB12_tr);
+  u8g2->drawStr(0, 40, "AcidBox");
+  u8g2->sendBuffer();
+  delay(200);
+}
+
 void OledGUI::draw() {
   if ( this->updateBlock() == 0 ) { // if transmitted then redraw page
     u8g2->clearBuffer();
@@ -33,6 +42,10 @@ void OledGUI::pagePattern() {
 }
 void OledGUI::pageTrack() {
   // track page
+ // u8g2->setDrawColor(1);
+  u8g2->drawRFrame(0, 0, DISPLAY_W, DISPLAY_H, 5);
+  u8g2->setFont(u8g2_font_ncenB12_tr);
+  u8g2->drawStr(10, 40, "AcidBox");
 }
 
 // to call internally: transmits only a fraction of a buffer, so it shouldn't take long

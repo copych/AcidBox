@@ -33,6 +33,7 @@ class OledGUI {
   public:
     OledGUI();
     ~OledGUI() {;};
+    void begin();
     void draw();
   
   private:
