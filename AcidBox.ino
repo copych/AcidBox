@@ -33,6 +33,7 @@
 #include "src/mixer/mixer.h"
 #include "src/sequencer/looper.h"
 #include "src/controls/controls.h"
+#include "src/gui/gui.h"
 #include <Wire.h>
 #ifdef DEBUG_TIMING
 #include "debug_timing.h"
