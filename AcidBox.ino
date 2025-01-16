@@ -115,6 +115,8 @@ volatile boolean timer1_fired = false;
 using namespace performer;
 Looper Performer;
 
+OledGUI gui;
+
 /*
  * Timer interrupt handler **********************************************************************************************************************************
 */
@@ -287,6 +289,10 @@ void setup(void) {
   // setup encoders and buttons
   controls.begin();
 
+  // start display
+  gui.begin();
+
+  // start audio output
   i2sInit();
   // i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
 
@@ -377,6 +383,8 @@ void regular_checks() {
 #ifdef JUKEBOX
   Performer.looperTask();
 #endif
+
+  gui.draw();
 }
 
 
