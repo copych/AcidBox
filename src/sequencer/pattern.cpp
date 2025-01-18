@@ -87,7 +87,7 @@ void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float int
           addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_OFF);
         }
         addEvent(i, EVT_NOTE_ON, cur_note, rnd_vel);
-          addEvent(i, EVT_NOTE_OFF, cur_note, 0);
+        addEvent(i, EVT_NOTE_OFF, cur_note, 0);
       }
       break;
     default:
@@ -189,9 +189,17 @@ bool Pattern::checkEvent(int step_num, eEventType_t evt_type, byte val1) {
 }
 
 bool Pattern::checkEvent(int step_num, eEventType_t evt_type, byte val1, byte val2) {
+  // Ensure step_num is within valid range
+  if (step_num < 0 || step_num >= Steps->size()) {
+#ifdef DEBUG_SEQUENCER  
+    DEBF("checkEvent out of bounds, step_num: %d\r\n", step_num);
+#endif    
+    return false;
+  }
+
   bool res = false;
-  for ( auto &st: Steps[step_num] ) {
-    if (st.type == evt_type && st.value1 == val1 && st.value2 == val2) { 
+  for (auto &st : Steps[step_num]) {
+    if (st.type == evt_type && st.value1 == val1 && st.value2 == val2) {
       res = true;
       break;
     }

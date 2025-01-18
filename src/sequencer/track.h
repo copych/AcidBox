@@ -3,6 +3,7 @@
 #include <Arduino.h>
 
 #include "looper_config.h"
+#include "../../config.h"
 #include "pattern.h"
 #include <vector>
 
@@ -22,8 +23,8 @@ typedef enum {  LOOP_NONE,
 
 typedef struct
 {
-  int note;
-  int length;
+  int note = 0;
+  int length = -1;
 } noteStack;
 
 class Track {
@@ -46,7 +47,10 @@ public:
   void  setMuteOnOff(bool val)                {_mute = val;};
   void  setSoloOnOff(bool val)                {_solo = val;};
   int   addPattern();
+  void  addStackNote(int note, bool isSlide);
+
   std::vector   <Pattern>         Patterns;
+  noteStack	    _noteStack[NOTE_STACK_SIZE];
 
 private:
   byte          _midiChannel      = 0;
@@ -56,8 +60,6 @@ private:
   int           _length           = 1;
   bool          _mute             = false;
   bool          _solo             = false;
-  noteStack	    _noteStack[NOTE_STACK_SIZE];
-  
 };
 } // namespace
 

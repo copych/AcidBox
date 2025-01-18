@@ -71,17 +71,17 @@ public:
 	void play();                        // reset and start from the zero position
 	void resume();                      // continues playback
 	void looperTask();                  // this is to call in loop(); ~1000Hz is quite enough, while 250Hz introduces at max +/-4ms quantization error, which may be audible
-  std::vector <Track> Tracks;
+  	std::vector <Track> Tracks;
 	
 private:
 	int				_ppqn 			= 24; 				  // MIDI sync pulses per quarter note 
 	int				_q_ppqn			= _ppqn / 4;		// often appearing 16th length
 	float			_bpm 			  = 130.0;
-	size_t	  _pulseMicros	= 60.0f * 1e6 / _ppqn / _bpm;
+	size_t	  		_pulseMicros	= 60.0f * 1e6 / _ppqn / _bpm;
 	float			_swing			  = 0.0f;				// -1.0 .. 1.0 making every odd 16th note to fire earlier or later up to the closest 32nd note
 	int				_swingPulses	= 0;
-	int       _swingMicros  = 0;
-	int       _startMicros  = 0;
+	int       		_swingMicros  = 0;
+	int       		_startMicros  = 0;
 	int				_loopSteps 		= 16;				  // Here we asume that "step" = 16th note, and "swing" is a deviation of a straight rhythm 
 	int				_currentStep 	= 0;
 	int				_currentPulse = 0;				  // pulse counter
@@ -91,15 +91,17 @@ private:
 	int				_harmonySeventh = 10;				// semitones: VII = 10, maj7 = 11, or 0 if omitted
 	int				_harmonyAddon 	= 0;				// semitones: any number 1-11, will be shifted up by an octave
 	bool			_sendSync 		  = false;		// send MIDI sync or not
-	bool      _sendControlsOnPreStep = false;
-	bool      _sendNoteOffsOnPreStep = false;
-	bool      _sendPortaAsOverlap = false;
+	bool      		_sendControlsOnPreStep = false;
+	bool      		_sendNoteOffsOnPreStep = false;
+	bool      		_sendPortaAsOverlap = false;
 	eSeqStates_t	_seqState 	= SEQ_STOP;
 	eSyncModes_t	_syncMode 	= SYNC_INT_MICROS;
 	int 			_num_tracks 	  = 0;
-	size_t 		_pulseTriggers[MAX_LOOP_STEPS];
-	size_t		_nextPulseTrigger;
-	size_t		_nextPulseMicros;
+	size_t 			_pulseTriggers[MAX_LOOP_STEPS];
+	size_t			_nextPulseTrigger;
+	size_t			_nextPulseMicros;
+
+	void handleNoteStackOnPulse();
 	
 	std::function<void(uint8_t, uint8_t, uint8_t)> _cb_midi_control;
 	std::function<void(uint8_t, uint8_t, uint8_t)> _cb_midi_note_on;
