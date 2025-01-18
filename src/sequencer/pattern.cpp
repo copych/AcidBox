@@ -126,8 +126,6 @@ bool Pattern::isSlide(int step_num) {
   if (checkEvent(step_num, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_ON) ) return true; else return false; 
 }
 
-
-
 String Pattern::toText() {
   String outStr = "";
   uint8_t patt[12][MAX_PATTERN_STEPS];
@@ -189,14 +187,6 @@ bool Pattern::checkEvent(int step_num, eEventType_t evt_type, byte val1) {
 }
 
 bool Pattern::checkEvent(int step_num, eEventType_t evt_type, byte val1, byte val2) {
-  // Ensure step_num is within valid range
-  if (step_num < 0 || step_num >= Steps->size()) {
-#ifdef DEBUG_SEQUENCER  
-    DEBF("checkEvent out of bounds, step_num: %d\r\n", step_num);
-#endif    
-    return false;
-  }
-
   bool res = false;
   for (auto &st : Steps[step_num]) {
     if (st.type == evt_type && st.value1 == val1 && st.value2 == val2) {

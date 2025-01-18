@@ -47,7 +47,7 @@ public:
   void  setMuteOnOff(bool val)                {_mute = val;};
   void  setSoloOnOff(bool val)                {_solo = val;};
   int   addPattern();
-  void  addStackNote(int note, bool isSlide);
+  bool  addStackNote(int note, bool isSlide);
 
   std::vector   <Pattern>         Patterns;
   noteStack	    _noteStack[NOTE_STACK_SIZE];

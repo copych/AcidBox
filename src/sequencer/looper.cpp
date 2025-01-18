@@ -95,19 +95,19 @@ void Looper::onPulse(){
 }
 
 void Looper::handleNoteStackOnPulse() {
+
+  DEBF("_currentPulse: %d, _nextPulseMicros: %d\r\n", _currentPulse, _nextPulseMicros);
+
   for (auto &track : Tracks) {
-    for(unsigned char i = 0; i < track._noteStack->length; i++) {
+    for(unsigned char i = 0; i < NOTE_STACK_SIZE; i++) {
       if (track._noteStack[i].length != -1 ) {
         --track._noteStack[i].length;
         if(track._noteStack[i].length == 0) {
           // TODO, this method should be better off in track but the note off event should be sent
           // This event is not available in track but in looper
           // Send a noteoff for the stack note
-          // _cb_midi_note_off(track.getMidiChannel(), track._noteStack->note, 0);
-          track._noteStack[i].length = -1;
-#ifdef DEBUG_SEQUENCER  
-          DEBF("End Notestack note: %d, length: %d\r\n", track._noteStack->note, track._noteStack[i].length);
-#endif          
+          _cb_midi_note_off(track.getMidiChannel(), track._noteStack->note, 0);
+          track._noteStack[i].length = -1;        
         }
       }
     }
@@ -207,54 +207,44 @@ void Looper::onStep() {
     uint8_t prev_note = tr.getPrevNote();
     for (auto &patt: tr.Patterns) {
       bool slide = patt.isSlide(_currentStep);
-#ifdef DEBUG_SEQUENCER
-    DEBF("Slide: %d\r\n", slide);
-    DEB("First switch\r\n");
-#endif   
     for ( auto &st: patt.Steps[_currentStep]) { // send controls first
         switch (st.type) {
-          case EVT_CONTROL_CHANGE:
-#ifdef DEBUG_SEQUENCER
-            DEB("EVT_CONTROL_CHANGE\r\n");
-#endif                
+          case EVT_CONTROL_CHANGE:              
             if (!_sendControlsOnPreStep) {
               _cb_midi_control(tr.getMidiChannel() , st.value1 , st.value2  );
             }
             break;
-          case EVT_NOTE_OFF:
-#ifdef DEBUG_SEQUENCER
-            DEB("EVT_NOTE_OFF\r\n");
-#endif                   
+          case EVT_NOTE_OFF:                 
             if (!_sendNoteOffsOnPreStep) {
-              _cb_midi_note_off(tr.getMidiChannel() , st.value1 ,  0);
+              //_cb_midi_note_off(tr.getMidiChannel() , st.value1 ,  0);
             }
             break;
         }
-      }
-#ifdef DEBUG_SEQUENCER
-            DEB("Second switch\r\n");
-#endif        
+      }      
       for ( auto &st: patt.Steps[_currentStep]) { // send notes afterwards
         switch (st.type) {
-          case EVT_NOTE_ON:
-#ifdef DEBUG_SEQUENCER
-            DEB("EVT_NOTE_ON\r\n");
-#endif             
+          case EVT_NOTE_ON:            
             if ( (!_sendControlsOnPreStep) && (tr.getTrackType() == TRACK_MONO) && !slide ) {
-              _cb_midi_note_off(tr.getMidiChannel(), prev_note , 0  );
+              //_cb_midi_note_off(tr.getMidiChannel(), prev_note , 0  );
             }
-            _cb_midi_note_on(tr.getMidiChannel(), st.value1, st.value2 );
+            
             // Add the note to the stack to trigger the note off
-            tr.addStackNote(st.value1, slide);
+            if(tr.addStackNote(st.value1, slide)) {
+              _cb_midi_note_on(tr.getMidiChannel(), st.value1, st.value2 );
+            } else {
+              #ifdef DEBUG_SEQUENCER
+                  DEB("Note stack full");
+              #endif  
+            }
 
             if ( (!_sendControlsOnPreStep) && (tr.getTrackType() == TRACK_MONO) && slide ) {
-              _cb_midi_note_off(tr.getMidiChannel(),  prev_note , 0 );
+              //_cb_midi_note_off(tr.getMidiChannel(),  prev_note , 0 );
             }
             tr.setPrevNote(st.value1);
             break;
         }
 #ifdef DEBUG_SEQUENCER        
-        DEBF("step: %d, chan: %d, evt: %s, v1: %d, v2: %d \r\n", _currentStep, tr.getMidiChannel(), patt.str_events[st.type], st.value1, st.value2);
+        //DEBF("step: %d, chan: %d, evt: %s, v1: %d, v2: %d \r\n", _currentStep, tr.getMidiChannel(), patt.str_events[st.type], st.value1, st.value2);
 #endif
       }
     }

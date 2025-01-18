@@ -7,21 +7,19 @@ int   Track::addPattern() {
   return (Patterns.size()-1);
 }
 
-void Track::addStackNote(int note, bool isSlide)
+bool Track::addStackNote(int note, bool isSlide)
 {
   for(unsigned char i = 0; i < NOTE_STACK_SIZE; i++) {
     if (_noteStack[i].length == -1) {
       int noteLength = NOTE_LENGTH_303;
       if(isSlide) {
-        noteLength = noteLength + 2;
+        noteLength = noteLength + SLIDE_LENGTH_303;          
       }
-      _noteStack[i].length = noteLength;
+      _noteStack[i].length = noteLength;  
       _noteStack[i].note = note;
-#ifdef DEBUG_SEQUENCER
-      DEBF("Note stack pos: %d, note: %d, length: %d \r\n", i, note, noteLength);
-#endif      
-      break;
+      return true;
     }
   }
+  return false;
 }
 

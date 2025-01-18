@@ -47,6 +47,9 @@ inline void handleNoteOn(uint8_t inChannel, uint8_t inNote, uint8_t inVelocity) 
 }
 
 inline void handleNoteOff(uint8_t inChannel, uint8_t inNote, uint8_t inVelocity) {
+#ifdef DEBUG_MIDI
+  DEBF("MIDI note off: %d, channel: %d, velocity: %d\r\n", inNote, inChannel, inVelocity);
+#endif  
   if (inChannel == DRUM_MIDI_CHAN )         {Drums.NoteOff(inNote);}
   else if (inChannel == SYNTH1_MIDI_CHAN )  {Synth1.on_midi_noteOFF(inNote, inVelocity);}
   else if (inChannel == SYNTH2_MIDI_CHAN )  {Synth2.on_midi_noteOFF(inNote, inVelocity);}
