@@ -81,7 +81,9 @@ int Looper::addTrack(eTrackType_t track_type, byte midi_channel){
   return (Tracks.size()-1);
 }
 
-void Looper::onPulse(){
+void Looper::onPulse() {
+  // Handle the noteStacks, if the note needs to go off, this method will send a note off.
+  handleNoteStackOnPulse();  
 	if (_currentPulse ==_nextPulseTrigger){
 		onStep();
 	} else if ((_currentPulse ==_nextPulseTrigger-1) || (_currentPulse ==_nextPulseTrigger+(_loopSteps * _q_ppqn)-1)){
@@ -89,15 +91,10 @@ void Looper::onPulse(){
   } else if ((_currentPulse ==_nextPulseTrigger+1) || (_currentPulse ==_nextPulseTrigger-(_loopSteps * _q_ppqn)+1)){
  //   onPostStep();
   }
-  // Handle the noteStacks, if the note needs to go off, this method will send a note off.
-  handleNoteStackOnPulse();
 	_currentPulse = (_currentPulse + 1) % (_loopSteps * _q_ppqn);
 }
 
 void Looper::handleNoteStackOnPulse() {
-
-  DEBF("_currentPulse: %d, _nextPulseMicros: %d\r\n", _currentPulse, _nextPulseMicros);
-
   for (auto &track : Tracks) {
     for(unsigned char i = 0; i < NOTE_STACK_SIZE; i++) {
       if (track._noteStack[i].length != -1 ) {
@@ -106,7 +103,8 @@ void Looper::handleNoteStackOnPulse() {
           // TODO, this method should be better off in track but the note off event should be sent
           // This event is not available in track but in looper
           // Send a noteoff for the stack note
-          _cb_midi_note_off(track.getMidiChannel(), track._noteStack->note, 0);
+          //DEBF("_currentPulse: %d, _nextPulseMicros: %d, stackPos: %d\r\n", _currentPulse, _nextPulseMicros, i);
+          _cb_midi_note_off(track.getMidiChannel(), track._noteStack[i].note, 0);
           track._noteStack[i].length = -1;        
         }
       }
@@ -211,7 +209,7 @@ void Looper::onStep() {
         switch (st.type) {
           case EVT_CONTROL_CHANGE:              
             if (!_sendControlsOnPreStep) {
-              _cb_midi_control(tr.getMidiChannel() , st.value1 , st.value2  );
+              //_cb_midi_control(tr.getMidiChannel() , st.value1 , st.value2  );
             }
             break;
           case EVT_NOTE_OFF:                 
@@ -233,7 +231,7 @@ void Looper::onStep() {
               _cb_midi_note_on(tr.getMidiChannel(), st.value1, st.value2 );
             } else {
               #ifdef DEBUG_SEQUENCER
-                  DEB("Note stack full");
+                  DEB("Note stack full\r\n");
               #endif  
             }
 

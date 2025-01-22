@@ -82,12 +82,12 @@ void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float int
           addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_ON);
         } else {
           cur_note = root_note;
-          addEvent(i, EVT_NOTE_OFF, cur_note, 0);
+          //addEvent(i, EVT_NOTE_OFF, cur_note, 0);
           if (i==15) rnd_vel = 100;
           addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_OFF);
         }
         addEvent(i, EVT_NOTE_ON, cur_note, rnd_vel);
-        addEvent(i, EVT_NOTE_OFF, cur_note, 0);
+        //addEvent(i, EVT_NOTE_OFF, cur_note, 0);
       }
       break;
     default:

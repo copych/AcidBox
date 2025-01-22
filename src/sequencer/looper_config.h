@@ -15,4 +15,4 @@
 
 #define NOTE_LENGTH_303 12
 #define SLIDE_LENGTH_303 20
-#define NOTE_STACK_SIZE 3
+#define NOTE_STACK_SIZE 5
