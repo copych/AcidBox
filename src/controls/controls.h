@@ -21,7 +21,20 @@ typedef enum  {BTN_PLAY, BTN_STOP, BTN_MENU,
               BTN_SEQ9, BTN_SEQ10, BTN_SEQ11, BTN_SEQ12, BTN_SEQ13, BTN_SEQ14, BTN_SEQ15, BTN_SEQ16,
               BTN_FUNC1, BTN_FUNC2,
               NUM_BUTTONS} eButtons;
-
+typedef enum {PRM_SYN1_VOL, PRM_SYN2_VOL, PRM_SMP_VOL,
+              PRM_SYN1_CUTOFF, PRM_SYN2_CUTOFF, PRM_SMP_CUTOFF,
+              PRM_SYN1_RESO, PRM_SYN2_RESO,
+              PRM_SYN1_DECAY, PRM_SYN2_DECAY,
+              PRM_SYN1_ENVMOD, PRM_SYN2_ENVMOD,
+              PRM_SYN1_ACCENT, PRM_SYN2_ACCENT,
+              PRM_SYN1_DRIVE, PRM_SYN2_DRIVE, PRM_SMP_CRUSHER,
+              PRM_SYN1_TUNING, PRM_SYN2_TUNING,
+              NUM_PARAMS} eParams;
+typedef struct {
+  eParams id;
+  float minVal;
+  float maxVal;
+} param_t;
 typedef struct {
   uint8_t mux_id; 
   uint8_t mux_Y;
