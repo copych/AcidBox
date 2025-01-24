@@ -19,7 +19,7 @@
 #define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoiled in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
 //#define DEBUG_SAMPLER
-//#define DEBUG_SYNTH
+#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
 //#define DEBUG_TIMING

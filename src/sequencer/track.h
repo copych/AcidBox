@@ -29,8 +29,8 @@ typedef struct
 
 class Track {
 public:
-  Track() {};
-  Track(eTrackType_t track_type, byte midi_channel) {_trackType = track_type; _midiChannel = midi_channel;};
+  Track();
+  Track(eTrackType_t track_type, byte midi_channel);
   eTrackType_t        getTrackType()    {return _trackType;};
   eLoopMode_t         getLoopMode()     {return _loopMode;};
   byte                getMidiChannel()  {return _midiChannel;};
@@ -47,7 +47,7 @@ public:
   void  setMuteOnOff(bool val)                {_mute = val;};
   void  setSoloOnOff(bool val)                {_solo = val;};
   int   addPattern();
-  bool  addStackNote(int note, bool isSlide);
+  bool  addStackNote(int note, int length);
 
   std::vector   <Pattern>         Patterns;
   noteStack	    _noteStack[NOTE_STACK_SIZE];

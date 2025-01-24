@@ -73,6 +73,196 @@ void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float int
   int8_t rnd_note;
   int8_t cur_note = -1;
   switch (style) {
+    case SLIDE_TEST_LOAD3:
+      for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
+        Steps[i].clear();
+        int8_t c = root_note;
+        int8_t plain = 60;
+        int8_t accent = 100;
+        switch (i)
+        {
+        // Check cases here: https://www.antonsavov.net/articles/303andmidi/#_how_does_the_midi_implementation_work_in_a_303clone
+        // case 1          
+        case 0:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c, accent);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }
+        case 1:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c+2, accent);
+          addEvent(i, event);
+          break;
+        }
+        // case 2      
+        case 2:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c+2, plain);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }
+        case 3:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c+2, plain);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }
+        case 4:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c+1, accent);
+          addEvent(i, event);
+          break;
+        }
+        // case 3
+        case 5:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c, plain);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }
+        case 6:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c, accent);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }
+        case 7:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c, accent);
+          addEvent(i, event);
+          break;
+        }
+        // case 4
+        case 8:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c, plain);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }
+        case 9:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c, accent);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }
+        case 10:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c+3, plain);
+          addEvent(i, event);
+          break;
+        }        
+        // case 5
+        case 11:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }
+        case 12:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c+4, accent);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }
+        case 13:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }  
+        case 14:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c+4, accent);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+          break;
+        }  
+        case 15:
+        {
+          sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
+          addEvent(i, event);
+          break;
+        }          
+
+
+
+        default:
+          break;
+        }
+
+
+
+
+      }
+      break;      
+    case SLIDE_TEST_LOAD2:
+      for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
+        Steps[i].clear();
+        cur_note = root_note;
+
+        rnd_vel = 60;
+        if(i == 0) 
+        {
+          sStepEvent_t event(EVT_NOTE_ON, cur_note, rnd_vel);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+        }
+        if(i == 1) 
+        {
+          sStepEvent_t event(EVT_NOTE_ON, cur_note + 1, rnd_vel);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+        }        
+        else if(i == 2) {
+          sStepEvent_t event(EVT_NOTE_ON, cur_note + 2, rnd_vel);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+        }
+      }
+      break;    
+
+    case SLIDE_TEST_LOAD:
+      for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
+        Steps[i].clear();
+        cur_note = root_note;
+
+        if(i == 0 || i == 3 || i == 12) {
+          rnd_vel = 127;
+        } else {
+          rnd_vel = 60;
+        }
+
+        if(i == 0 || i == 5 || i == 7 || i == 10) {
+          addEvent(i, EVT_NOTE_ON, cur_note, rnd_vel);
+        } 
+        else if(i == 2 || i == 3 || i == 9 || i == 12 || i == 13) 
+        {
+          sStepEvent_t event(EVT_NOTE_ON, cur_note +2, rnd_vel);
+          event.length = event.length + SLIDE_LENGTH_303;
+          addEvent(i, event);
+        }
+
+
+
+
+        // if(i % 2 == 0) {
+        //   addEvent(i, EVT_NOTE_ON, cur_note, rnd_vel);
+        // } 
+        
+        //addEvent(i, EVT_NOTE_OFF, cur_note, 0);
+      }
+      break;    
     case STYLE_TEST_LOAD:
       for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
         Steps[i].clear();
@@ -163,6 +353,11 @@ String Pattern::toText() {
 void Pattern::addEvent(int step_num, eEventType_t evt_type, byte val1, byte val2) {
   Steps[step_num].emplace_back(evt_type, val1, val2);
 }
+
+void Pattern::addEvent(int step_num, sStepEvent_t event) {
+  Steps[step_num].emplace_back(event);
+}
+
 
 bool Pattern::checkEvent(int step_num, eEventType_t evt_type) {
   bool res = false;

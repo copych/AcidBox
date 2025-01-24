@@ -24,6 +24,9 @@ typedef enum  { STYLE_STRAIGHT,
                 STYLE_BREAK,
                 STYLE_HANG,
                 STYLE_TEST_LOAD,
+                SLIDE_TEST_LOAD,
+                SLIDE_TEST_LOAD2,
+                SLIDE_TEST_LOAD3,
                 NUM_STYLES
 } eStyle_t;
 
@@ -43,6 +46,7 @@ struct sStepEvent_t{
                 eEventType_t type = EVT_NONE;
                 byte value1 = 0;
                 byte value2 = 0;
+                int length = NOTE_LENGTH_303;
                 //construct
                 sStepEvent_t (eEventType_t evt_type, byte val1, byte val2) :    type(evt_type), value1(val1), value2(val2)    {}
 } ;
@@ -109,6 +113,7 @@ const uint8_t _OH_chances[NUM_STYLES][16] = {
   String          toText();
   
   void addEvent(int step_num, eEventType_t evt_type, byte val1, byte val2); 
+  void addEvent(int step_num, sStepEvent_t event);
   void setLength(int new_length)          {_length = constrain(new_length, 1, MAX_PATTERN_STEPS);};
   void setActiveOnOff(bool val)           {_active = val;}; 
   void generateDrums(eStyle_t style, float intencity /*0.0 - 1.0*/, float tension /*0.0 - 1.0*/);

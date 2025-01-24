@@ -24,7 +24,10 @@ void FxDelay::Reset(void){
         delayLine_l[i] = 0;
         delayLine_r[i] = 0;
     }
-    delayLen = 60.0f / bpm * 1.5f * (float)acidbox_min(SAMPLE_RATE,MAX_DELAY);
-    delayToMix = 1.0f;
-    delayFeedback = 0.2f;
+    // delayLen = 60.0f / bpm * 1.5f * (float)acidbox_min(SAMPLE_RATE,MAX_DELAY);
+    // delayToMix = 1.0f;
+    // delayFeedback = 0.2f;
+    delayLen = 0.0f;
+    delayToMix = 0.0f;
+    delayFeedback = 0.0f;    
 }

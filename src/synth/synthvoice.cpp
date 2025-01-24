@@ -140,6 +140,11 @@ void SynthVoice::mva_reset(mva_data *p) {
 void  SynthVoice::note_on(uint8_t midiNote, bool slide, bool accent) {
   _accent = accent;
   _slide = slide || _portamento;
+
+#ifdef DEBUG_SYNTH
+  DEBF("synth: note: %d, slide: %d, accent: %d\r\n", midiNote, slide, accent);
+#endif
+
   _targetStep = Tables::midi_tbl_steps[midiNote];
   _effectiveStep = _targetStep * _tuning * _pitchbend;
   if (mva1.n == 1) {

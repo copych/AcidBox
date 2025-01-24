@@ -227,7 +227,7 @@ void Looper::onStep() {
             }
             
             // Add the note to the stack to trigger the note off
-            if(tr.addStackNote(st.value1, slide)) {
+            if(tr.addStackNote(st.value1, st.length)) {
               _cb_midi_note_on(tr.getMidiChannel(), st.value1, st.value2 );
             } else {
               #ifdef DEBUG_SEQUENCER
