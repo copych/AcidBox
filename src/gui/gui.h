@@ -11,7 +11,15 @@
 #define DISPLAY_H 64
 #define DISPLAY_ROTATE 0 // can be 0, 90, 180 or 270
 
-typedef enum {PG_PATTERN, PG_TRACK, NUM_PAGES} UIpage_t;
+#define FONT_TINY     u8g2_font_squeezed_r6_tr 
+//#define FONT_TINY     u8g2_font_04b_03_tr
+#define FONT_SMALL    u8g2_font_6x13_tr
+//#define FONT_MID      u8g2_font_ncenB12_tr
+#define FONT_MID      u8g2_font_7x14_tr
+#define FONT_BIG      u8g2_font_balthasar_titling_nbp_tr
+#define FONT_HUGE     u8g2_font_fub42_tr
+
+typedef enum {PG_ABOUT, PG_PATTERN, PG_TRACK, PG_PARAM, PG_LOADCFG, PG_SAVECFG, PG_SETUP, NUM_PAGES} UIpage_t;
 
 // DO NOT CHANGE
 #if (DISPLAY_ROTATE==180)
@@ -25,9 +33,9 @@ typedef enum {PG_PATTERN, PG_TRACK, NUM_PAGES} UIpage_t;
 #endif
 
 #define W_H_DIV X
-#define _U8_CONCAT( ctrl, w, div, h) U8G2_ ## ctrl ## _ ## w ## div ## h ## _NONAME_F_HW_I2C
-#define U8_CONCAT( ctrl, w, div, h) _U8_CONCAT( ctrl, w, div, h)
-#define U8_OBJECT U8_CONCAT( DISPLAY_CONTROLLER, DISPLAY_W, W_H_DIV, DISPLAY_H)
+#define _U8_CONCAT(ctrl, w, div, h) U8G2_ ## ctrl ## _ ## w ## div ## h ## _NONAME_F_HW_I2C
+#define U8_CONCAT(ctrl, w, div, h) _U8_CONCAT(ctrl, w, div, h)
+#define U8_OBJECT U8_CONCAT(DISPLAY_CONTROLLER, DISPLAY_W, W_H_DIV, DISPLAY_H)
 
 class OledGUI {
   public:
@@ -42,13 +50,20 @@ class OledGUI {
     int           _block_w = 0;
     int           _cur_xt = 0;
     int           _cur_yt = 0;
-    UIpage_t      _cur_page = PG_TRACK;
+    int           _header_h = 12;  
+    int           _footer_w = 12;  
+    UIpage_t      _cur_page = PG_ABOUT;
     int           updateBlock();
     U8_OBJECT*    u8g2;
 
     // page drawing routines
+    void pageAbout();
     void pagePattern();
     void pageTrack();
+    void pageParam();
+    void pageLoadCfg();
+    void pageSaveCfg();
+    void pageSetup();
 
     // misc info drawing routines
     void drawHeader();
