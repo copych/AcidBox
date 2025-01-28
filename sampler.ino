@@ -136,6 +136,7 @@ void Sampler::Init() {
     CreateDefaultSamples(LittleFS);
     ScanContents(LittleFS, myDir.c_str() , 5);
   }
+  repeat = 12;
   repeat = min(sampleInfoCount , repeat); // 12 (an octave) or less
 
   if (repeat==0) repeat = 1;
@@ -210,15 +211,12 @@ void Sampler::Init() {
       }
       wav.dataSize = min(wav.dataSize, buffPointer-oldPointer); // some samples have wrong header info
       
-  //    samplePlayer[i].file =            f;// store file pointer for future use // nope, we don't, we close file, LittleFS won't let us keep so many open files, neither  memory...
       samplePlayer[i].sampleRate =      wav.sampleRate;
 #ifdef DEBUG_SAMPLER
       DEBF("fileSize: %d\n",            wav.fileSize);
       DEBF("lengthOfData: %d\n",        wav.lengthOfData);
       DEBF("numberOfChannels: %d\n",    wav.numberOfChannels);
       DEBF("sampleRate: %d\n",          wav.sampleRate);
-//      DEBF("byteRate: %d\n",            wav.byteRate);
-//      DEBF("bytesPerSample: %d\n",      wav.bytesPerSample);
       DEBF("bitsPerSample: %d\n",       wav.bitsPerSample);
       DEBF("dataSize: %d\n",            wav.dataSize); 
 //      DEBF("dataStartInBuffer: %d\n",   samplePlayer[i].sampleStart);
@@ -339,6 +337,12 @@ inline void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
   if ( sampleInfoCount == 0 ) {
     return;
   }
+#ifdef PRELOAD_ALL
+  if ( progNumber >= 99 ) { // if progNumber >= 99 we can access all samples in a piano roll
+    note = note % repeat;
+    note = note + (repeat * (progNumber)) ;
+  }
+#endif
   int j = note % sampleInfoCount;
   int param_i = note % repeat + 1;
 
@@ -491,7 +495,9 @@ void Sampler::SetPlaybackSpeed( float value ) {
 
 void Sampler::SetProgram( uint8_t prog ) {
   progNumber = prog ;
+#ifndef PRELOAD_ALL
   Init();
+#endif
 }
 
 

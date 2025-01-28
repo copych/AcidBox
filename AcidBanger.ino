@@ -295,21 +295,25 @@ static const byte button_pins[ButLast] = {
 
 
 static void send_midi_noteon(byte chan, byte note, byte vol) {
-#ifdef MIDI_VIA_SERIAL  
-  MIDI.sendNoteOn(note, vol, chan);
-#endif
-#ifdef MIDI_VIA_SERIAL2  
-  MIDI2.sendNoteOn(note, vol, chan);
+#ifdef ENABLE_MIDI_OUT
+  #ifdef MIDI_VIA_SERIAL  
+    MIDI.sendNoteOn(note, vol, chan);
+  #endif
+  #ifdef MIDI_VIA_SERIAL2  
+    MIDI2.sendNoteOn(note, vol, chan);
+  #endif
 #endif
   handleNoteOn( chan, note, vol) ;
 }
 
 static void send_midi_noteoff(byte chan, byte note) {
-#ifdef MIDI_VIA_SERIAL  
-  MIDI.sendNoteOn(note, 0, chan);
-#endif
-#ifdef MIDI_VIA_SERIAL2  
-  MIDI2.sendNoteOn(note, 0, chan);
+#ifdef ENABLE_MIDI_OUT
+  #ifdef MIDI_VIA_SERIAL  
+    MIDI.sendNoteOn(note, 0, chan);
+  #endif
+  #ifdef MIDI_VIA_SERIAL2  
+    MIDI2.sendNoteOn(note, 0, chan);
+  #endif
 #endif
   handleNoteOff( chan, note, 0) ;
 }
@@ -471,13 +475,15 @@ void sequencer_step(byte step) {
   if (Break.after == bar_current && step == 0) {
     instr_noteon(NumInstruments - 1, 127, 0, 0);
     //    instr_noteon_raw(NumInstruments-1, CRASH_NOTE, 127, 0);
+#ifdef PRELOAD_ALL
     if (flip(30)) {
       //change drumkit
       current_drumkit = myRandom(((Drums.GetSamplesCount()-1)/12)) * 12 ;
-      
-//#ifdef DEBUG_JUKEBOX
+      Drums.SetProgram(current_drumkit);
+#ifdef DEBUG_JUKEBOX
       DEBF("Selected drumkit: %d\r\n" , current_drumkit);
-//#endif
+#endif
+#endif
     }
 #ifdef DEBUG_JUKEBOX
     DEBUG("CRASH!!!!!!!!!!!!!!!!!!!!!");

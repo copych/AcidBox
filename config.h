@@ -1,7 +1,7 @@
 #pragma once
 
 #define PROG_NAME       "ESP32 AcidBox"
-#define VERSION         "v.1.3.6 S3"
+#define VERSION         "v.1.3.7 S3"
 
 #define BOARD_HAS_UART_CHIP
 
@@ -18,17 +18,18 @@
 
 #define DEBUG_ON              // note that debugging eats ticks initially belonging to real-time tasks, so sound output will be spoild in most cases, turn it off for production build
 //#define DEBUG_MASTER_OUT      // serial monitor plotter will draw the output waveform
-//#define DEBUG_SAMPLER
+#define DEBUG_SAMPLER
 //#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
 //#define DEBUG_TIMING
-//#define DEBUG_MIDI
+#define DEBUG_MIDI
 
-//#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
-#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
+#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
+//#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
 #define MIDIRX_PIN      4       // this pin is used for input when MIDI_VIA_SERIAL2 defined (note that default pin 17 won't work with PSRAM)
 #define MIDITX_PIN      15      // this pin will be used for output (not implemented yet) when MIDI_VIA_SERIAL2 defined
+//#define ENABLE_MIDI_OUT 
 
 #define POT_NUM 3
 #if defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -102,7 +103,7 @@ const float  NORM_RADIANS = ONE_DIV_TWOPI * TABLE_SIZE;
   #define DEFAULT_DRUMKIT 4           // /data/4/ folder
   #define SAMPLECNT       8           // how many samples we prepare (here just 8)
 #else
-//  #define PRELOAD_ALL                 // allows operating all the samples in realtime
+  #define PRELOAD_ALL                 // allows operating all the samples in realtime, requires more time to start, recommended for OPI PSRAM of ESP32S3
   #define PSRAM_SAMPLER_CACHE 3145728 // bytes, we are going to preload ALL the samples from FLASH to PSRAM
                                       // we divide samples by octaves to use modifiers to particular instruments, not just note numbers
                                       // i.e. we know that all the "C" notes in all octaves are bass drums, and CC_808_BD_TONE affects all BD's
