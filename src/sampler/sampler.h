@@ -217,6 +217,12 @@ void Sampler::NoteOn( uint8_t note, uint8_t vol ) {
   if ( sampleInfoCount == 0 ) {
     return;
   }
+#ifdef PRELOAD_ALL
+  if ( progNumber >= 99 ) { // if progNumber >= 99 we can access all samples in a piano roll
+    note = note % repeat;
+    note = note + (repeat * (progNumber)) ;
+  }
+#endif
   int j = note % sampleInfoCount;
   int param_i = note % repeat + 1;
 
