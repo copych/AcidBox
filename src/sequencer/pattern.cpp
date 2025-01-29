@@ -73,7 +73,7 @@ void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float int
   int8_t rnd_note;
   int8_t cur_note = -1;
   switch (style) {
-    case SLIDE_TEST_LOAD3:
+    case SLIDE_TEST_LOAD:
       for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
         Steps[i].clear();
         int8_t c = root_note;
@@ -194,75 +194,11 @@ void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float int
           addEvent(i, event);
           break;
         }          
-
-
-
         default:
           break;
         }
-
-
-
-
       }
       break;      
-    case SLIDE_TEST_LOAD2:
-      for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
-        Steps[i].clear();
-        cur_note = root_note;
-
-        rnd_vel = 60;
-        if(i == 0) 
-        {
-          sStepEvent_t event(EVT_NOTE_ON, cur_note, rnd_vel);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
-        }
-        if(i == 1) 
-        {
-          sStepEvent_t event(EVT_NOTE_ON, cur_note + 1, rnd_vel);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
-        }        
-        else if(i == 2) {
-          sStepEvent_t event(EVT_NOTE_ON, cur_note + 2, rnd_vel);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
-        }
-      }
-      break;    
-
-    case SLIDE_TEST_LOAD:
-      for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
-        Steps[i].clear();
-        cur_note = root_note;
-
-        if(i == 0 || i == 3 || i == 12) {
-          rnd_vel = 127;
-        } else {
-          rnd_vel = 60;
-        }
-
-        if(i == 0 || i == 5 || i == 7 || i == 10) {
-          addEvent(i, EVT_NOTE_ON, cur_note, rnd_vel);
-        } 
-        else if(i == 2 || i == 3 || i == 9 || i == 12 || i == 13) 
-        {
-          sStepEvent_t event(EVT_NOTE_ON, cur_note +2, rnd_vel);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
-        }
-
-
-
-
-        // if(i % 2 == 0) {
-        //   addEvent(i, EVT_NOTE_ON, cur_note, rnd_vel);
-        // } 
-        
-        //addEvent(i, EVT_NOTE_OFF, cur_note, 0);
-      }
-      break;    
     case STYLE_TEST_LOAD:
       for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
         Steps[i].clear();

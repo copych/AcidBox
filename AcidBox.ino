@@ -400,13 +400,11 @@ void regular_checks() {
   gui.draw();
 }
 
-
-
 void testSetup() {
   
   Performer.setPpqn(96);         // pulses per quarter note
   Performer.setSwing(0.0);       // -1.0 .. 1.0 moving odd 16th notes forward and back. 0.667 is duplets; 0.0 means straight 16th
-  Performer.setBpm(120);         // BPM
+  Performer.setBpm(130);         // BPM
   Performer.setLoopSteps(16);    // Loop length, 16th notes
   
   DEBF("SEQ: add track: %d \r\n", Performer.addTrack(TRACK_MONO, 1));
@@ -418,12 +416,12 @@ void testSetup() {
   DEBF("SEQ: Track 2: add pattern: %d \r\n", Performer.Tracks[2].addPattern());
   
   Performer.Tracks[0].Patterns[0].generateNoteSet(0.5, 0.5);
-  Performer.Tracks[0].Patterns[0].generateMelody(48, SLIDE_TEST_LOAD3, 1.0 , 0.0, 1.0);
+  Performer.Tracks[0].Patterns[0].generateMelody(48, SLIDE_TEST_LOAD, 1.0 , 0.0, 1.0);
   
-  //Performer.Tracks[1].Patterns[0].generateNoteSet(0.5, 0.5);
-  //Performer.Tracks[1].Patterns[0].generateMelody(36, STYLE_TEST_LOAD, 1.0 , 0.0, 1.0);
+  Performer.Tracks[1].Patterns[0].generateNoteSet(0.5, 0.5);
+  Performer.Tracks[1].Patterns[0].generateMelody(36, STYLE_TEST_LOAD, 1.0 , 0.0, 1.0);
   
-  //Performer.Tracks[2].Patterns[0].generateDrums( STYLE_TEST_LOAD, 1.0 , 0.0);
+  Performer.Tracks[2].Patterns[0].generateDrums( STYLE_TEST_LOAD, 1.0 , 0.0);
 
   Synth1.ParseCC(CC_303_WAVEFORM, 0);
   Synth1.ParseCC(CC_303_VOLUME, 60);

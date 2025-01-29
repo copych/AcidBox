@@ -161,11 +161,8 @@ inline void FxReverb::Init() {
         DEB("REVERB: allPassBuf2 : ");
         DEBF("%d Bytes RAM allocated for reverb buffer, &=%#010x\r\n", sizeof(float) * ALLPASS_BUF_LEN_2, allPassBuf2);
     }
-    //SetLevel( 1.0f );
-    //SetTime( 0.5f );
-    SetLevel( 0.0f );
-    SetTime( 0.0f );
-
+    SetLevel( 1.0f );
+    SetTime( 0.5f );
 }
 
 inline void FxReverb::SetTime(float value) {

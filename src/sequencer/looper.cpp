@@ -70,10 +70,7 @@ void Looper::setGrid() {
 		} else {
 			_pulseTriggers[i] = i * _q_ppqn + _swingPulses;
 		}
- //   DEB(_pulseTriggers[i]);
- //   DEB(", ");
 	}
- DEBUG();
 }
 
 int Looper::addTrack(eTrackType_t track_type, byte midi_channel){
@@ -100,10 +97,6 @@ void Looper::handleNoteStackOnPulse() {
       if (track._noteStack[i].length != -1 ) {
         --track._noteStack[i].length;
         if(track._noteStack[i].length == 0) {
-          // TODO, this method should be better off in track but the note off event should be sent
-          // This event is not available in track but in looper
-          // Send a noteoff for the stack note
-          //DEBF("_currentPulse: %d, _nextPulseMicros: %d, stackPos: %d\r\n", _currentPulse, _nextPulseMicros, i);
           _cb_midi_note_off(track.getMidiChannel(), track._noteStack[i].note, 0);
           track._noteStack[i].length = -1;        
         }
@@ -241,9 +234,6 @@ void Looper::onStep() {
             tr.setPrevNote(st.value1);
             break;
         }
-#ifdef DEBUG_SEQUENCER        
-        //DEBF("step: %d, chan: %d, evt: %s, v1: %d, v2: %d \r\n", _currentStep, tr.getMidiChannel(), patt.str_events[st.type], st.value1, st.value2);
-#endif
       }
     }
   }

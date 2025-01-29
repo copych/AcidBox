@@ -25,8 +25,6 @@ typedef enum  { STYLE_STRAIGHT,
                 STYLE_HANG,
                 STYLE_TEST_LOAD,
                 SLIDE_TEST_LOAD,
-                SLIDE_TEST_LOAD2,
-                SLIDE_TEST_LOAD3,
                 NUM_STYLES
 } eStyle_t;
 
