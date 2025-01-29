@@ -5,6 +5,7 @@
 #include <LittleFS.h>
 #include "midi_config.h"
 #include "../fx/fx_filtercrusher.h"
+#include "../general/general.h"
 
 class Sampler {
   public:

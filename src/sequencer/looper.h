@@ -15,6 +15,7 @@ this pattern looper is intended for live midi looping
 #include "looper_config.h"
 #include <vector>
 #include "track.h"
+#include "../general/general.h"
 
 namespace performer {
 

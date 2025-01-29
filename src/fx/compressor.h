@@ -3,7 +3,7 @@
 #define DSY_COMPRESSOR_H
 
 #include "Arduino.h"
-#include "../../general.h"
+#include "../general/general.h"
 
 /** dynamics compressor
 

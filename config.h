@@ -22,9 +22,9 @@
 //#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
-//#define DEBUG_TIMING
-#define DEBUG_MIDI
-#define DEBUG_SEQUENCER
+#define DEBUG_TIMING
+//#define DEBUG_MIDI
+//#define DEBUG_SEQUENCER
 
 //#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
 //#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 

@@ -3,7 +3,7 @@
 #define FXFCR_H
 
 #include "Arduino.h"
-#include "../../general.h"
+#include "../general/general.h"
 
 /*
    this file includes some simple effects

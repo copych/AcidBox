@@ -2,7 +2,7 @@
 #define rosic_BiquadFilter_h
 
 #include "../../config.h"
-#include "../../general.h"
+#include "../general/general.h"
 
 /**
 This is an implementation of a simple one-pole filter unit.

@@ -2,6 +2,8 @@
 #ifndef AD_H
 #define AD_H
 
+#include "../general/general.h"
+
 /**
 This is an AD envelope generator made of an ADSR generator by cutting SR )))
 */

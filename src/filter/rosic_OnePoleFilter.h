@@ -1,6 +1,6 @@
 #ifndef rosic_OnePoleFilter_h
 #define rosic_OnePoleFilter_h
-#include "general.h"
+#include "../general/general.h"
 
 /**
   This is an implementation of a simple one-pole filter unit.

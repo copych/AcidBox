@@ -2,14 +2,6 @@
 #include <Arduino.h>
 #include "../../config.h"
 
-
-// Duplicate from general
-inline float fclamp(float in, float minV, float maxV){
-  if (in>maxV) return maxV;
-  if (in<minV) return minV;
-  return in;
-}
-
 inline bool flip(int percent) {
   if (random(101) <= percent) return true; else return false;
 }

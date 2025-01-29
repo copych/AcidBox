@@ -1,7 +1,7 @@
 #pragma once
 #ifndef OVERDRIVE_H
 #define OVERDRIVE_H
-#include "general.h"
+#include "../general/general.h"
 #include "../filter/rosic_BiquadFilter.h"
 
 class Overdrive

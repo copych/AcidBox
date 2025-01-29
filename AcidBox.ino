@@ -22,7 +22,7 @@
 #pragma GCC optimize ("O2")
 #include "config.h"
 #include "tables.h"
-#include "general.h"
+#include "src/general/general.h"
 #include "src/fx/fx_delay.h"
 #ifndef NO_PSRAM
 #include "src/fx/fx_reverb.h"

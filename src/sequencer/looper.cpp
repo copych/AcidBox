@@ -55,7 +55,7 @@ void Looper::setPpqn(int new_ppqn){
 }
 
 void Looper::setSwing(float new_swing) {
-	fclamp(new_swing, -1.0, 1.0);
+	General::fclamp(new_swing, -1.0, 1.0);
 	_swing = new_swing;
 	_swingPulses = round( new_swing * (_q_ppqn / 2) );
 	_swingMicros = _swingPulses * _pulseMicros; 			// microseconds to shift odd 16th notes
@@ -83,11 +83,7 @@ void Looper::onPulse() {
   handleNoteStackOnPulse();  
 	if (_currentPulse ==_nextPulseTrigger){
 		onStep();
-	} else if ((_currentPulse ==_nextPulseTrigger-1) || (_currentPulse ==_nextPulseTrigger+(_loopSteps * _q_ppqn)-1)){
-  //  onPreStep();
-  } else if ((_currentPulse ==_nextPulseTrigger+1) || (_currentPulse ==_nextPulseTrigger-(_loopSteps * _q_ppqn)+1)){
- //   onPostStep();
-  }
+	}
 	_currentPulse = (_currentPulse + 1) % (_loopSteps * _q_ppqn);
 }
 
@@ -105,85 +101,6 @@ void Looper::handleNoteStackOnPulse() {
   }
 }
 
-/*
-void Looper::onPreStep(){
-  int preStep = (_currentStep + 1 ) % _loopSteps;
-  for ( auto &tr: Tracks) {
-    for ( auto &patt: tr.Patterns) {
-#if defined MIDI_VIA_SERIAL || defined MIDI_VIA_SERIAL2
-        for ( auto &st: patt.Steps[preStep]) { // send controls or note-offs first
-          switch (st.type) {
-            case EVT_CONTROL_CHANGE:
-              if (_sendControlsOnPreStep) {
-                MIDI.sendControlChange ( st.value1 , st.value2 , tr.getMidiChannel() );
-              }
-              break;
-            case EVT_NOTE_OFF:
-              if (_sendNoteOffsOnPreStep) {
-                MIDI.sendNoteOff ( st.value1 ,  0,  tr.getMidiChannel() );
-              }
-              break;
-            case EVT_NOTE_ON:
-              // terminate current sounding note
-              if (_sendNoteOffsOnPreStep) {
-                if (tr.getTrackType() == TRACK_MONO) MIDI.sendNoteOff ( tr.getPrevNote() , 0, tr.getMidiChannel() );
-              }
-              break;
-          }
-        }
-#endif
-    }
-  }
-  // to be sure that we first send controller data and note-OFFs, and then send note-ONs
- // DEBF("preStep for %d \r\n", _currentStep);
-}
-
-
-
-void Looper::onPostStep(){
-  if (_sendPortaAsOverlap) {
-    for ( auto &tr: Tracks) {
-      for ( auto &patt: tr.Patterns) {
-        for ( auto &st: patt.Steps[_currentStep]) { // send controls or note-offs first
-          switch (st.type) {
-            case EVT_CONTROL_CHANGE:
-              if (st.value1 == CC_PORTAMENTO && st.value2 > 63) { // slide on
-                MIDI.sendControlChange ( st.value1 , st.value2 , tr.getMidiChannel() );
-              }
-              break;
-          }
-        }
-      }
-    }
-    for ( auto &tr: Tracks) {
-      for ( auto &patt: tr.Patterns) {
-  #if defined MIDI_VIA_SERIAL || defined MIDI_VIA_SERIAL2
-          for ( auto &st: patt.Steps[_currentStep]) { // send controls or note-offs first
-            switch (st.type) {
-              case EVT_CONTROL_CHANGE:
-                if (_sendControlsOnPreStep) {
-                  MIDI.sendControlChange ( st.value1 , st.value2 , tr.getMidiChannel() );
-                }
-                break;
-              case EVT_NOTE_OFF:
-                if (_sendNoteOffsOnPreStep) {
-                  MIDI.sendNoteOff ( st.value1 ,  0,  tr.getMidiChannel() );
-                }
-                break;
-              case EVT_NOTE_ON:
-                // terminate current sounding note
-                if (_sendNoteOffsOnPreStep) {
-                  if (tr.getTrackType() == TRACK_MONO) MIDI.sendNoteOff ( tr.getPrevNote() , 0, tr.getMidiChannel() );
-                }
-                break;
-            }
-          }
-  #endif
-      }
-    }
-  }
-}
-*/
 void Looper::onStep() {  
   _currentStep++;
 	_currentStep = _currentStep % _loopSteps;
