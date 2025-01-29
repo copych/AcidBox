@@ -22,7 +22,7 @@
 //#define DEBUG_SYNTH
 //#define DEBUG_JUKEBOX
 //#define DEBUG_FX
-#define DEBUG_TIMING
+//#define DEBUG_TIMING
 //#define DEBUG_MIDI
 //#define DEBUG_SEQUENCER
 
