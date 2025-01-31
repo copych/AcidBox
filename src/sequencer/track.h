@@ -31,6 +31,7 @@ class Track {
 public:
   Track();
   Track(eTrackType_t track_type, byte midi_channel);
+
   eTrackType_t        getTrackType()    {return _trackType;};
   eLoopMode_t         getLoopMode()     {return _loopMode;};
   byte                getMidiChannel()  {return _midiChannel;};
@@ -38,7 +39,6 @@ public:
   int                 getLength()       {return _length;};
   bool                isMute()          {return _mute;};
   bool                isSolo()          {return _solo;};
-  
   
   void  setTrackType(eTrackType_t new_type)   {_trackType = new_type;};
   void  setLoopMode(eLoopMode_t new_mode)     {_loopMode = new_mode;};

@@ -114,44 +114,35 @@ void Looper::onStep() {
 #endif     
     uint8_t prev_note = tr.getPrevNote();
     for (auto &patt: tr.Patterns) {
-      bool slide = patt.isSlide(_currentStep);
-    for ( auto &st: patt.Steps[_currentStep]) { // send controls first
-        switch (st.type) {
-          case EVT_CONTROL_CHANGE:              
-            if (!_sendControlsOnPreStep) {
-              //_cb_midi_control(tr.getMidiChannel() , st.value1 , st.value2  );
-            }
-            break;
-          case EVT_NOTE_OFF:                 
-            if (!_sendNoteOffsOnPreStep) {
-              //_cb_midi_note_off(tr.getMidiChannel() , st.value1 ,  0);
-            }
-            break;
+      for ( auto &st: patt.Steps[_currentStep]) { // send controls first
+          switch (st.type) {
+            case EVT_CONTROL_CHANGE:              
+              if (!_sendControlsOnPreStep) {
+                //_cb_midi_control(tr.getMidiChannel() , st.value1 , st.value2  );
+              }
+              break;
+            case EVT_NOTE_OFF:                 
+              if (!_sendNoteOffsOnPreStep) {
+                //_cb_midi_note_off(tr.getMidiChannel() , st.value1 ,  0);
+              }
+              break;
+          }
+        }      
+        for ( auto &st: patt.Steps[_currentStep]) { // send notes afterwards
+          switch (st.type) {
+            case EVT_NOTE_ON:            
+              // Add the note to the stack to trigger the note off
+              if(tr.addStackNote(st.value1, st.length)) {
+                _cb_midi_note_on(tr.getMidiChannel(), st.value1, st.value2 );
+              } else {
+                #ifdef DEBUG_SEQUENCER
+                    DEB("Note stack full\r\n");
+                #endif  
+              }
+              tr.setPrevNote(st.value1);
+              break;
+          }
         }
-      }      
-      for ( auto &st: patt.Steps[_currentStep]) { // send notes afterwards
-        switch (st.type) {
-          case EVT_NOTE_ON:            
-            if ( (!_sendControlsOnPreStep) && (tr.getTrackType() == TRACK_MONO) && !slide ) {
-              //_cb_midi_note_off(tr.getMidiChannel(), prev_note , 0  );
-            }
-            
-            // Add the note to the stack to trigger the note off
-            if(tr.addStackNote(st.value1, st.length)) {
-              _cb_midi_note_on(tr.getMidiChannel(), st.value1, st.value2 );
-            } else {
-              #ifdef DEBUG_SEQUENCER
-                  DEB("Note stack full\r\n");
-              #endif  
-            }
-
-            if ( (!_sendControlsOnPreStep) && (tr.getTrackType() == TRACK_MONO) && slide ) {
-              //_cb_midi_note_off(tr.getMidiChannel(),  prev_note , 0 );
-            }
-            tr.setPrevNote(st.value1);
-            break;
-        }
-      }
     }
   }
 }

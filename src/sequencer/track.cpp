@@ -11,7 +11,7 @@ Track::Track(eTrackType_t track_type, byte midi_channel) {
   _midiChannel = midi_channel;
 };
 
-int   Track::addPattern() {
+int Track::addPattern() {
   Patterns.emplace_back(Pattern());
   return (Patterns.size()-1);
 }
@@ -27,4 +27,3 @@ bool Track::addStackNote(int note, int length)
   }
   return false;
 }
-

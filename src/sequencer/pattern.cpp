@@ -248,10 +248,6 @@ void Pattern::generateNoteSet(float tension /*0.0 - 1.0*/, float randomness){
     _current_note_set = _semitones[idx];
 }
 
-bool Pattern::isSlide(int step_num) {
-  if (checkEvent(step_num, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_ON) ) return true; else return false; 
-}
-
 String Pattern::toText() {
   String outStr = "";
   uint8_t patt[12][MAX_PATTERN_STEPS];
