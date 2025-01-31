@@ -9,7 +9,7 @@ Track* Looper::getTrack(int trackNum) {
   if(Tracks.size() > trackNum) {
     return &Tracks[trackNum];
   }
-  throw std::invalid_argument("Vector out of bounds");
+  throw std::invalid_argument("Tracks vector out of bounds");
 };
 
 
@@ -122,7 +122,7 @@ void Looper::onStep() {
     DEBF("Track midi: %d\r\n", tr.getMidiChannel());
 #endif     
     uint8_t prev_note = tr.getPrevNote();
-    for (auto &patt: tr.Patterns) {
+    for (auto &patt: *tr.getPatterns()) {
       for ( auto &st: patt.Steps[_currentStep]) { // send controls first
           switch (st.type) {
             case EVT_CONTROL_CHANGE:              

@@ -63,8 +63,6 @@ void Pattern::generateDrumInstr(eDrumInstr_t instr, eStyle_t style, float intens
       if (flip((int)(60 * intensity))) rnd_vel = DRUM_ACCENTED; else rnd_vel = DRUM_NORMAL;
       addEvent(i, EVT_NOTE_ON, _drum_notes[instr], rnd_vel);
     }
-
-    
   }
 }
 

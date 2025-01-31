@@ -139,8 +139,6 @@ private:
   bool              _active     = true;
   int               _id         = -1;
   int8_t            _note_chances[16]   = {77, 63, 63, 37, 63, 63, 50, 63, 37, 77, 90, 10, 77, 63, 57, 57};
-  int8_t            _slide_chances[16]  = {10, 90, 50, 90, 50, 40, 60, 60, 40, 90, 50, 90, 30, 30, 30, 60};
-  int8_t            _accent_chances[16] = {77, 63, 63, 37, 63, 63, 50, 63, 37, 77, 90, 10, 77, 63, 57, 57};
   
   std::vector<int8_t> _current_note_set = {_root_note};
 };

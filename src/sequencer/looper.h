@@ -40,7 +40,6 @@ class Looper {
 public:
 	Looper() {};
 	
-
 	int getBpm() 						{return _bpm;}
 	int getLoopSteps() 					{return _loopSteps;}
 	int getCurrentStep() 				{return _currentStep;}
@@ -51,6 +50,7 @@ public:
 	int addTrack(eTrackType_t trackType, byte midiChannel); // adds a track, returns the index of a newly added track (not thread-safe)
 	int addPattern(int trackNum); // adds a pattern to a track with id=trackNum, returns the index of a newly added pattern (not thread-safe)
 	Track* getTrack(int trackNum);
+	int getNumberOfTracks()				{return Tracks.size();}
 
 	void setSyncOnOff(bool sendSync) 	{_sendSync = sendSync;}
 	void setSeqState(eSeqStates_t new_state);

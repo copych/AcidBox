@@ -415,13 +415,13 @@ void testSetup() {
   DEBF("SEQ: Track 1: add pattern: %d \r\n", Performer.getTrack(1)->addPattern());
   DEBF("SEQ: Track 2: add pattern: %d \r\n", Performer.getTrack(2)->addPattern());
   
-  Performer.getTrack(0)->Patterns[0].generateNoteSet(0.5, 0.5);
-  Performer.getTrack(0)->Patterns[0].generateMelody(48, SLIDE_TEST_LOAD, 1.0 , 0.0, 1.0);
+  Performer.getTrack(0)->getPattern(0)->generateNoteSet(0.5, 0.5);
+  Performer.getTrack(0)->getPattern(0)->generateMelody(48, SLIDE_TEST_LOAD, 1.0 , 0.0, 1.0);
   
-  Performer.getTrack(1)->Patterns[0].generateNoteSet(0.5, 0.5);
-  Performer.getTrack(1)->Patterns[0].generateMelody(36, STYLE_TEST_LOAD, 1.0 , 0.0, 1.0);
+  Performer.getTrack(1)->getPattern(0)->generateNoteSet(0.5, 0.5);
+  Performer.getTrack(1)->getPattern(0)->generateMelody(36, STYLE_TEST_LOAD, 1.0 , 0.0, 1.0);
   
-  Performer.getTrack(2)->Patterns[0].generateDrums( STYLE_TEST_LOAD, 1.0 , 0.0);
+  Performer.getTrack(2)->getPattern(0)->generateDrums( STYLE_TEST_LOAD, 1.0 , 0.0);
 
   Synth1.ParseCC(CC_303_WAVEFORM, 0);
   Synth1.ParseCC(CC_303_VOLUME, 60);
@@ -447,6 +447,6 @@ void testSetup() {
   Synth2.ParseCC(CC_303_DELAY_SEND, 100);
   Synth2.ParseCC(CC_303_REVERB_SEND, 60);
   
-  DEBUG( Performer.getTrack(2)->Patterns[0].toText());
+  DEBUG( Performer.getTrack(2)->getPattern(0)->toText());
   
 }

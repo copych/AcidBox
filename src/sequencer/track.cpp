@@ -16,6 +16,13 @@ int Track::addPattern() {
   return (Patterns.size()-1);
 }
 
+Pattern* Track::getPattern(int patternIndex) {
+  if(Patterns.size() > patternIndex) {
+    return &Patterns[patternIndex];
+  }
+  throw std::invalid_argument("Patterns vector out of bounds");
+}
+
 bool Track::addStackNote(int note, int length)
 {
   for(unsigned char i = 0; i < NOTE_STACK_SIZE; i++) {
