@@ -1,5 +1,4 @@
 #include "ad.h"
-#include "../../general.h"
 
 void AD_env::init(float sample_rate, int blockSize) {
     sample_rate_  = sample_rate / blockSize;

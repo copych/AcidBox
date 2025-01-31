@@ -38,18 +38,10 @@ class General {
     }
 
     static void mixer() __attribute__((noinline));
-
-    // TODO was not optimized in config.h with IRAM or other attributes
     static float dB2amp(float dB);
     static float amp2dB(float amp);
     static float linToExp(float in, float inMin, float inMax, float outMin, float outMax);
     static float knobMap(float in, float outMin, float outMax);
-
-    // TODO, Not used
-    // static float fast_sin(float x);
-    // static float fast_cos(float x);
-    // static float linToLin(float in, float inMin, float inMax, float outMin, float outMax);
-    // static float expToLin(float in, float inMin, float inMax, float outMin, float outMax);
 };
 
 #endif

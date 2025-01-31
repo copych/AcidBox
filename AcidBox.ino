@@ -22,7 +22,7 @@
 #pragma GCC optimize ("O2")
 #include "config.h"
 #include "tables.h"
-#include "general.h"
+#include "src/general/general.h"
 #include "src/fx/fx_delay.h"
 #ifndef NO_PSRAM
 #include "src/fx/fx_reverb.h"
@@ -364,6 +364,19 @@ void paramChange(uint8_t paramNum, float paramVal) {
     case 4:
       Synth2.ParseCC(CC_303_ACCENT_LVL, paramVal);
       break;
+    case 8:
+      //set_bpm( 40.0f + (paramVal * 160.0f));
+      Synth2.ParseCC(CC_303_CUTOFF, paramVal);
+      break;
+    case 9:
+      Synth2.ParseCC(CC_303_RESO, paramVal);
+      break;
+    case 10:
+      Synth2.ParseCC(CC_303_OVERDRIVE, paramVal);
+      Synth2.ParseCC(CC_303_DISTORTION, paramVal);
+      break;
+
+
     default:
       {}
   }
@@ -387,8 +400,6 @@ void regular_checks() {
   gui.draw();
 }
 
-
-
 void testSetup() {
   
   Performer.setPpqn(96);         // pulses per quarter note
@@ -405,7 +416,7 @@ void testSetup() {
   DEBF("SEQ: Track 2: add pattern: %d \r\n", Performer.Tracks[2].addPattern());
   
   Performer.Tracks[0].Patterns[0].generateNoteSet(0.5, 0.5);
-  Performer.Tracks[0].Patterns[0].generateMelody(36, STYLE_TEST_LOAD, 1.0 , 0.0, 1.0);
+  Performer.Tracks[0].Patterns[0].generateMelody(48, SLIDE_TEST_LOAD, 1.0 , 0.0, 1.0);
   
   Performer.Tracks[1].Patterns[0].generateNoteSet(0.5, 0.5);
   Performer.Tracks[1].Patterns[0].generateMelody(36, STYLE_TEST_LOAD, 1.0 , 0.0, 1.0);

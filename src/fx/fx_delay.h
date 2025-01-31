@@ -5,7 +5,7 @@
 #include "Arduino.h"
 #include "esp_heap_caps.h"
 #include "../../config.h"
-#include "../../general.h"
+#include "../general/general.h"
 
 /*
  * This is a simple implementation of a delay line

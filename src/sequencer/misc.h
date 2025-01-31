@@ -1,13 +1,6 @@
 #pragma once
 #include <Arduino.h>
-
-
-
-inline float fclamp(float in, float minV, float maxV){
-  if (in>maxV) return maxV;
-  if (in<minV) return minV;
-  return in;
-}
+#include "../../config.h"
 
 inline bool flip(int percent) {
   if (random(101) <= percent) return true; else return false;
@@ -26,17 +19,3 @@ inline void MidiInit() {
 
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-
-// serial debugging macros
-
-#ifndef DEBUG
-  #ifdef DEBUG_ON
-    #define DEB(...) Serial.print(__VA_ARGS__) 
-    #define DEBF(...) Serial.printf(__VA_ARGS__) 
-    #define DEBUG(...) Serial.println(__VA_ARGS__) 
-  #else
-    #define DEB(...)
-    #define DEBF(...)
-    #define DEBUG(...)
-  #endif
-#endif

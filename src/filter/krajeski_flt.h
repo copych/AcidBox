@@ -4,7 +4,7 @@
 #define KRAJESKI_LADDER_H
 
 #include "../../config.h"
-#include "../../general.h"
+#include "../general/general.h"
 
 /*
 This class implements Tim Stilson's MoogVCF filter

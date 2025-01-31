@@ -3,6 +3,7 @@
 #include <Arduino.h>
 
 #include "looper_config.h"
+#include "../../config.h"
 #include "pattern.h"
 #include <vector>
 
@@ -20,10 +21,17 @@ typedef enum {  LOOP_NONE,
                 NUM_LOOP_MODES
 } eLoopMode_t;
 
+typedef struct
+{
+  int note = 0;
+  int length = -1;
+} noteStack;
+
 class Track {
 public:
-  Track() {};
-  Track(eTrackType_t track_type, byte midi_channel) {_trackType = track_type; _midiChannel = midi_channel;};
+  Track();
+  Track(eTrackType_t track_type, byte midi_channel);
+
   eTrackType_t        getTrackType()    {return _trackType;};
   eLoopMode_t         getLoopMode()     {return _loopMode;};
   byte                getMidiChannel()  {return _midiChannel;};
@@ -32,7 +40,6 @@ public:
   bool                isMute()          {return _mute;};
   bool                isSolo()          {return _solo;};
   
-  
   void  setTrackType(eTrackType_t new_type)   {_trackType = new_type;};
   void  setLoopMode(eLoopMode_t new_mode)     {_loopMode = new_mode;};
   void  setMidiChannel(byte new_channel)      {_midiChannel = new_channel;};
@@ -40,7 +47,10 @@ public:
   void  setMuteOnOff(bool val)                {_mute = val;};
   void  setSoloOnOff(bool val)                {_solo = val;};
   int   addPattern();
+  bool  addStackNote(int note, int length);
+
   std::vector   <Pattern>         Patterns;
+  noteStack	    _noteStack[NOTE_STACK_SIZE];
 
 private:
   byte          _midiChannel      = 0;
@@ -50,7 +60,6 @@ private:
   int           _length           = 1;
   bool          _mute             = false;
   bool          _solo             = false;
-  
 };
 } // namespace
 
