@@ -4,6 +4,15 @@
 
 using namespace performer;
 
+
+Track* Looper::getTrack(int trackNum) {
+  if(Tracks.size() > trackNum) {
+    return &Tracks[trackNum];
+  }
+  throw std::invalid_argument("Vector out of bounds");
+};
+
+
 void Looper::looperTask() {
   if (_seqState == SEQ_PLAY) {
   	switch (_syncMode) {
