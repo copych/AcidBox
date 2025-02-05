@@ -15,7 +15,7 @@
   You will need to upload samples from /data folder to the ESP32 flash, otherwise you'll only have 40kB samples from samples.h. 
   To upload samples follow the instructions:
   
-  https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
+   
   And then use Tools -> ESP32 Sketch Data Upload
 
 */
@@ -411,9 +411,9 @@ void testSetup() {
   DEBF("SEQ: add track: %d \r\n", Performer.addTrack(TRACK_MONO, 2));
   DEBF("SEQ: add track: %d \r\n", Performer.addTrack(TRACK_DRUMS, 10));
   
-  DEBF("SEQ: Track 0: add pattern: %d \r\n", Performer.getTrack(0)->addPattern());
-  DEBF("SEQ: Track 1: add pattern: %d \r\n", Performer.getTrack(1)->addPattern());
-  DEBF("SEQ: Track 2: add pattern: %d \r\n", Performer.getTrack(2)->addPattern());
+  DEBF("SEQ: Track 0: add pattern: %d \r\n", Performer.getTrack(0)->addPattern(16));
+  DEBF("SEQ: Track 1: add pattern: %d \r\n", Performer.getTrack(1)->addPattern(16));
+  DEBF("SEQ: Track 2: add pattern: %d \r\n", Performer.getTrack(2)->addPattern(16));
   
   Performer.getTrack(0)->getPattern(0)->generateNoteSet(0.5, 0.5);
   Performer.getTrack(0)->getPattern(0)->generateMelody(48, SLIDE_TEST_LOAD, 1.0 , 0.0, 1.0);

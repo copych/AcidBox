@@ -72,6 +72,7 @@ void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float int
   int8_t cur_note = -1;
   switch (style) {
     case SLIDE_TEST_LOAD:
+      clearPattern();
       for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
         Steps[i].clear();
         int8_t c = root_note;
@@ -83,113 +84,145 @@ void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float int
         // case 1          
         case 0:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c, accent);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c, accent);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c, true, true);
           break;
         }
         case 1:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c+2, accent);
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c+2, accent);
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c+2, true, false);
           break;
         }
         // case 2      
         case 2:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c+2, plain);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c+2, plain);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c+2, false, true);
           break;
         }
         case 3:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c+2, plain);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c+2, plain);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c+2, false, true);
           break;
         }
         case 4:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c+1, accent);
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c+1, accent);
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c+1, true, false);
           break;
         }
         // case 3
         case 5:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c, plain);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c, plain);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c, false, true);
           break;
         }
         case 6:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c, accent);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c, accent);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c, false, true);
           break;
         }
         case 7:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c, accent);
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c, accent);
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c, true, false);
           break;
         }
         // case 4
         case 8:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c, plain);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c, plain);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c, false, true);
           break;
         }
         case 9:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c, accent);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c, accent);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c, true, true);
           break;
         }
         case 10:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c+3, plain);
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c+3, plain);
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c+3, false, false);
           break;
         }        
         // case 5
         case 11:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c+4, false, true);
           break;
         }
         case 12:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c+4, accent);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c+4, accent);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c+4, true, true);
           break;
         }
         case 13:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c+4, false, true);
           break;
         }  
         case 14:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c+4, accent);
-          event.length = event.length + SLIDE_LENGTH_303;
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c+4, accent);
+          // event.length = event.length + SLIDE_LENGTH_303;
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c+4, true, true);
           break;
         }  
         case 15:
         {
-          sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
-          addEvent(i, event);
+          // sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
+          // addEvent(i, event);
+          // Set notes
+          setNote(i, c+4, false, false);
           break;
         }          
         default:
@@ -279,6 +312,48 @@ String Pattern::toText() {
   }
   return outStr;
 }
+
+void Pattern::setNote(unsigned int step, byte note, bool accent, bool slide) {
+  if(step > _length -1) {
+    throw std::invalid_argument("Step for note out of bounds");
+  } else if(note > 127) {
+    throw std::invalid_argument("Note ranges from 0 to 127");
+  }
+  Notes[step].type = EVT_NOTE_ON;
+  Notes[step].value1 = note;
+  if(slide) {
+    Notes[step].length = NOTE_LENGTH_303 + SLIDE_LENGTH_303;
+  }
+  if(!accent) {
+    Notes[step].value2 = VEL_NORMAL;
+  } else {
+    Notes[step].value2 = VEL_ACCENTED;
+  }
+}
+
+sStepEvent_t Pattern::getNote(int step) {
+  if(step > _length -1) {
+    throw std::invalid_argument("Step for note out of bounds");
+  }
+  return Notes[step];
+}
+
+void Pattern::clearNote(unsigned int step) {
+  if(step > _length -1) {
+    throw std::invalid_argument("Step for note out of bounds");
+  }
+  Notes[step].type = EVT_NONE;
+  Notes[step].value1 = 0;
+  Notes[step].value2 = 0;
+  Notes[step].length = 0;
+}
+
+void Pattern::clearPattern() {
+  for (int i = 0; i < _length; i++) {
+    clearNote(i);
+  }
+}
+
 
 void Pattern::addEvent(int step_num, eEventType_t evt_type, byte val1, byte val2) {
   Steps[step_num].emplace_back(evt_type, val1, val2);

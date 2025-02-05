@@ -11,8 +11,8 @@ Track::Track(eTrackType_t track_type, byte midi_channel) {
   _midiChannel = midi_channel;
 };
 
-int Track::addPattern() {
-  Patterns.emplace_back(Pattern());
+int Track::addPattern(int length) {
+  Patterns.emplace_back(Pattern(length));
   return (Patterns.size()-1);
 }
 

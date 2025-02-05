@@ -49,7 +49,7 @@ public:
   void  setPrevNote(byte val)                 {_prevNote = val;};
   void  setMuteOnOff(bool val)                {_mute = val;};
   void  setSoloOnOff(bool val)                {_solo = val;};
-  int   addPattern();
+  int   addPattern(int length);
   bool  addStackNote(int note, int length);
   noteStack	    _noteStack[NOTE_STACK_SIZE];
 

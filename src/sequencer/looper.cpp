@@ -121,7 +121,6 @@ void Looper::onStep() {
 #ifdef DEBUG_SEQUENCER
     DEBF("Track midi: %d\r\n", tr.getMidiChannel());
 #endif     
-    uint8_t prev_note = tr.getPrevNote();
     for (auto &patt: *tr.getPatterns()) {
       for ( auto &st: patt.Steps[_currentStep]) { // send controls first
           switch (st.type) {
@@ -152,6 +151,15 @@ void Looper::onStep() {
               break;
           }
         }
+
+        // sStepEvent_t noteEvent = patt.getNote(_currentStep);        
+        // if(tr.addStackNote(noteEvent.value1, noteEvent.length)) {
+        //   _cb_midi_note_on(tr.getMidiChannel(), noteEvent.value1, noteEvent.value2 );
+        // } else {
+        //   #ifdef DEBUG_SEQUENCER
+        //               DEB("Note stack full\r\n");
+        //   #endif  
+        // }
     }
   }
 }
