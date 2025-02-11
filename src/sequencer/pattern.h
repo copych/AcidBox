@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <stdexcept>
 #include "looper_config.h"
+#include "../general/myrand.h"
 
 namespace performer {
 
@@ -39,7 +40,11 @@ typedef enum  { EVT_NONE,
                 EVT_CONTROL_CHANGE,
                 EVT_SYSEX,
                 NUM_EVT_TYPES
-} eEventType_t;   
+} eEventType_t;
+
+typedef enum {  SYNTH,
+                DRUM
+} ePatternType_t;
 
 struct sStepEvent_t{
                 eEventType_t type = EVT_NONE;
@@ -49,6 +54,7 @@ struct sStepEvent_t{
                 //construct
                 sStepEvent_t () {};
                 sStepEvent_t (eEventType_t evt_type, byte val1, byte val2) : type(evt_type), value1(val1), value2(val2)    {};
+                sStepEvent_t (eEventType_t evt_type, byte val1, byte val2, int length) : type(evt_type), value1(val1), value2(val2), length(length)    {};
 } ;
 
 class Pattern {
@@ -113,7 +119,7 @@ class Pattern {
     {0, 0, 12, 12, 18, 24, 24}                  // locrian mode? dim 5th
   };  
 
-  Pattern(int length) { _length = length; };
+  Pattern(int length, ePatternType_t patternType) { _length = length; _patternType = patternType; };
   int             getLength()     {return _length;};
   bool            isActive()      {return _active;};
   bool            checkEvent(int step_num, eEventType_t evt_type);
@@ -122,8 +128,9 @@ class Pattern {
   String          toText();
   
   void setNote(unsigned int step, byte note, bool accent, bool slide);
-  sStepEvent_t getNote(int step);
-  void clearNote(unsigned int step);
+  void addNote(unsigned int step, byte note, bool accent, bool slide);
+  std::vector<sStepEvent_t>* getNotes(int step);
+  void clearNotes(unsigned int step);
   void clearPattern();
 
   void addEvent(int step_num, eEventType_t evt_type, byte val1, byte val2); 
@@ -135,10 +142,10 @@ class Pattern {
   void generateMelody(byte root_note /*0-127*/, eStyle_t style, float intencity /*0.0 - 1.0*/, float randomness /*0.0 - 1.0*/, float tension /*0.0 - 1.0*/);
   void generateNoteSet(float tension /*0.0 - 1.0*/, float randomness = 0.0);
   void xorDrumParts(eDrumInstr_t instrToFill, eDrumInstr_t BaseInstr, int chance, byte velo); 
-  sStepEvent_t Notes[MAX_PATTERN_STEPS];
-  std::vector<sStepEvent_t> Steps[MAX_PATTERN_STEPS]; 
-  
+
 private:
+  std::vector<sStepEvent_t> Notes[MAX_PATTERN_STEPS];
+  std::vector<sStepEvent_t> Steps[MAX_PATTERN_STEPS]; 
   int                     _noteset    = 0;
   float                   _intensity  = 0.5;
   float                   _tension    = 0.5;
@@ -146,8 +153,9 @@ private:
   int                     _length     = MAX_PATTERN_STEPS;   // 16th notes
   bool                    _active     = true;
   int                     _id         = -1;
+  ePatternType_t          _patternType;
   static constexpr int8_t _note_chances[16]   = {77, 63, 63, 37, 63, 63, 50, 63, 37, 77, 90, 10, 77, 63, 57, 57};
-  
   std::vector<int8_t> _current_note_set = {_root_note};
+  sStepEvent_t getNote(byte note, bool accent, bool slide);
 };
 } // namespace

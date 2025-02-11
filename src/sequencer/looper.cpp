@@ -122,44 +122,47 @@ void Looper::onStep() {
     DEBF("Track midi: %d\r\n", tr.getMidiChannel());
 #endif     
     for (auto &patt: *tr.getPatterns()) {
-      for ( auto &st: patt.Steps[_currentStep]) { // send controls first
-          switch (st.type) {
-            case EVT_CONTROL_CHANGE:              
-              if (!_sendControlsOnPreStep) {
-                //_cb_midi_control(tr.getMidiChannel() , st.value1 , st.value2  );
-              }
-              break;
-            case EVT_NOTE_OFF:                 
-              if (!_sendNoteOffsOnPreStep) {
-                //_cb_midi_note_off(tr.getMidiChannel() , st.value1 ,  0);
-              }
-              break;
-          }
-        }      
-        for ( auto &st: patt.Steps[_currentStep]) { // send notes afterwards
-          switch (st.type) {
-            case EVT_NOTE_ON:            
-              // Add the note to the stack to trigger the note off
-              if(tr.addStackNote(st.value1, st.length)) {
-                _cb_midi_note_on(tr.getMidiChannel(), st.value1, st.value2 );
-              } else {
-                #ifdef DEBUG_SEQUENCER
-                    DEB("Note stack full\r\n");
-                #endif  
-              }
-              tr.setPrevNote(st.value1);
-              break;
+      // for ( auto &st: patt.Steps[_currentStep]) { // send controls first
+      //     switch (st.type) {
+      //       case EVT_CONTROL_CHANGE:              
+      //         if (!_sendControlsOnPreStep) {
+      //           //_cb_midi_control(tr.getMidiChannel() , st.value1 , st.value2  );
+      //         }
+      //         break;
+      //       case EVT_NOTE_OFF:                 
+      //         if (!_sendNoteOffsOnPreStep) {
+      //           //_cb_midi_note_off(tr.getMidiChannel() , st.value1 ,  0);
+      //         }
+      //         break;
+      //     }
+      //   }      
+        // for ( auto &st: patt.Steps[_currentStep]) { // send notes afterwards
+        //   switch (st.type) {
+        //     case EVT_NOTE_ON:            
+        //       // // Add the note to the stack to trigger the note off
+        //       // if(tr.addStackNote(st.value1, st.length)) {
+        //       //   _cb_midi_note_on(tr.getMidiChannel(), st.value1, st.value2 );
+        //       // } else {
+        //       //   #ifdef DEBUG_SEQUENCER
+        //       //       DEB("Note stack full\r\n");
+        //       //   #endif  
+        //       // }
+        //       // tr.setPrevNote(st.value1);
+        //       break;
+        //   }
+        // }
+
+        
+        std::vector<sStepEvent_t> *noteEvents = patt.getNotes(_currentStep);        
+        for (auto &noteEvent: *noteEvents) {
+          if(tr.addStackNote(noteEvent.value1, noteEvent.length)) {
+            _cb_midi_note_on(tr.getMidiChannel(), noteEvent.value1, noteEvent.value2 );
+          } else {
+            #ifdef DEBUG_SEQUENCER
+                        DEB("Note stack full\r\n");
+            #endif  
           }
         }
-
-        // sStepEvent_t noteEvent = patt.getNote(_currentStep);        
-        // if(tr.addStackNote(noteEvent.value1, noteEvent.length)) {
-        //   _cb_midi_note_on(tr.getMidiChannel(), noteEvent.value1, noteEvent.value2 );
-        // } else {
-        //   #ifdef DEBUG_SEQUENCER
-        //               DEB("Note stack full\r\n");
-        //   #endif  
-        // }
     }
   }
 }

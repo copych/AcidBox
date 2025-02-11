@@ -4,10 +4,8 @@
 
 using namespace performer;
 
-void Pattern::generateDrums(eStyle_t style, float intensity /*0.0 - 1.0*/, float tension /*0.0 - 1.0*/){
-  for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
-    Steps[i].clear();
-  }
+void Pattern::generateDrums(eStyle_t style, float intensity /*0.0 - 1.0*/, float tension /*0.0 - 1.0*/) {
+  clearPattern();
   generateDrumInstr(DRUM_BD, style, intensity, tension);
   generateDrumInstr(DRUM_SD, style, intensity, tension);
   generateDrumInstr(DRUM_OH, style, intensity, tension);
@@ -31,7 +29,9 @@ void Pattern::xorDrumParts(eDrumInstr_t instrToFill, eDrumInstr_t BaseInstr, int
 void Pattern::generateDrumInstr(eDrumInstr_t instr, eStyle_t style, float intensity /*0.0 - 1.0*/, float randomness /*0.0 - 1.0*/){
   int8_t rnd_vel;     
   float note_chance;
-  for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
+  for (int i = 0; i < _length; i++) {
+    bool accent = false;
+    bool slide = false;
     switch(instr) {
       case DRUM_BD:
         note_chance = _BD_chances[style][i % 16];
@@ -60,8 +60,12 @@ void Pattern::generateDrumInstr(eDrumInstr_t instr, eStyle_t style, float intens
     }
     
     if (flip((int)(intensity * note_chance))) {
-      if (flip((int)(60 * intensity))) rnd_vel = DRUM_ACCENTED; else rnd_vel = DRUM_NORMAL;
-      addEvent(i, EVT_NOTE_ON, _drum_notes[instr], rnd_vel);
+      if (flip((int)(60 * intensity))) {
+        accent = true;
+      }  else {
+        accent = false;
+      }
+      addNote(i, _drum_notes[instr], accent, slide);
     }
   }
 }
@@ -69,12 +73,11 @@ void Pattern::generateDrumInstr(eDrumInstr_t instr, eStyle_t style, float intens
 void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float intensity /*0.0 - 1.0*/, float randomness /*0.0 - 1.0*/, float tension /*0.0 - 1.0*/){
   int8_t rnd_vel;
   int8_t rnd_note;
-  int8_t cur_note = -1;
+  int8_t cur_note = root_note;
   switch (style) {
     case SLIDE_TEST_LOAD:
       clearPattern();
-      for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
-        Steps[i].clear();
+      for (int i = 0; i < _length; i++) {
         int8_t c = root_note;
         int8_t plain = 60;
         int8_t accent = 100;
@@ -84,144 +87,85 @@ void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float int
         // case 1          
         case 0:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c, accent);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c, true, true);
           break;
         }
         case 1:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c+2, accent);
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c+2, true, false);
           break;
         }
         // case 2      
         case 2:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c+2, plain);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c+2, false, true);
           break;
         }
         case 3:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c+2, plain);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c+2, false, true);
           break;
         }
         case 4:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c+1, accent);
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c+1, true, false);
           break;
         }
         // case 3
         case 5:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c, plain);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c, false, true);
           break;
         }
         case 6:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c, accent);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
-          setNote(i, c, false, true);
+          setNote(i, c, true, true);
           break;
         }
         case 7:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c, accent);
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c, true, false);
           break;
         }
         // case 4
         case 8:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c, plain);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c, false, true);
           break;
         }
         case 9:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c, accent);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c, true, true);
           break;
         }
         case 10:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c+3, plain);
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c+3, false, false);
           break;
         }        
         // case 5
         case 11:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c+4, false, true);
           break;
         }
         case 12:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c+4, accent);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c+4, true, true);
           break;
         }
         case 13:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c+4, false, true);
           break;
         }  
         case 14:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c+4, accent);
-          // event.length = event.length + SLIDE_LENGTH_303;
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c+4, true, true);
           break;
         }  
         case 15:
         {
-          // sStepEvent_t event(EVT_NOTE_ON, c+4, plain);
-          // addEvent(i, event);
-          // Set notes
           setNote(i, c+4, false, false);
           break;
         }          
@@ -231,40 +175,42 @@ void Pattern::generateMelody(byte root_note /*0-127*/, eStyle_t style, float int
       }
       break;      
     case STYLE_TEST_LOAD:
-      for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
-        Steps[i].clear();
+      clearPattern();
+      for (int i = 0; i < _length; i++) {
+        bool slide = false;
+        bool accent = false;        
         if (i == 7 || i == 15) {
           cur_note = root_note+13;
-          rnd_vel = 60;
-          addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_ON);
+          slide = true;
         } else {
           cur_note = root_note;
-          //addEvent(i, EVT_NOTE_OFF, cur_note, 0);
-          if (i==15) rnd_vel = 100;
-          addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_OFF);
+          if (i==15) {
+            accent = true;
+          }
         }
-        addEvent(i, EVT_NOTE_ON, cur_note, rnd_vel);
-        //addEvent(i, EVT_NOTE_OFF, cur_note, 0);
+        setNote(i, cur_note, accent, slide);
       }
       break;
     default:
-      for (int i = 0; i < MAX_PATTERN_STEPS; i++) {
-        Steps[i].clear();
+      MyRand rnd;
+      clearPattern();
+      bool slide = false;
+      bool accent = false;           
+      for (int i = 0; i < _length; i++) {
         int note_chance = (float)_note_chances[i % 16];
         if (flip(intensity * note_chance)) {
-          rnd_note = _current_note_set[(random(_current_note_set.size()))] + root_note;
-          if (flip((int)(60 * intensity))) rnd_vel = VEL_ACCENTED; else rnd_vel = VEL_NORMAL;
-          addEvent(i, EVT_NOTE_ON, rnd_note, rnd_vel);
-          cur_note = rnd_note;
+          rnd_note = _current_note_set[(rnd.getUnsignedInt(_current_note_set.size()))] + root_note;
+          if (flip((int)(60 * intensity))) accent = true; else accent = false;
           if (flip((int)(70 * intensity))) {
-            addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_ON);
+            slide = true;
           } else {      
-            addEvent(i, EVT_CONTROL_CHANGE, CC_PORTAMENTO, MIDI_VAL_OFF);
+            slide = false;
           }
+          setNote(i, rnd_note, accent, slide);
+          cur_note = rnd_note;
         } else {
           if (cur_note != -1) {
             if (flip(50)) {
-              addEvent(i, EVT_NOTE_OFF, cur_note, 0);
               cur_note = -1;
             }
           }
@@ -313,47 +259,49 @@ String Pattern::toText() {
   return outStr;
 }
 
+void Pattern::addNote(unsigned int step, byte note, bool accent, bool slide) {
+  if(step > _length -1) {
+    throw std::invalid_argument("Step for note out of bounds");
+  } else if(note > 127) {
+    throw std::invalid_argument("Note ranges from 0 to 127");
+  }
+  sStepEvent_t event = getNote(note, accent, slide);
+  Notes[step].emplace_back(event);
+}
+
 void Pattern::setNote(unsigned int step, byte note, bool accent, bool slide) {
   if(step > _length -1) {
     throw std::invalid_argument("Step for note out of bounds");
   } else if(note > 127) {
     throw std::invalid_argument("Note ranges from 0 to 127");
   }
-  Notes[step].type = EVT_NOTE_ON;
-  Notes[step].value1 = note;
-  if(slide) {
-    Notes[step].length = NOTE_LENGTH_303 + SLIDE_LENGTH_303;
-  }
-  if(!accent) {
-    Notes[step].value2 = VEL_NORMAL;
+  sStepEvent_t event = getNote(note, accent, slide);
+  if(Notes[step].size() == 0) {
+    Notes[step].emplace_back(event);
   } else {
-    Notes[step].value2 = VEL_ACCENTED;
+    Notes[step][0] = event;
   }
 }
 
-sStepEvent_t Pattern::getNote(int step) {
+std::vector<sStepEvent_t>* Pattern::getNotes(int step) {
   if(step > _length -1) {
     throw std::invalid_argument("Step for note out of bounds");
   }
-  return Notes[step];
+  return &Notes[step];
 }
 
-void Pattern::clearNote(unsigned int step) {
+void Pattern::clearNotes(unsigned int step) {
   if(step > _length -1) {
     throw std::invalid_argument("Step for note out of bounds");
   }
-  Notes[step].type = EVT_NONE;
-  Notes[step].value1 = 0;
-  Notes[step].value2 = 0;
-  Notes[step].length = 0;
+  Notes[step].clear();
 }
 
 void Pattern::clearPattern() {
   for (int i = 0; i < _length; i++) {
-    clearNote(i);
+    clearNotes(i);
   }
 }
-
 
 void Pattern::addEvent(int step_num, eEventType_t evt_type, byte val1, byte val2) {
   Steps[step_num].emplace_back(evt_type, val1, val2);
@@ -395,4 +343,17 @@ bool Pattern::checkEvent(int step_num, eEventType_t evt_type, byte val1, byte va
     }
   }
   return res;
+}
+
+sStepEvent_t Pattern::getNote(byte note, bool accent, bool slide) {
+  int length = NOTE_LENGTH_303;
+  if(slide) {
+    length = length + SLIDE_LENGTH_303;
+  }
+  byte velocity = VEL_NORMAL;
+  if(accent) {
+    velocity = velocity + VEL_ACCENTED;
+  }
+  sStepEvent_t event = {EVT_NOTE_ON, note, velocity, length};
+  return event;
 }
