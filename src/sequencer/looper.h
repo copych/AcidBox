@@ -14,6 +14,7 @@ this pattern looper is intended for live midi looping
 
 #include "looper_config.h"
 #include <vector>
+#include <stdexcept>
 #include "track.h"
 #include "../general/general.h"
 
@@ -39,18 +40,19 @@ class Looper {
 public:
 	Looper() {};
 	
-
-	int getBpm() 							    {return _bpm;}
-	int getLoopSteps() 						{return _loopSteps;}
-	int getCurrentStep() 					{return _currentStep;}
-	int getPpqn() 							  {return _ppqn;}
+	int getBpm() 						{return _bpm;}
+	int getLoopSteps() 					{return _loopSteps;}
+	int getCurrentStep() 				{return _currentStep;}
+	int getPpqn() 						{return _ppqn;}
 	eSeqStates_t 	getSeqState()		{return _seqState;}
 	eSyncModes_t 	getSyncMode()		{return _syncMode;}
  
 	int addTrack(eTrackType_t trackType, byte midiChannel); // adds a track, returns the index of a newly added track (not thread-safe)
 	int addPattern(int trackNum); // adds a pattern to a track with id=trackNum, returns the index of a newly added pattern (not thread-safe)
-	
-	void setSyncOnOff(bool sendSync) 		{_sendSync = sendSync;}
+	Track* getTrack(int trackNum);
+	int getNumberOfTracks()				{return Tracks.size();}
+
+	void setSyncOnOff(bool sendSync) 	{_sendSync = sendSync;}
 	void setSeqState(eSeqStates_t new_state);
 	void setSyncMode(eSyncModes_t new_mode);
 	void setBpm(float new_bpm);
@@ -72,9 +74,9 @@ public:
 	void play();                        // reset and start from the zero position
 	void resume();                      // continues playback
 	void looperTask();                  // this is to call in loop(); ~1000Hz is quite enough, while 250Hz introduces at max +/-4ms quantization error, which may be audible
-  	std::vector <Track> Tracks;
 	
 private:
+	std::vector <Track> Tracks;
 	int				_ppqn 			= 24; 				  // MIDI sync pulses per quarter note 
 	int				_q_ppqn			= _ppqn / 4;		// often appearing 16th length
 	float			_bpm 			  = 130.0;

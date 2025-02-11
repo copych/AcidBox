@@ -6,6 +6,7 @@
 #include "../../config.h"
 #include "pattern.h"
 #include <vector>
+#include <stdexcept>
 
 namespace performer {
 
@@ -40,19 +41,20 @@ public:
   bool                isMute()          {return _mute;};
   bool                isSolo()          {return _solo;};
   
+  Pattern* getPattern(int patternIndex);
+  std::vector<Pattern>* getPatterns()   {return &Patterns;}
   void  setTrackType(eTrackType_t new_type)   {_trackType = new_type;};
   void  setLoopMode(eLoopMode_t new_mode)     {_loopMode = new_mode;};
   void  setMidiChannel(byte new_channel)      {_midiChannel = new_channel;};
   void  setPrevNote(byte val)                 {_prevNote = val;};
   void  setMuteOnOff(bool val)                {_mute = val;};
   void  setSoloOnOff(bool val)                {_solo = val;};
-  int   addPattern();
+  int   addPattern(int length);
   bool  addStackNote(int note, int length);
-
-  std::vector   <Pattern>         Patterns;
   noteStack	    _noteStack[NOTE_STACK_SIZE];
 
 private:
+  std::vector<Pattern> Patterns;
   byte          _midiChannel      = 0;
   byte          _prevNote         = 0;
   eTrackType_t  _trackType        = TRACK_MONO;
