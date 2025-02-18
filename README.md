@@ -25,7 +25,13 @@ In ArduinoIDE (I've used v.1.8.20) select:
 * partition scheme: No OTA (1MB APP/ 3MB SPIFFS)
 * PSRAM: enabled (or the type of your PSRAM)
 
-Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions: https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
+Also you will need to upload drum samples to the ESP32 flash (LittleFS). To do so follow the instructions:
+
+for Arduino IDE 1.X.X https://github.com/lorol/LITTLEFS#arduino-esp32-littlefs-filesystem-upload-tool
+
+for Arduino IDE 2.X.X https://github.com/earlephilhower/arduino-littlefs-upload and follow the instructions there.
+
+Don't forget to select the appropriate partitioning both for uploading app and fs image in the tools menu: No OTA 1mb app+3mb SPIFFS. Choose LittleFS while uploading.
 
 If you don't upload samples, the app will use the default drum kit from the samples.h
 
