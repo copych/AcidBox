@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <Arduino.h>
 
 /*
@@ -13,6 +12,8 @@ this pattern looper is intended for live midi looping
 // use _min, _max or std::min and std::max instead
 
 #include "looper_config.h"
+#include "../databus/IBusListener.h"
+#include "../databus/DataBus.h"
 #include <vector>
 #include <stdexcept>
 #include "track.h"
@@ -36,17 +37,22 @@ typedef enum  { SYNC_INT_MICROS,        // checking micros() in the loop()
 } eSyncModes_t;  
 
 // sequencer data
-class Looper {
+class Looper : public IBusListener {
+
 public:
-	Looper() {};
-	
+	Looper(DataBus *dataBus);
 	int getBpm() 						{return _bpm;}
 	int getLoopSteps() 					{return _loopSteps;}
 	int getCurrentStep() 				{return _currentStep;}
 	int getPpqn() 						{return _ppqn;}
 	eSeqStates_t 	getSeqState()		{return _seqState;}
 	eSyncModes_t 	getSyncMode()		{return _syncMode;}
- 
+
+	/** IBusListener methods */
+	void receiveBusMessage(Message message);
+	enum ReceiverType getListenerReceiverType();
+	void busInit();
+
 	int addTrack(eTrackType_t trackType, byte midiChannel); // adds a track, returns the index of a newly added track (not thread-safe)
 	int addPattern(int trackNum); // adds a pattern to a track with id=trackNum, returns the index of a newly added pattern (not thread-safe)
 	Track* getTrack(int trackNum);
@@ -76,6 +82,7 @@ public:
 	void looperTask();                  // this is to call in loop(); ~1000Hz is quite enough, while 250Hz introduces at max +/-4ms quantization error, which may be audible
 	
 private:
+	DataBus *_dataBus;
 	std::vector <Track> Tracks;
 	int				_ppqn 			= 24; 				  // MIDI sync pulses per quarter note 
 	int				_q_ppqn			= _ppqn / 4;		// often appearing 16th length
