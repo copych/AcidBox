@@ -73,6 +73,9 @@ MIDI_NAMESPACE::MidiInterface<MIDI_NAMESPACE::SerialMIDI<HardwareSerial, Serial2
 // service variables and arrays
 static  uint32_t  last_reset = 0;
 
+// Databus
+DataBus dataBus;
+
 // Audio buffers of all kinds
 volatile int current_gen_buf = 0; // set of buffers for generation
 volatile int current_out_buf = 1 - 0; // set of buffers for output
@@ -113,7 +116,7 @@ portMUX_TYPE timer1Mux = portMUX_INITIALIZER_UNLOCKED;
 volatile boolean timer1_fired = false;
 
 using namespace performer;
-Looper Performer;
+Looper Performer(&dataBus);
 
 OledGUI gui;
 
@@ -292,6 +295,12 @@ void setup(void) {
   // start display
   gui.begin();
 
+  // Register to bus
+  dataBus.registerToBus(&Performer);
+
+  // Bus init
+  Performer.busInit();
+
   // start audio output
   i2sInit();
   // i2s_write(i2s_num, out_buf[current_out_buf]._signed, sizeof(out_buf[current_out_buf]._signed), &bytes_written, portMAX_DELAY);
@@ -318,7 +327,8 @@ void setup(void) {
 #endif
 
 #ifdef JUKEBOX_PLAY_ON_START
-  Performer.play();	            // Start playing from the 0 position
+  // If the sequencer should start playing, send a message
+  dataBus.sendMessage(0, 0, SEQUENCER_START_STOP, SEQUENCER);
 #endif
 
   DEBUG("setup done");

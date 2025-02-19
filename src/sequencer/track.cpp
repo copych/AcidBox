@@ -26,7 +26,9 @@ Pattern* Track::getPattern(int patternIndex) {
 
 bool Track::addStackNote(int note, int length)
 {
+#ifdef DEBUG_SEQUENCER
   DEBF("Add to stack note: %d, length: %d\r\n", note, length);
+#endif
   for(unsigned char i = 0; i < NOTE_STACK_SIZE; i++) {
     if (_noteStack[i].length == -1) {
       _noteStack[i].length = length;  

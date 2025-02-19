@@ -4,13 +4,41 @@
 
 using namespace performer;
 
+Looper::Looper(DataBus *dataBus) {
+		_dataBus = dataBus;
+		messageSubscriptions = SEQUENCER_START_STOP;
+}
+
+void Looper::receiveBusMessage(Message message) {
+  switch (message.command)
+  {
+  case SEQUENCER_START_STOP:
+    if (_seqState == SEQ_PLAY) {
+      stop();
+    } else {
+      play();
+    }
+    break;
+  
+  default:
+    break;
+  }
+}
+
+enum ReceiverType Looper::getListenerReceiverType() {
+  return SEQUENCER;
+}
+
+void Looper::busInit() {
+
+}
 
 Track* Looper::getTrack(int trackNum) {
   if(Tracks.size() > trackNum) {
     return &Tracks[trackNum];
   }
   throw std::invalid_argument("Tracks vector out of bounds");
-};
+}
 
 
 void Looper::looperTask() {
