@@ -25,6 +25,28 @@ inline void MidiInit() {
   MIDI2.setHandleProgramChange(handleProgramChange);
   MIDI2.begin(MIDI_CHANNEL_OMNI);
 #endif
+#ifdef MIDI_USB_DEVICE
+  // /* Change USB Device Descriptor Parameter
+  USB.VID(0x1209);
+  USB.PID(0x1305);
+  USB.productName("AcidBox S3");
+  USB.manufacturerName("copych");
+  //USB.serialNumber("0000");
+  //USB.firmwareVersion(0x0000);
+  USB.usbVersion(0x0200);
+  USB.usbClass(TUSB_CLASS_AUDIO);
+  USB.usbSubClass(0x00);
+  USB.usbProtocol(0x00);
+  USB.usbAttributes(0x80);
+  // */ 
+  
+  MIDI_usbDev.setHandleNoteOn(handleNoteOn);
+  MIDI_usbDev.setHandleNoteOff(handleNoteOff);
+  MIDI_usbDev.setHandleControlChange(handleCC);
+  MIDI_usbDev.setHandlePitchBend(handlePitchBend);
+  MIDI_usbDev.setHandleProgramChange(handleProgramChange);
+  MIDI_usbDev.begin(MIDI_CHANNEL_OMNI);
+#endif
 
 }
 

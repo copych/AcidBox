@@ -33,8 +33,13 @@
 
 // =============================================================== MIDI interfaces ===============================================================
 
-#if defined MIDI_VIA_SERIAL2 || defined MIDI_VIA_SERIAL
+#if defined MIDI_VIA_SERIAL2 || defined MIDI_VIA_SERIAL || defined MIDI_USB_DEVICE
 #include <MIDI.h>
+#endif
+
+#ifdef MIDI_USB_DEVICE
+  #include "src/usbmidi/src/USB-MIDI.h"
+  USBMIDI_CREATE_INSTANCE(0, MIDI_usbDev);
 #endif
 
 #ifdef MIDI_VIA_SERIAL
@@ -401,6 +406,10 @@ void regular_checks() {
   MIDI2.read();
 #endif
   
+#ifdef MIDI_USB_DEVICE
+  MIDI_usbDev.read();
+#endif
+
 #ifdef JUKEBOX
   jukebox_tick();
 #endif
