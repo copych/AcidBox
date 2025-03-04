@@ -1,4 +1,8 @@
-!Attention! ESP Arduino cores v.3.1.2 and 3.1.3 have some bug that won't allow i2s driver to install when PSRAM is enabled, please, avoid using these versions!
+Attention! ESP Arduino cores v.3.1.2 and 3.1.3 have some bug that won't allow i2s driver to install when PSRAM is enabled, please, avoid using these versions!
+
+
+If you have an ESP32-S3 board, then use the additional features. https://github.com/copych/AcidBox/tree/S3-regular extends capabilities, using faster OPI PSRAM, and hardware support for USB. 
+
 
 # AcidBox
 ESP32 headless acid combo of tb303 + tb303 + tr808 like synths. Filter cutoff, reso, env mod, accent, wavefolder, overdrive within each 303, per-instrument tunings, hi-pass/lo-pass filter and bitcrusher in drums, send to reverb, delay and master compression.
