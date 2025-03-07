@@ -1,4 +1,4 @@
-Attention! ESP Arduino cores v.3.1.2 and 3.1.3 have some bug that won't allow i2s driver to install when PSRAM is enabled, please, avoid using these versions!
+<b>Attention!</b> ESP Arduino cores `v.3.1.2`, `3.1.3` and `3.2.0-RC1` have a bug that won't allow i2s driver to install when PSRAM is enabled, please, avoid using these versions!
 
 
 If you have an ESP32-S3 board, then use the additional features. https://github.com/copych/AcidBox/tree/S3-regular extends capabilities, using faster OPI PSRAM, and hardware support for USB. 
