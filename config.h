@@ -25,8 +25,9 @@
 //#define DEBUG_TIMING
 //#define DEBUG_MIDI
 
+//#define MIDI_USB_DEVICE       // use this option if you want to operate via USB with the sampler seen as a MIDI device (-50 kBytes of available RAM)
 //#define MIDI_VIA_SERIAL       // use this option to enable Hairless MIDI on Serial port @115200 baud (USB connector), THIS WILL BLOCK SERIAL DEBUGGING as well
-//#define MIDI_VIA_SERIAL2        // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
+//#define MIDI_VIA_SERIAL2      // use this option if you want to operate by standard MIDI @31250baud, UART2 (Serial2), 
 #ifdef MIDI_VIA_SERIAL
 #define MIDIRX_PIN      4       // this pin is used for input when MIDI_VIA_SERIAL2 defined (note that default pin 17 won't work with PSRAM)
 #define MIDITX_PIN      15      // this pin will be used for output (not implemented yet) when MIDI_VIA_SERIAL2 defined
