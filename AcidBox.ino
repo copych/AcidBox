@@ -32,8 +32,8 @@
 #include "src/sampler/sampler.h"
 #include "src/mixer/mixer.h"
 #include "src/sequencer/looper.h"
-#include "src/controls/controls.h"
 #include "src/gui/gui.h"
+#include "src/controls/controls.h"
 #include <Wire.h>
 #ifdef DEBUG_TIMING
 #include "debug_timing.h"
@@ -42,8 +42,13 @@
 
 // =============================================================== MIDI interfaces ===============================================================
 
-#if defined MIDI_VIA_SERIAL2 || defined MIDI_VIA_SERIAL
+#if defined MIDI_VIA_SERIAL2 || defined MIDI_VIA_SERIAL || defined MIDI_USB_DEVICE
 #include <MIDI.h>
+#endif
+
+#ifdef MIDI_USB_DEVICE
+  #include "src/usbmidi/src/USB-MIDI.h"
+  USBMIDI_CREATE_INSTANCE(0, MIDI_usbDev);
 #endif
 
 #ifdef MIDI_VIA_SERIAL
@@ -115,7 +120,6 @@ volatile boolean timer1_fired = false;
 using namespace performer;
 Looper Performer;
 
-OledGUI gui;
 
 /*
  * Timer interrupt handler **********************************************************************************************************************************
@@ -131,7 +135,9 @@ void IRAM_ATTR onTimer1() {
  * Muxed controls ====================================================================================================================
 */
 
-UIControls controls;
+OledGUI gui;
+
+UIControls controls(&gui);
 
 /* 
 /*
@@ -286,11 +292,12 @@ void setup(void) {
   // test environment for performance measurements
   testSetup();
   
+  // start display
+  gui.begin();
+
   // setup encoders and buttons
   controls.begin();
 
-  // start display
-  gui.begin();
 
   // start audio output
   i2sInit();
