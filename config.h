@@ -27,12 +27,19 @@
 #define MIDIRX_PIN      4       // this pin is used for input when MIDI_VIA_SERIAL2 defined (note that default pin 17 won't work with PSRAM)
 #define MIDITX_PIN      15      // this pin will be used for output (not implemented yet) when MIDI_VIA_SERIAL2 defined
 
+#include <M5Unified.h> // Added for M5Stack Core S3
+
 #define POT_NUM 3
 #if defined(CONFIG_IDF_TARGET_ESP32S3)
-#define I2S_BCLK_PIN    5       // I2S BIT CLOCK pin (BCL BCK CLK)
-#define I2S_WCLK_PIN    7       // I2S WORD CLOCK pin (WCK WCL LCK)
-#define I2S_DOUT_PIN    6       // to I2S DATA IN pin (DIN D DAT)
-const uint8_t POT_PINS[POT_NUM] = {15, 16, 17};
+// Pins for M5Stack Core S3 according to the roadmap
+#define I2S_BCLK_PIN    17      // I2S BIT CLOCK pin (BCL BCK CLK)
+#define I2S_WCLK_PIN    15      // I2S WORD CLOCK pin (WCK WCL LCK)
+#define I2S_DOUT_PIN    18      // to I2S DATA IN pin (DIN D DAT)
+// POT_PINS for Core S3 - Placeholder, requires confirmation or typical values
+// Assuming similar ADC capable pins as Core2 for now.
+// Common ADC pins on ESP32-S3 are GPIO1-GPIO10. Let's use some of them.
+const uint8_t POT_PINS[POT_NUM] = {8, 9, 1}; // Updated based on user feedback
+#define LED_PIN 14 // LCD Backlight for M5Stack Core S3
 #elif defined(CONFIG_IDF_TARGET_ESP32)
 #define I2S_BCLK_PIN    5       // I2S BIT CLOCK pin (BCL BCK CLK)
 #define I2S_WCLK_PIN    19      // I2S WORD CLOCK pin (WCK WCL LCK)
